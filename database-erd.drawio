@@ -1,0 +1,248 @@
+<mxfile host="app.diagrams.net" modified="2024-01-15T10:30:00.000Z" agent="5.0" etag="abc123" version="22.1.16">
+  <diagram name="Database ERD - Thesis Management System" id="database-erd">
+    <mxGraphModel dx="2074" dy="1129" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="2336" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Core System Tables -->
+        <mxCell id="users-table" value="users&#xa;&#xa;🔑 id: UUID (PK)&#xa;📧 email: VARCHAR(255) UNIQUE&#xa;🔒 password_hash: VARCHAR(255)&#xa;👤 role: ENUM(UserRole)&#xa;📝 first_name: VARCHAR(100)&#xa;📝 last_name: VARCHAR(100)&#xa;📱 phone: VARCHAR(20)&#xa;🏠 address: TEXT&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="280" height="320" as="geometry" />
+        </mxCell>
+
+        <mxCell id="students-table" value="students&#xa;&#xa;🔑 id: UUID (PK)&#xa;👤 user_id: UUID (FK → users.id)&#xa;🎓 student_id: VARCHAR(20) UNIQUE&#xa;📚 class_id: UUID (FK → classes.id)&#xa;📊 gpa: DECIMAL(3,2)&#xa;📈 total_credits: INTEGER&#xa;📅 enrollment_year: INTEGER&#xa;📅 expected_graduation: DATE&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="400" y="40" width="300" height="280" as="geometry" />
+        </mxCell>
+
+        <mxCell id="supervisors-table" value="supervisors&#xa;&#xa;🔑 id: UUID (PK)&#xa;👤 user_id: UUID (FK → users.id)&#xa;🎓 supervisor_id: VARCHAR(20) UNIQUE&#xa;🏢 department_id: UUID (FK → departments.id)&#xa;🎯 specializations: TEXT[]&#xa;📊 max_theses_per_semester: INTEGER&#xa;📈 current_theses_count: INTEGER&#xa;🎖️ academic_rank: ENUM(AcademicRank)&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="760" y="40" width="320" height="280" as="geometry" />
+        </mxCell>
+
+        <mxCell id="partners-table" value="partners&#xa;&#xa;🔑 id: UUID (PK)&#xa;👤 user_id: UUID (FK → users.id)&#xa;🏢 name: VARCHAR(255)&#xa;🏭 type: ENUM(PartnerType)&#xa;🏗️ industry: VARCHAR(100)&#xa;🌐 website: VARCHAR(255)&#xa;📝 description: TEXT&#xa;👨‍💼 contact_person_name: VARCHAR(100)&#xa;📧 contact_email: VARCHAR(255)&#xa;📱 contact_phone: VARCHAR(20)&#xa;🏠 address: TEXT&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="40" width="320" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- Academic Structure -->
+        <mxCell id="academic-years-table" value="academic_years&#xa;&#xa;🔑 id: UUID (PK)&#xa;📚 name: VARCHAR(20)&#xa;📅 start_date: DATE&#xa;📅 end_date: DATE&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="440" width="240" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="semesters-table" value="semesters&#xa;&#xa;🔑 id: UUID (PK)&#xa;📚 academic_year_id: UUID (FK)&#xa;📝 name: VARCHAR(50)&#xa;📅 start_date: DATE&#xa;📅 end_date: DATE&#xa;⏰ registration_deadline: TIMESTAMP&#xa;⏰ thesis_deadline: TIMESTAMP&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="320" y="440" width="280" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="departments-table" value="departments&#xa;&#xa;🔑 id: UUID (PK)&#xa;📝 name: VARCHAR(255)&#xa;🏷️ code: VARCHAR(10) UNIQUE&#xa;📝 description: TEXT&#xa;👨‍💼 head_of_department: VARCHAR(100)&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="640" y="440" width="280" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="programs-table" value="programs&#xa;&#xa;🔑 id: UUID (PK)&#xa;🏢 department_id: UUID (FK)&#xa;📝 name: VARCHAR(255)&#xa;🏷️ code: VARCHAR(10) UNIQUE&#xa;⏱️ duration: INTEGER&#xa;🎓 degree: ENUM(DegreeType)&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="960" y="440" width="260" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="classes-table" value="classes&#xa;&#xa;🔑 id: UUID (PK)&#xa;📚 program_id: UUID (FK)&#xa;📝 name: VARCHAR(100)&#xa;📅 academic_year: VARCHAR(20)&#xa;👥 max_students: INTEGER&#xa;👥 current_students: INTEGER&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="440" width="260" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- Thesis Management -->
+        <mxCell id="theses-table" value="theses&#xa;&#xa;🔑 id: UUID (PK)&#xa;👨‍🎓 student_id: UUID (FK → students.id)&#xa;👨‍🏫 supervisor_id: UUID (FK → supervisors.id)&#xa;📚 semester_id: UUID (FK → semesters.id)&#xa;📝 title: VARCHAR(500)&#xa;📄 description: TEXT&#xa;🎯 objectives: TEXT[]&#xa;🔬 methodology: TEXT&#xa;📊 expected_outcomes: TEXT[]&#xa;📈 status: ENUM(ThesisStatus)&#xa;📅 registration_date: TIMESTAMP&#xa;📅 proposal_submission_date: TIMESTAMP&#xa;📅 defense_date: TIMESTAMP&#xa;🎯 final_grade: DECIMAL(3,1)&#xa;📊 progress_percentage: INTEGER&#xa;✅ is_active: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP&#xa;&#xa;🔒 UNIQUE(student_id, semester_id, deleted_at)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="760" width="380" height="460" as="geometry" />
+        </mxCell>
+
+        <mxCell id="thesis-milestones-table" value="thesis_milestones&#xa;&#xa;🔑 id: UUID (PK)&#xa;📚 thesis_id: UUID (FK → theses.id)&#xa;📝 title: VARCHAR(255)&#xa;📄 description: TEXT&#xa;📅 due_date: TIMESTAMP&#xa;📅 completed_date: TIMESTAMP&#xa;📈 status: ENUM(MilestoneStatus)&#xa;💯 completion_percentage: INTEGER&#xa;📝 notes: TEXT&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="460" y="760" width="300" height="280" as="geometry" />
+        </mxCell>
+
+        <mxCell id="thesis-documents-table" value="thesis_documents&#xa;&#xa;🔑 id: UUID (PK)&#xa;📚 thesis_id: UUID (FK → theses.id)&#xa;📝 title: VARCHAR(255)&#xa;📄 document_type: ENUM(DocumentType)&#xa;📁 file_path: VARCHAR(500)&#xa;📏 file_size: BIGINT&#xa;📎 mime_type: VARCHAR(100)&#xa;📅 upload_date: TIMESTAMP&#xa;👤 uploaded_by: UUID (FK → users.id)&#xa;📝 version: VARCHAR(20)&#xa;📝 description: TEXT&#xa;✅ is_approved: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="800" y="760" width="320" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- Internship Management -->
+        <mxCell id="internship-positions-table" value="internship_positions&#xa;&#xa;🔑 id: UUID (PK)&#xa;🏢 partner_id: UUID (FK → partners.id)&#xa;📝 title: VARCHAR(255)&#xa;📄 description: TEXT&#xa;🎯 requirements: TEXT[]&#xa;💰 benefits: TEXT[]&#xa;📍 location: VARCHAR(255)&#xa;⏱️ duration_weeks: INTEGER&#xa;👥 max_interns: INTEGER&#xa;👥 current_interns: INTEGER&#xa;👥 available_slots: INTEGER&#xa;📊 required_gpa: DECIMAL(3,2)&#xa;📚 required_courses: TEXT[]&#xa;✅ is_active: BOOLEAN&#xa;📅 application_deadline: TIMESTAMP&#xa;📅 start_date: DATE&#xa;📅 end_date: DATE&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="760" width="320" height="480" as="geometry" />
+        </mxCell>
+
+        <mxCell id="internships-table" value="internships&#xa;&#xa;🔑 id: UUID (PK)&#xa;👨‍🎓 student_id: UUID (FK → students.id)&#xa;🏢 partner_id: UUID (FK → partners.id)&#xa;💼 position_id: UUID (FK → internship_positions.id)&#xa;📚 semester_id: UUID (FK → semesters.id)&#xa;📈 status: ENUM(InternshipStatus)&#xa;📅 application_date: TIMESTAMP&#xa;📅 acceptance_date: TIMESTAMP&#xa;📅 start_date: DATE&#xa;📅 end_date: DATE&#xa;📅 actual_start_date: DATE&#xa;📅 actual_end_date: DATE&#xa;🎯 final_grade: DECIMAL(3,1)&#xa;📊 partner_evaluation: DECIMAL(3,1)&#xa;📊 student_evaluation: DECIMAL(3,1)&#xa;📝 notes: TEXT&#xa;✅ is_completed: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP&#xa;🗑️ deleted_at: TIMESTAMP&#xa;&#xa;🔒 UNIQUE(student_id, semester_id, deleted_at)" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1280" width="380" height="480" as="geometry" />
+        </mxCell>
+
+        <mxCell id="internship-reports-table" value="internship_reports&#xa;&#xa;🔑 id: UUID (PK)&#xa;💼 internship_id: UUID (FK → internships.id)&#xa;📝 title: VARCHAR(255)&#xa;📄 content: TEXT&#xa;📅 report_date: DATE&#xa;📅 week_number: INTEGER&#xa;⏱️ hours_worked: DECIMAL(5,2)&#xa;🎯 tasks_completed: TEXT[]&#xa;🚧 challenges_faced: TEXT&#xa;📚 skills_learned: TEXT[]&#xa;📊 self_assessment: DECIMAL(3,1)&#xa;📝 supervisor_feedback: TEXT&#xa;📊 supervisor_rating: DECIMAL(3,1)&#xa;✅ is_approved: BOOLEAN&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="460" y="1280" width="320" height="380" as="geometry" />
+        </mxCell>
+
+        <!-- System Tables -->
+        <mxCell id="notifications-table" value="notifications&#xa;&#xa;🔑 id: UUID (PK)&#xa;👤 user_id: UUID (FK → users.id)&#xa;📝 title: VARCHAR(255)&#xa;📄 message: TEXT&#xa;📱 type: ENUM(NotificationType)&#xa;📊 priority: ENUM(Priority)&#xa;📱 channels: TEXT[]&#xa;✅ is_read: BOOLEAN&#xa;📅 read_at: TIMESTAMP&#xa;📅 scheduled_at: TIMESTAMP&#xa;📅 sent_at: TIMESTAMP&#xa;🔄 retry_count: INTEGER&#xa;📊 status: ENUM(NotificationStatus)&#xa;📄 metadata: JSONB&#xa;📅 created_at: TIMESTAMP&#xa;📅 updated_at: TIMESTAMP" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1280" width="300" height="380" as="geometry" />
+        </mxCell>
+
+        <mxCell id="audit-logs-table" value="audit_logs&#xa;&#xa;🔑 id: UUID (PK)&#xa;📝 table_name: VARCHAR(50)&#xa;🔑 record_id: UUID&#xa;📊 action: ENUM(AuditAction)&#xa;👤 user_id: UUID (FK → users.id)&#xa;📄 old_values: JSONB&#xa;📄 new_values: JSONB&#xa;🌐 ip_address: INET&#xa;🖥️ user_agent: TEXT&#xa;📅 timestamp: TIMESTAMP&#xa;📄 metadata: JSONB" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="1280" width="280" height="280" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+        
+        <!-- User relationships -->
+        <mxCell id="edge1" edge="1" parent="1" source="users-table" target="students-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1-label" value="1:1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge1">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge2" edge="1" parent="1" source="users-table" target="supervisors-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge2-label" value="1:1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge2">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge3" edge="1" parent="1" source="users-table" target="partners-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge3-label" value="1:1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge3">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Academic structure relationships -->
+        <mxCell id="edge4" edge="1" parent="1" source="academic-years-table" target="semesters-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge4-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge4">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge5" edge="1" parent="1" source="departments-table" target="programs-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge5-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge5">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge6" edge="1" parent="1" source="programs-table" target="classes-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge6">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge7" edge="1" parent="1" source="classes-table" target="students-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge7">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge8" edge="1" parent="1" source="departments-table" target="supervisors-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge8">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Thesis relationships -->
+        <mxCell id="edge9" edge="1" parent="1" source="students-table" target="theses-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge9">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge10" edge="1" parent="1" source="supervisors-table" target="theses-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge10-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge10">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge11" edge="1" parent="1" source="semesters-table" target="theses-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge11-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge11">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge12" edge="1" parent="1" source="theses-table" target="thesis-milestones-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge12-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge12">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge13" edge="1" parent="1" source="theses-table" target="thesis-documents-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge13-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge13">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Internship relationships -->
+        <mxCell id="edge14" edge="1" parent="1" source="partners-table" target="internship-positions-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge14-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge14">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge15" edge="1" parent="1" source="students-table" target="internships-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge15-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge15">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge16" edge="1" parent="1" source="partners-table" target="internships-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge16-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge16">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge17" edge="1" parent="1" source="internship-positions-table" target="internships-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge17-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge17">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge18" edge="1" parent="1" source="semesters-table" target="internships-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge18-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge18">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge19" edge="1" parent="1" source="internships-table" target="internship-reports-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge19-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge19">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- System relationships -->
+        <mxCell id="edge20" edge="1" parent="1" source="users-table" target="notifications-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge20-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge20">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge21" edge="1" parent="1" source="users-table" target="audit-logs-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge21-label" value="1:n" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="edge21">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="📊 DATABASE ERD LEGEND&#xa;&#xa;🔑 Primary Key&#xa;🔗 Foreign Key&#xa;🔒 Unique Constraint&#xa;📅 Timestamp Fields&#xa;🗑️ Soft Delete Support&#xa;📊 Business Logic Fields&#xa;✅ Status/Active Fields&#xa;&#xa;🎨 Color Coding:&#xa;🔵 Core Users (Blue)&#xa;🟢 Students/Thesis (Green)&#xa;🟡 Supervisors (Yellow)&#xa;🔴 Partners/Internships (Red)&#xa;🟣 Academic Structure (Purple)&#xa;🟠 System Tables (Orange)" style="swimlane;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1800" width="400" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Business Rules -->
+        <mxCell id="business-rules" value="🔒 BUSINESS CONSTRAINTS&#xa;&#xa;✅ One thesis per student per semester&#xa;✅ One internship per student per semester&#xa;✅ Supervisor capacity limits (max 8)&#xa;✅ GPA requirements (min 2.0 for thesis)&#xa;✅ Registration deadlines enforcement&#xa;✅ Soft delete for data integrity&#xa;✅ Audit trail for all changes&#xa;✅ Automatic capacity management&#xa;✅ Conflict detection for schedules&#xa;✅ Role-based data access&#xa;&#xa;📊 INDEXES FOR PERFORMANCE:&#xa;• students(class_id, gpa)&#xa;• theses(student_id, semester_id, status)&#xa;• internships(student_id, partner_id, status)&#xa;• supervisors(department_id, current_load)&#xa;• audit_logs(table_name, timestamp)" style="swimlane;fontStyle=1;align=left;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="480" y="1800" width="400" height="380" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile> 

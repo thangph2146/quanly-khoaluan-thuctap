@@ -1,0 +1,73 @@
+import { StatusType } from '@/components/common/status-badge'
+import { Thesis, ThesisStatus } from './types'
+
+export const thesesData: Thesis[] = [
+	{
+		id: 'KL001',
+		title: 'Ứng dụng Machine Learning trong dự đoán xu hướng thị trường',
+		student: 'Nguyễn Văn A',
+		studentId: '20210001',
+		supervisor: 'TS. Trần Thị B',
+		status: 'IN_PROGRESS',
+		semester: '2024-2025',
+		registrationDate: '2024-09-15',
+		deadline: '2024-12-15',
+		progress: 65,
+	},
+	{
+		id: 'KL002',
+		title: 'Hệ thống quản lý thư viện điện tử sử dụng React và Node.js',
+		student: 'Lê Thị C',
+		studentId: '20210002',
+		supervisor: 'ThS. Nguyễn Văn D',
+		status: 'PENDING_DEFENSE',
+		semester: '2024-2025',
+		registrationDate: '2024-09-10',
+		deadline: '2024-12-10',
+		progress: 95,
+	},
+	{
+		id: 'KL003',
+		title: 'Phát triển ứng dụng mobile quản lý chi tiêu cá nhân',
+		student: 'Phạm Văn E',
+		studentId: '20210003',
+		supervisor: 'PGS. Hoàng Thị F',
+		status: 'APPROVED',
+		semester: '2024-2025',
+		registrationDate: '2024-09-20',
+		deadline: '2024-12-20',
+		progress: 30,
+	},
+	{
+		id: 'KL004',
+		title: 'Nghiên cứu và ứng dụng Blockchain trong hệ thống thanh toán',
+		student: 'Vũ Thị G',
+		studentId: '20210004',
+		supervisor: 'TS. Đặng Văn H',
+		status: 'COMPLETED',
+		semester: '2023-2024',
+		registrationDate: '2024-02-15',
+		deadline: '2024-06-15',
+		progress: 100,
+	},
+	{
+		id: 'KL005',
+		title: 'Xây dựng chatbot hỗ trợ tư vấn học tập sử dụng AI',
+		student: 'Bùi Văn I',
+		studentId: '20210005',
+		supervisor: 'ThS. Ngô Thị K',
+		status: 'OVERDUE',
+		semester: '2024-2025',
+		registrationDate: '2024-08-15',
+		deadline: '2024-11-15',
+		progress: 40,
+	},
+]
+
+export const statusMap: Record<ThesisStatus, StatusType> = {
+	APPROVED: 'approved',
+	IN_PROGRESS: 'in_progress',
+	PENDING_DEFENSE: 'review',
+	COMPLETED: 'completed',
+	OVERDUE: 'overdue',
+} 
