@@ -6,6 +6,7 @@ import {
 	Briefcase,
 	FileText,
 	Settings,
+	BarChart,
 } from 'lucide-react'
 import type { AppConfig } from './types'
 
@@ -23,7 +24,13 @@ export const appConfig: AppConfig = {
 					'dashboard:view',
 					'users:manage',
 					'thesis:manage_all',
+					'thesis:register',
+					'thesis:view_own',
+					'thesis:view_all',
 					'internship:manage_all',
+					'internship:register',
+					'internship:view_own',
+					'internship:view_all',
 					'documents:manage',
 					'settings:manage',
 				],
@@ -42,6 +49,12 @@ export const appConfig: AppConfig = {
 			title: 'Phân tích',
 			url: '/dashboard/analytics',
 			icon: LineChart,
+			permission: 'dashboard:view',
+		},
+		{
+			title: 'Báo cáo',
+			url: '/dashboard/reports',
+			icon: BarChart,
 			permission: 'dashboard:view',
 		},
 		{
@@ -66,6 +79,21 @@ export const appConfig: AppConfig = {
 					url: '/thesis/progress',
 					permission: 'thesis:view_own',
 				},
+				{
+					title: 'Đang thực hiện',
+					url: '/thesis/active',
+					permission: 'thesis:view_all',
+				},
+				{
+					title: 'Phân công',
+					url: '/thesis/assignments',
+					permission: 'thesis:manage_all',
+				},
+				{
+					title: 'Bảo vệ',
+					url: '/thesis/defense',
+					permission: 'thesis:manage_all',
+				},
 			],
 		},
 		{
@@ -84,6 +112,21 @@ export const appConfig: AppConfig = {
 					url: '/internship/partners',
 					permission: 'internship:view_own',
 				},
+				{
+					title: 'Đang thực tập',
+					url: '/internship/active',
+					permission: 'internship:view_all',
+				},
+				{
+					title: 'Đánh giá',
+					url: '/internship/evaluation',
+					permission: 'internship:manage_all',
+				},
+				{
+					title: 'Giảng viên HD',
+					url: '/internship/supervisors',
+					permission: 'internship:manage_all',
+				},
 			],
 		},
 		{
@@ -91,6 +134,18 @@ export const appConfig: AppConfig = {
 			url: '/documents',
 			icon: FileText,
 			permission: 'documents:manage',
+			items: [
+				{
+					title: 'Biểu mẫu',
+					url: '/documents/forms',
+					permission: 'documents:manage',
+				},
+				{
+					title: 'Hướng dẫn',
+					url: '/documents/guidelines',
+					permission: 'documents:manage',
+				},
+			],
 		},
 		{
 			title: 'Cài đặt',

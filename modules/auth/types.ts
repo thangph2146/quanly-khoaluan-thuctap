@@ -8,9 +8,11 @@ export type Permission =
 	| 'thesis:register'
 	| 'thesis:manage_all'
 	| 'thesis:view_own'
+	| 'thesis:view_all'
 	| 'internship:register'
 	| 'internship:manage_all'
 	| 'internship:view_own'
+	| 'internship:view_all'
 	| 'documents:manage'
 	| 'settings:manage'
 
