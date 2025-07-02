@@ -9,7 +9,9 @@ import {
 	Building2,
 	Library,
 } from 'lucide-react'
-import type { AppConfig, User, Role, Permission, UserRole, RolePermission } from '@/modules/config/types'
+import type { AppConfig } from '@/modules/config/types'
+import type { User, Role, UserRole } from '@/modules/users/types'
+import type { Permission, RolePermission } from '@/modules/auth/types'
 
 // Core permissions based on C# models
 const permissions: Permission[] = [
