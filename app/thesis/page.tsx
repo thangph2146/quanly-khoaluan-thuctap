@@ -1,31 +1,17 @@
 'use client'
 
-import { type ColumnDef } from "@tanstack/react-table"
-import { PageHeader } from "@/components/common/page-header"
-import { StatisticsCard } from "@/components/common/statistics-card"
+import { useState } from 'react'
+import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { PageHeader } from '@/components/common'
+import { Button } from '@/components/ui/button'
 import {
-	DataTable,
-	renderSortableHeader,
-} from "@/components/common/data-table"
-import { StatusBadge } from "@/components/common/status-badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { 
-	BookOpen, 
-	Plus, 
-	Edit,
-	Eye,
-	Trash2,
-	CheckCircle,
-	Clock,
-	AlertCircle,
-	XCircle,
-	MoreHorizontal
-} from "lucide-react"
-import { thesisData } from "@/modules/thesis/data"
-import { Thesis, ThesisStatus } from "@/modules/thesis/types"
-import { StatusType } from "@/modules/common/types"
-import { useRouter } from 'next/navigation'
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from '@/components/ui/sheet'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -35,183 +21,295 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { DataTable } from '@/components/common/data-table'
+import { columns } from './columns'
+import { thesisData, mockStudents, mockAcademicYears, mockSemesters } from '@/modules/thesis/data'
+import { Thesis } from '@/modules/thesis/types'
 
+
+// Form Component
+const ThesisForm = ({
+	thesis,
+	onSave,
+	onCancel,
+}: {
+	thesis?: Thesis | null
+	onSave: (data: Partial<Thesis>) => void
+	onCancel: () => void
+}) => {
+	const [formData, setFormData] = useState({
+		title: thesis?.title || '',
+		studentId: thesis?.studentId?.toString() || '',
+		academicYearId: thesis?.academicYearId?.toString() || '',
+		semesterId: thesis?.semesterId?.toString() || '',
+		submissionDate: thesis?.submissionDate || '',
+	})
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+		const { name, value } = e.target
+		setFormData(prev => ({ ...prev, [name]: value }))
+	}
+
+	const handleSelectChange = (name: string, value: string) => {
+		setFormData(prev => ({ ...prev, [name]: value }))
+	}
+
+	const handleFormSave = () => {
+		// Convert string IDs to numbers
+		const saveData = {
+			...formData,
+			studentId: parseInt(formData.studentId),
+			academicYearId: parseInt(formData.academicYearId),
+			semesterId: parseInt(formData.semesterId),
+		}
+		onSave(saveData)
+	}
+
+	return (
+		<div className="space-y-4 py-4">
+			<div className="space-y-2">
+				<Label htmlFor="title">Tên đề tài</Label>
+				<Input
+					id="title"
+					name="title"
+					value={formData.title}
+					onChange={handleChange}
+					placeholder="Nhập tên đề tài khóa luận"
+				/>
+			</div>
+
+			<div className="space-y-2">
+				<Label htmlFor="studentId">Sinh viên</Label>
+				<Select
+					value={formData.studentId.toString()}
+					onValueChange={(value) => handleSelectChange('studentId', value)}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Chọn sinh viên" />
+					</SelectTrigger>
+					<SelectContent>
+						{mockStudents.map((student) => (
+							<SelectItem key={student.id} value={student.id.toString()}>
+								{student.studentCode} - {student.fullName}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
+
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-2">
+					<Label htmlFor="academicYearId">Niên khóa</Label>
+					<Select
+						value={formData.academicYearId.toString()}
+						onValueChange={(value) => handleSelectChange('academicYearId', value)}
+					>
+						<SelectTrigger>
+							<SelectValue placeholder="Chọn niên khóa" />
+						</SelectTrigger>
+						<SelectContent>
+							{mockAcademicYears.map((year) => (
+								<SelectItem key={year.id} value={year.id.toString()}>
+									{year.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor="semesterId">Học kỳ</Label>
+					<Select
+						value={formData.semesterId.toString()}
+						onValueChange={(value) => handleSelectChange('semesterId', value)}
+					>
+						<SelectTrigger>
+							<SelectValue placeholder="Chọn học kỳ" />
+						</SelectTrigger>
+						<SelectContent>
+							{mockSemesters.map((semester) => (
+								<SelectItem key={semester.id} value={semester.id.toString()}>
+									{semester.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+			</div>
+
+			<div className="space-y-2">
+				<Label htmlFor="submissionDate">Hạn nộp</Label>
+				<Input
+					id="submissionDate"
+					name="submissionDate"
+					type="date"
+					value={formData.submissionDate}
+					onChange={handleChange}
+				/>
+			</div>
+
+			<SheetFooter className="pt-4">
+				<Button variant="outline" onClick={onCancel}>
+					Hủy
+				</Button>
+				<Button onClick={handleFormSave}>Lưu thay đổi</Button>
+			</SheetFooter>
+		</div>
+	)
+}
+
+
+// Main Page Component
 export default function ThesisPage() {
-	const router = useRouter()
-	const breadcrumbs = [
-		{ label: "Hệ thống Quản lý", href: "/dashboard" },
-		{ label: "Quản lý Khóa luận" }
-	]
+	const [theses, setTheses] = useState<Thesis[]>(thesisData)
+	const [isSheetOpen, setSheetOpen] = useState(false)
+	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
+	const [selectedThesis, setSelectedThesis] = useState<Thesis | null>(null)
+    const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
 
-	const columns: ColumnDef<Thesis>[] = [
-		{
-			accessorKey: "id",
-			header: ({ column }) => renderSortableHeader(column, "Mã KL"),
-		},
-		{
-			accessorKey: "title",
-			header: "Tên khóa luận",
-			cell: ({ row }) => {
-				const thesis = row.original
-				return (
-					<div className="max-w-[350px]">
-						<p className="font-medium truncate">{thesis.title}</p>
-						<p className="text-sm text-muted-foreground">
-							Học kỳ {thesis.semester}
-						</p>
-					</div>
-				)
-			},
-		},
-		{
-			accessorKey: "student",
-			header: "Sinh viên",
-			cell: ({ row }) => {
-				const thesis = row.original
-				return (
-					<div>
-						<p className="font-medium">{thesis.student}</p>
-						<p className="text-sm text-muted-foreground">
-							{thesis.studentId}
-						</p>
-					</div>
-				)
-			},
-		},
-		{
-			accessorKey: "supervisor",
-			header: "Giảng viên HD",
-		},
-		{
-			accessorKey: "status",
-			header: "Trạng thái",
-			cell: ({ row }) => {
-				const status = row.getValue("status") as ThesisStatus
-				return <StatusBadge status={status as StatusType} />
-			},
-		},
-		{
-			accessorKey: "progress",
-			header: "Tiến độ",
-			cell: ({ row }) => {
-				const progress = row.getValue("progress") as number
-				return (
-					<div className="flex items-center gap-2 min-w-[120px]">
-						<Progress value={progress} className="h-2 w-full" />
-						<span className="text-xs font-medium text-muted-foreground">
-							{progress}%
-						</span>
-					</div>
-				)
-			},
-		},
-		{
-			accessorKey: "deadline",
-			header: ({ column }) => renderSortableHeader(column, "Hạn nộp"),
-		},
-		{
-			id: 'actions',
-			cell: ({ row }) => (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" className="h-8 w-8 p-0">
-							<span className="sr-only">Mở menu</span>
-							<MoreHorizontal className="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem
-							onClick={() => router.push(`/thesis/${row.original.id}`)}
-						>
-							<Eye className="mr-2 h-4 w-4" />
-							Xem chi tiết
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={() =>
-								router.push(`/thesis/${row.original.id}/edit`)
-							}
-						>
-							<Edit className="mr-2 h-4 w-4" />
-							Chỉnh sửa
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<DropdownMenuItem
-									onSelect={e => e.preventDefault()}
-									className="text-red-600"
-								>
-									<Trash2 className="mr-2 h-4 w-4" />
-									Xóa
-								</DropdownMenuItem>
-							</AlertDialogTrigger>
-							<AlertDialogContent>
-								<AlertDialogHeader>
-									<AlertDialogTitle>
-										Bạn có chắc chắn muốn xóa?
-									</AlertDialogTitle>
-									<AlertDialogDescription>
-										Hành động này không thể được hoàn tác. Dữ liệu khóa
-										luận sẽ bị xóa vĩnh viễn.
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-								<AlertDialogFooter>
-									<AlertDialogCancel>Hủy</AlertDialogCancel>
-									<AlertDialogAction
-										onClick={() =>
-											console.log(`Deleting thesis ${row.original.id}`)
-										}
-									>
-										Tiếp tục
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
-					</DropdownMenuContent>
-				</DropdownMenu>
-			),
-		},
+	const handleCreate = (data: Partial<Thesis>) => {
+		const newThesis: Thesis = {
+			id: Math.max(...theses.map(t => t.id), 0) + 1,
+			...data,
+            student: mockStudents.find(s => s.id === data.studentId)!,
+            academicYear: mockAcademicYears.find(y => y.id === data.academicYearId)!,
+            semester: mockSemesters.find(s => s.id === data.semesterId)!,
+		} as Thesis
+		setTheses(prev => [...prev, newThesis])
+		setSheetOpen(false)
+	}
+
+	const handleUpdate = (data: Partial<Thesis>) => {
+		if (!selectedThesis) return
+		setTheses(prev =>
+			prev.map(t => {
+                if (t.id === selectedThesis.id) {
+                    return { 
+                        ...t, 
+                        ...data,
+                        student: mockStudents.find(s => s.id === data.studentId)!,
+                        academicYear: mockAcademicYears.find(y => y.id === data.academicYearId)!,
+                        semester: mockSemesters.find(s => s.id === data.semesterId)!,
+                    }
+                }
+                return t
+            })
+		)
+		setSheetOpen(false)
+		setSelectedThesis(null)
+	}
+
+	const handleDelete = () => {
+		if (!selectedThesis) return
+		setTheses(prev => prev.filter(t => t.id !== selectedThesis.id))
+		setDeleteDialogOpen(false)
+		setSelectedThesis(null)
+	}
+
+	const openSheet = (mode: 'create' | 'edit', thesis?: Thesis) => {
+        setSheetMode(mode)
+        setSelectedThesis(thesis || null)
+        setSheetOpen(true)
+    }
+
+	const openDeleteDialog = (thesis: Thesis) => {
+		setSelectedThesis(thesis)
+		setDeleteDialogOpen(true)
+	}
+
+	const dynamicColumns = columns.map(col => {
+		if (col.id === 'actions') {
+			return {
+				...col,
+				cell: ({ row }: { row: { original: Thesis } }) => {
+					const thesis = row.original
+					return (
+						<div className="flex space-x-2">
+                            <Button variant="outline" size="icon" onClick={() => alert('View details for ' + thesis.title)}>
+								<Eye className="h-4 w-4" />
+							</Button>
+							<Button variant="outline" size="icon" onClick={() => openSheet('edit', thesis)}>
+								<Edit className="h-4 w-4" />
+							</Button>
+							<Button variant="destructive" size="icon" onClick={() => openDeleteDialog(thesis)}>
+								<Trash2 className="h-4 w-4" />
+							</Button>
+						</div>
+					)
+				},
+			}
+		}
+		return col
+	})
+
+	const breadcrumbs = [
+		{ label: 'Hệ thống Quản lý', href: '/dashboard' },
+		{ label: 'Khóa luận' },
 	]
 
 	return (
-		<PageHeader
-			title="Quản lý Khóa luận"
-			description="Quản lý toàn bộ khóa luận sinh viên trong hệ thống"
-			breadcrumbs={breadcrumbs}
-			actions={
-				<Button onClick={() => router.push('/thesis/new')}>
-					<Plus className="mr-2 h-4 w-4" />
-					Thêm khóa luận mới
-				</Button>
-			}
-		>
-			<div className="space-y-4">
-				{/* Statistics Cards */}
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-					<StatisticsCard title="Tổng số" value={156} icon={BookOpen} description="khóa luận" />
-					<StatisticsCard title="Đang thực hiện" value={89} icon={Clock} description="57% tổng số" variant="success" />
-					<StatisticsCard title="Chờ bảo vệ" value={34} icon={AlertCircle} description="22% tổng số" variant="warning" />
-					<StatisticsCard title="Hoàn thành" value={28} icon={CheckCircle} description="18% tổng số" />
-					<StatisticsCard title="Quá hạn" value={5} icon={XCircle} description="3% tổng số" variant="error" />
-				</div>
-				
-				{/* Data Table */}
+		<>
+			<PageHeader
+				title="Quản lý Khóa luận"
+				description="Quản lý danh sách các đề tài khóa luận của sinh viên."
+				breadcrumbs={breadcrumbs}
+				actions={
+                    <Button onClick={() => openSheet('create')}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Thêm đề tài
+                    </Button>
+				}
+			>
 				<DataTable
-					columns={columns}
-					data={thesisData}
+					columns={dynamicColumns}
+					data={theses}
 					searchableColumn="title"
-					searchPlaceholder="Tìm kiếm theo tên KL, SV..."
+					searchPlaceholder="Tìm theo tên đề tài, sinh viên..."
 				/>
-			</div>
-		</PageHeader>
+			</PageHeader>
+            
+			{/* Create/Edit Sheet */}
+			<Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+				<SheetContent className="sm:max-w-xl">
+					<SheetHeader>
+						<SheetTitle>{sheetMode === 'create' ? 'Thêm đề tài mới' : 'Chỉnh sửa đề tài'}</SheetTitle>
+						<SheetDescription>
+                            {sheetMode === 'create' ? 'Điền thông tin để thêm một đề tài mới.' : 'Cập nhật thông tin cho đề tài đã chọn.'}
+                        </SheetDescription>
+					</SheetHeader>
+					<ThesisForm 
+                        thesis={sheetMode === 'edit' ? selectedThesis : null} 
+                        onSave={sheetMode === 'create' ? handleCreate : handleUpdate} 
+                        onCancel={() => setSheetOpen(false)}
+                    />
+				</SheetContent>
+			</Sheet>
+
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Hành động này không thể được hoàn tác. Đề tài &quot;{selectedThesis?.title}&quot; sẽ bị xóa vĩnh viễn.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel onClick={() => setSelectedThesis(null)}>Hủy</AlertDialogCancel>
+						<AlertDialogAction onClick={handleDelete}>Xóa</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	)
 } 

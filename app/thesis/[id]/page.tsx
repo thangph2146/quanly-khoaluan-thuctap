@@ -1,7 +1,7 @@
 'use client'
 
 import { notFound, useRouter } from 'next/navigation'
-import { findThesisById, statusMap } from '@/modules/thesis/data'
+import { thesisData } from '@/modules/thesis/data'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,15 +11,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { StatusBadge } from '@/components/common/status-badge'
 import {
 	Edit,
 	User,
-	BookUser,
 	Calendar as CalendarIcon,
 	FileText,
-	TrendingUp,
 	Tag,
 } from 'lucide-react'
 
@@ -29,7 +25,7 @@ export default function ThesisDetailsPage({
 	params: { id: string }
 }) {
 	const router = useRouter()
-	const thesis = findThesisById(params.id)
+	const thesis = thesisData.find(t => t.id.toString() === params.id)
 
 	if (!thesis) {
 		notFound()
@@ -38,7 +34,7 @@ export default function ThesisDetailsPage({
 	const breadcrumbs = [
 		{ label: 'Hệ thống Quản lý', href: '/dashboard' },
 		{ label: 'Quản lý Khóa luận', href: '/thesis' },
-		{ label: thesis.title },
+		{ label: thesis.title || 'Chi tiết' },
 	]
 
 	return (
@@ -58,9 +54,7 @@ export default function ThesisDetailsPage({
 					<CardHeader>
 						<CardTitle>{thesis.title}</CardTitle>
 						<CardDescription>
-							<StatusBadge
-								status={statusMap[thesis.status] ?? 'inactive'}
-							/>
+							Mã số: {thesis.id}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
@@ -71,50 +65,31 @@ export default function ThesisDetailsPage({
 									Sinh viên thực hiện
 								</p>
 								<p className="font-medium">
-									{thesis.student} ({thesis.studentId})
+									{thesis.student.fullName} ({thesis.student.studentCode})
 								</p>
 							</div>
 						</div>
-						<div className="flex items-center">
-							<BookUser className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">
-									Giảng viên hướng dẫn
-								</p>
-								<p className="font-medium">{thesis.supervisor}</p>
-							</div>
-						</div>
+
 						<div className="flex items-center">
 							<Tag className="w-5 h-5 mr-3 text-muted-foreground" />
 							<div>
 								<p className="text-sm text-muted-foreground">Học kỳ</p>
-								<p className="font-medium">{thesis.semester}</p>
+								<p className="font-medium">
+									{thesis.semester.name} - {thesis.academicYear.name}
+								</p>
 							</div>
 						</div>
 						<div className="flex items-center">
 							<CalendarIcon className="w-5 h-5 mr-3 text-muted-foreground" />
 							<div>
-								<p className="text-sm text-muted-foreground">Ngày đăng ký</p>
-								<p className="font-medium">{thesis.registrationDate}</p>
-							</div>
-						</div>
-						<div className="flex items-center">
-							<CalendarIcon className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">Hạn nộp</p>
-								<p className="font-medium">{thesis.deadline}</p>
-							</div>
-						</div>
-						<div className="flex items-center col-span-full">
-							<TrendingUp className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">Tiến độ</p>
-								<div className="flex items-center gap-2 mt-1">
-									<Progress value={thesis.progress} className="h-2 w-48" />
-									<span className="text-sm font-medium">
-										{thesis.progress}%
-									</span>
-								</div>
+								<p className="text-sm text-muted-foreground">
+									Ngày nộp bài
+								</p>
+								<p className="font-medium">
+									{new Date(thesis.submissionDate).toLocaleDateString(
+										'vi-VN'
+									)}
+								</p>
 							</div>
 						</div>
 					</CardContent>

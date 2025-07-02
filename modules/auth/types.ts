@@ -1,39 +1,36 @@
-/**
- * Định danh các quyền hạn cụ thể trong hệ thống.
- * Ví dụ: 'users:create', 'thesis:view_all', 'reports:generate'
- */
-export type Permission =
-	| 'dashboard:view'
-	| 'users:manage'
-	| 'thesis:register'
-	| 'thesis:manage_all'
-	| 'thesis:view_own'
-	| 'thesis:view_all'
-	| 'internship:register'
-	| 'internship:manage_all'
-	| 'internship:view_own'
-	| 'internship:view_all'
-	| 'documents:manage'
-	| 'settings:manage'
+import { Menu } from '@/modules/config/types'
+import { Role } from '@/modules/users/types'
 
 /**
- * Đại diện cho một vai trò trong hệ thống.
- * Mỗi vai trò có một tập hợp các quyền hạn.
+ * Defines specific permissions in the system.
+ * Based on Permission.cs
  */
-export interface Role {
-	id: string
-	name: 'ADMIN' | 'LECTURER' | 'STUDENT'
-	permissions: Permission[]
+export interface Permission {
+	id: number
+	name: string // e.g., "users:create", "users:read"
+	description?: string
+	module: string // e.g., "UserManagement", "Academic"
+	rolePermissions?: RolePermission[]
 }
 
 /**
- * Đại diện cho một người dùng trong hệ thống.
- * Người dùng có thể có nhiều vai trò.
+ * Represents a many-to-many relationship between Role and Permission.
+ * Based on RolePermission.cs
  */
-export interface User {
-	id: string
-	name: string
-	email: string
-	avatarUrl?: string
-	roles: Role[]
+export interface RolePermission {
+	roleId: number
+	role: Role
+	permissionId: number
+	permission: Permission
+}
+
+/**
+ * Represents a many-to-many relationship between Role and Menu.
+ * Based on RoleMenu.cs
+ */
+export interface RoleMenu {
+	roleId: number
+	role: Role
+	menuId: number
+	menu: Menu
 } 

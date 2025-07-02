@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar'
 import type { NavItem } from '@/modules/config/types'
 import { hasPermission } from '@/modules/auth/utils'
-import { User } from '@/modules/auth/types'
+import { User } from '@/modules/users/types'
 
 export function NavMain({ items, user }: { items: NavItem[]; user: User }) {
 	const pathname = usePathname()

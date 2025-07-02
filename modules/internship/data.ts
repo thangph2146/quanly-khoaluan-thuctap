@@ -1,88 +1,128 @@
-import { Internship } from './types'
+import { Internship, Partner } from './types'
+import { Student } from '@/modules/users/types'
+import { AcademicYear, Semester } from '@/modules/config/types'
 
-export const internshipsData: Internship[] = [
+// Mock Data
+export const students: Student[] = [
 	{
-		id: 'TT001',
-		title: 'Thực tập phát triển Web tại FPT Software',
-		student: 'Nguyễn Thị A',
-		studentId: '20210001',
-		company: 'FPT Software',
-		position: 'Frontend Developer',
-		supervisor: 'ThS. Trần Văn B',
-		companySupervisor: 'Nguyễn Đức C',
-		status: 'IN_PROGRESS',
-		startDate: '2024-06-01',
-		endDate: '2024-08-30',
-		location: 'Hà Nội',
-		salary: '5,000,000 VNĐ',
-		rating: 4.5,
+		id: 20210001,
+		studentCode: '20210001',
+		fullName: 'Nguyễn Thị A',
+		dateOfBirth: '2003-01-15',
+		email: 'a.nguyen@example.com',
+		phoneNumber: '0901234567',
 	},
 	{
-		id: 'TT002',
-		title: 'Thực tập Data Science tại Viettel',
-		student: 'Lê Văn D',
-		studentId: '20210002',
-		company: 'Viettel Digital',
-		position: 'Data Analyst',
-		supervisor: 'TS. Phạm Thị E',
-		companySupervisor: 'Hoàng Văn F',
-		status: 'COMPLETED',
-		startDate: '2024-05-15',
-		endDate: '2024-08-15',
-		location: 'TP.HCM',
-		salary: '6,000,000 VNĐ',
-		rating: 5.0,
+		id: 20210002,
+		studentCode: '20210002',
+		fullName: 'Lê Văn D',
+		dateOfBirth: '2003-02-20',
+		email: 'd.le@example.com',
+		phoneNumber: '0902345678',
 	},
 	{
-		id: 'TT003',
-		title: 'Thực tập Mobile App tại VNG Corporation',
-		student: 'Trần Thị G',
-		studentId: '20210003',
-		company: 'VNG Corporation',
-		position: 'Mobile Developer',
-		supervisor: 'ThS. Vũ Minh H',
-		companySupervisor: 'Đỗ Thị I',
-		status: 'PENDING_EVALUATION',
-		startDate: '2024-06-15',
-		endDate: '2024-09-15',
-		location: 'TP.HCM',
-		salary: '7,000,000 VNĐ',
-		rating: 0,
-	},
-	{
-		id: 'TT004',
-		title: 'Thực tập DevOps tại TechComBank',
-		student: 'Bùi Văn K',
-		studentId: '20210004',
-		company: 'Techcombank',
-		position: 'DevOps Engineer',
-		supervisor: 'TS. Ngô Thị L',
-		companySupervisor: 'Phan Văn M',
-		status: 'APPROVED',
-		startDate: '2024-07-01',
-		endDate: '2024-09-30',
-		location: 'Hà Nội',
-		salary: '8,000,000 VNĐ',
-		rating: 0,
-	},
-	{
-		id: 'TT005',
-		title: 'Thực tập AI/ML tại VNPT Technology',
-		student: 'Đinh Thị N',
-		studentId: '20210005',
-		company: 'VNPT Technology',
-		position: 'AI Engineer',
-		supervisor: 'PGS. Lê Văn O',
-		companySupervisor: 'Trịnh Thị P',
-		status: 'CANCELLED',
-		startDate: '2024-06-01',
-		endDate: '2024-08-31',
-		location: 'Đà Nẵng',
-		salary: '6,500,000 VNĐ',
-		rating: 0,
+		id: 20210003,
+		studentCode: '20210003',
+		fullName: 'Trần Thị B',
+		dateOfBirth: '2003-03-10',
+		email: 'b.tran@example.com',
+		phoneNumber: '0903456789',
 	},
 ]
 
-export function findInternshipById(id: string) {
-	return internshipsData.find(internship => internship.id === id)
+export const partners: Partner[] = [
+	{
+		id: 1,
+		name: 'FPT Software',
+		address: 'Khu công nghệ cao Hòa Lạc, Hà Nội',
+		phoneNumber: '02473007575',
+		email: 'contact@fptsoftware.com',
+	},
+	{
+		id: 2,
+		name: 'Viettel Digital',
+		address: 'Số 1 Trần Hữu Dực, Hà Nội',
+		phoneNumber: '0987654321',
+		email: 'digital@viettel.com.vn',
+	},
+	{
+		id: 3,
+		name: 'VNG Corporation',
+		address: 'Khu chế xuất Tân Thuận, Quận 7, TP.HCM',
+		phoneNumber: '02839623888',
+		email: 'contact@vng.com.vn',
+	},
+]
+
+export const academicYears: AcademicYear[] = [
+	{ id: 1, name: '2023-2024', startDate: '2023-09-05', endDate: '2024-06-30' },
+	{ id: 2, name: '2024-2025', startDate: '2024-09-01', endDate: '2025-06-30' },
+]
+
+export const semesters: Semester[] = [
+	{
+		id: 1,
+		name: 'Học kỳ 1',
+		academicYearId: 1,
+		academicYear: academicYears[0],
+	},
+	{
+		id: 2,
+		name: 'Học kỳ 2',
+		academicYearId: 1,
+		academicYear: academicYears[0],
+	},
+	{
+		id: 3,
+		name: 'Học kỳ 1',
+		academicYearId: 2,
+		academicYear: academicYears[1],
+	},
+]
+
+export const internshipsData: Internship[] = [
+	{
+		id: 1,
+		studentId: 20210001,
+		student: students[0],
+		partnerId: 1,
+		partner: partners[0],
+		academicYearId: 2,
+		academicYear: academicYears[1],
+		semesterId: 3,
+		semester: semesters[2],
+		reportUrl: null,
+		grade: null,
+	},
+	{
+		id: 2,
+		studentId: 20210002,
+		student: students[1],
+		partnerId: 2,
+		partner: partners[1],
+		academicYearId: 1,
+		academicYear: academicYears[0],
+		semesterId: 2,
+		semester: semesters[1],
+		reportUrl: '/reports/internship-report-2.pdf',
+		grade: 8.5,
+	},
+	{
+		id: 3,
+		studentId: 20210003,
+		student: students[2],
+		partnerId: 3,
+		partner: partners[2],
+		academicYearId: 1,
+		academicYear: academicYears[0],
+		semesterId: 1,
+		semester: semesters[0],
+		reportUrl: '/reports/internship-report-3.pdf',
+		grade: 9.0,
+	},
+]
+
+export function findInternshipById(id: string | number) {
+	const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+	return internshipsData.find(internship => internship.id === numericId)
 } 

@@ -1,83 +1,77 @@
-import { User } from './types'
+import { User, Role } from './types'
+
+export const roles: Role[] = [
+	{ id: 1, name: 'ADMIN' },
+	{ id: 2, name: 'LECTURER' },
+	{ id: 3, name: 'STUDENT' },
+	{ id: 4, name: 'BUSINESS_REP' },
+]
 
 export const users: User[] = [
 	{
-		id: 'USR001',
+		id: 1,
+		keycloakUserId: 'uuid-admin-01',
 		name: 'Trần Thị Admin',
 		email: 'admin@university.edu.vn',
-		avatar: '/avatars/01.png',
-		role: 'ADMIN',
-		status: 'ACTIVE',
-		department: 'Phòng Đào tạo',
-		lastLogin: '2024-10-26T10:00:00Z',
-		thesesManaged: 156,
-		internshipsSupervised: 89,
+		avatarUrl: '/avatars/01.png',
+		isActive: true,
+		createdAt: '2024-01-15T10:00:00Z',
+		updatedAt: '2024-10-26T10:00:00Z',
+		userRoles: [{ userId: 1, roleId: 1, role: roles[0] }]
 	},
 	{
-		id: 'USR002',
+		id: 2,
+		keycloakUserId: 'uuid-lecturer-01',
 		name: 'Nguyễn Văn Giảng Viên',
 		email: 'lecturer.nguyen@university.edu.vn',
-		avatar: '/avatars/02.png',
-		role: 'LECTURER',
-		status: 'ACTIVE',
-		department: 'Công nghệ thông tin',
-		lastLogin: '2024-10-26T09:30:00Z',
-		thesesManaged: 12,
-		internshipsSupervised: 5,
+		avatarUrl: '/avatars/02.png',
+		isActive: true,
+		createdAt: '2024-02-20T09:30:00Z',
+		updatedAt: '2024-10-26T09:30:00Z',
+		userRoles: [{ userId: 2, roleId: 2, role: roles[1] }]
 	},
 	{
-		id: 'USR003',
+		id: 3,
+		keycloakUserId: 'uuid-student-01',
 		name: 'Lê Thị Sinh Viên',
 		email: 'student.le@student.university.edu.vn',
-		avatar: '/avatars/03.png',
-		role: 'STUDENT',
-		status: 'ACTIVE',
-		department: 'Công nghệ thông tin',
-		studentId: '20201234',
-		lastLogin: '2024-10-25T15:20:00Z',
-		thesesManaged: 1,
-		internshipsSupervised: 1,
+		avatarUrl: '/avatars/03.png',
+		isActive: true,
+		createdAt: '2024-03-10T14:00:00Z',
+		updatedAt: '2024-10-25T15:20:00Z',
+		userRoles: [{ userId: 3, roleId: 3, role: roles[2] }]
 	},
 	{
-		id: 'USR004',
+		id: 4,
+		keycloakUserId: 'uuid-business-01',
 		name: 'Phạm Văn Doanh Nghiệp',
 		email: 'hr@fpt.com.vn',
-		avatar: '/avatars/04.png',
-		role: 'BUSINESS_REP',
-		status: 'ACTIVE',
-		department: 'Đối ngoại',
-		company: 'FPT Software',
-		lastLogin: '2024-10-24T11:00:00Z',
-		thesesManaged: 0,
-		internshipsSupervised: 15,
+		avatarUrl: '/avatars/04.png',
+		isActive: true,
+		createdAt: '2024-05-01T11:00:00Z',
+		updatedAt: '2024-10-24T11:00:00Z',
+		userRoles: [{ userId: 4, roleId: 4, role: roles[3] }]
 	},
-    {
-		id: 'USR005',
+	{
+		id: 5,
+		keycloakUserId: 'uuid-lecturer-02',
 		name: 'Hoàng Văn Giảng Viên',
 		email: 'lecturer.hoang@university.edu.vn',
-		avatar: '/avatars/05.png',
-		role: 'LECTURER',
-		status: 'INACTIVE',
-		department: 'Kinh tế',
-		lastLogin: '2024-08-15T11:00:00Z',
-		thesesManaged: 8,
-		internshipsSupervised: 3,
+		avatarUrl: '/avatars/05.png',
+		isActive: false,
+		createdAt: '2024-02-21T11:00:00Z',
+		updatedAt: '2024-08-15T11:00:00Z',
+		userRoles: [{ userId: 5, roleId: 2, role: roles[1] }]
 	},
-    {
-		id: 'USR006',
+	{
+		id: 6,
+		keycloakUserId: 'uuid-student-02',
 		name: 'Đặng Thị Sinh Viên',
 		email: 'student.dang@student.university.edu.vn',
-		avatar: '/avatars/06.png',
-		role: 'STUDENT',
-		status: 'PENDING',
-		department: 'Quản trị Kinh doanh',
-        studentId: '20215678',
-		lastLogin: '2024-10-26T12:00:00Z',
-		thesesManaged: 0,
-		internshipsSupervised: 0,
+		avatarUrl: '/avatars/06.png',
+		isActive: true,
+		createdAt: '2024-03-12T08:00:00Z',
+		updatedAt: '2024-10-26T12:00:00Z',
+		userRoles: [{ userId: 6, roleId: 3, role: roles[2] }]
 	},
 ] 
-
-export const findUserById = (id: string) => {
-	return users.find(user => user.id === id)
-} 

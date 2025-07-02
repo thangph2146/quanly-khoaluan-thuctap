@@ -1,3 +1,6 @@
+import { AcademicYear, Semester } from '@/modules/config/types'
+import { Student } from '@/modules/users/types'
+
 export type InternshipStatus =
 	| 'APPROVED'
 	| 'IN_PROGRESS'
@@ -5,34 +8,26 @@ export type InternshipStatus =
 	| 'COMPLETED'
 	| 'CANCELLED'
 
-export interface Student {
-	id: string
-	name: string
-}
-
-export interface Company {
+// Based on Partner.cs
+export interface Partner {
+	id: number
 	name: string
 	address: string
-}
-
-export interface Supervisor {
-	name: string
+	phoneNumber: string
 	email: string
 }
 
+// Based on Internship.cs - simplified to match backend exactly
 export interface Internship {
-	id: string
-	title: string
-	student: string
-	studentId: string
-	company: string
-	position: string
-	supervisor: string
-	companySupervisor: string
-	status: InternshipStatus
-	startDate: string
-	endDate: string
-	location: string
-	salary: string
-	rating: number
+	id: number
+	studentId: number
+	student: Student
+	partnerId: number
+	partner: Partner
+	academicYearId: number
+	academicYear: AcademicYear
+	semesterId: number
+	semester: Semester
+	reportUrl?: string | null
+	grade?: number | null
 } 

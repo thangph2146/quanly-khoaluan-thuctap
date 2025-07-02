@@ -1,7 +1,7 @@
 'use client'
 
 import { notFound, useRouter } from 'next/navigation'
-import { findThesisById } from '@/modules/thesis/data'
+import { thesisData } from '@/modules/thesis/data'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,18 +13,20 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select'
 import { Save } from 'lucide-react'
+
+// Helper to format date to YYYY-MM-DD for input[type="date"]
+const formatDateForInput = (dateString: string) => {
+	const date = new Date(dateString)
+	const year = date.getFullYear()
+	const month = (date.getMonth() + 1).toString().padStart(2, '0')
+	const day = date.getDate().toString().padStart(2, '0')
+	return `${year}-${month}-${day}`
+}
 
 export default function ThesisEditPage({ params }: { params: { id: string } }) {
 	const router = useRouter()
-	const thesis = findThesisById(params.id)
+	const thesis = thesisData.find(t => t.id.toString() === params.id)
 
 	if (!thesis) {
 		notFound()
@@ -63,58 +65,30 @@ export default function ThesisEditPage({ params }: { params: { id: string } }) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div>
 								<label className="text-sm font-medium">Sinh viên</label>
-								<Input defaultValue={thesis.student} />
+								<Input
+									defaultValue={thesis.student.fullName}
+									disabled
+								/>
 							</div>
 							<div>
 								<label className="text-sm font-medium">Mã sinh viên</label>
-								<Input defaultValue={thesis.studentId} disabled />
-							</div>
-							<div>
-								<label className="text-sm font-medium">
-									Giảng viên hướng dẫn
-								</label>
-								<Input defaultValue={thesis.supervisor} />
+								<Input
+									defaultValue={thesis.student.studentCode}
+									disabled
+								/>
 							</div>
 							<div>
 								<label className="text-sm font-medium">Học kỳ</label>
-								<Input defaultValue={thesis.semester} />
-							</div>
-							<div>
-								<label className="text-sm font-medium">Ngày đăng ký</label>
-								<Input type="date" defaultValue={thesis.registrationDate} />
-							</div>
-							<div>
-								<label className="text-sm font-medium">Hạn nộp</label>
-								<Input type="date" defaultValue={thesis.deadline} />
-							</div>
-							<div>
-								<label className="text-sm font-medium">Trạng thái</label>
-								<Select defaultValue={thesis.status}>
-									<SelectTrigger>
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="IN_PROGRESS">
-											Đang thực hiện
-										</SelectItem>
-										<SelectItem value="PENDING_DEFENSE">
-											Chờ bảo vệ
-										</SelectItem>
-										<SelectItem value="COMPLETED">Hoàn thành</SelectItem>
-										<SelectItem value="OVERDUE">Quá hạn</SelectItem>
-										<SelectItem value="APPROVED">Đã duyệt</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-							<div>
-								<label className="text-sm font-medium">
-									Tiến độ (%)
-								</label>
 								<Input
-									type="number"
-									defaultValue={thesis.progress}
-									min="0"
-									max="100"
+									defaultValue={`${thesis.semester.name} - ${thesis.academicYear.name}`}
+									disabled
+								/>
+							</div>
+							<div>
+								<label className="text-sm font-medium">Ngày nộp</label>
+								<Input
+									type="date"
+									defaultValue={formatDateForInput(thesis.submissionDate)}
 								/>
 							</div>
 						</div>

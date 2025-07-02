@@ -1,36 +1,17 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { useState } from 'react'
+import { Plus, Edit, Trash2 } from 'lucide-react'
+import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-	DropdownMenuSeparator,
-	DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu'
-import {
-	Users,
-	UserPlus,
-	MoreHorizontal,
-	Edit,
-	Trash2,
-	Eye,
-	ShieldCheck,
-	UserCheck,
-	UserX,
-} from 'lucide-react'
-import { users } from '@/modules/users/data'
-import { getRoleText, getStatusVariant } from '@/modules/users/utils'
-import { User } from '@/modules/users/types'
-import { DataTable } from '@/components/common/data-table'
-import { ColumnDef } from '@tanstack/react-table'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Checkbox } from '@/components/ui/checkbox'
-import { PageHeader } from '@/components/common'
-import { useRouter } from 'next/navigation'
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from '@/components/ui/sheet'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -40,250 +21,248 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { DataTable } from '@/components/common/data-table'
+import { columns } from './columns'
+import { users, roles } from '@/modules/users/data'
+import { User, Role } from '@/modules/users/types'
 
+// Form Component
+const UserForm = ({
+	user,
+	allRoles,
+	onSave,
+	onCancel,
+}: {
+	user?: User | null
+	allRoles: Role[]
+	onSave: (data: Partial<User>, selectedRoleIds: number[]) => void
+	onCancel: () => void
+}) => {
+	const [formData, setFormData] = useState({
+		name: user?.name || '',
+		email: user?.email || '',
+		avatarUrl: user?.avatarUrl || '',
+		isActive: user?.isActive ?? true,
+	})
+	const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>(
+        user?.userRoles?.map(ur => ur.roleId) || []
+    );
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target
+		setFormData(prev => ({ ...prev, [name]: value }))
+	}
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData(prev => ({ ...prev, isActive: checked }));
+    };
+
+	const handleRoleChange = (roleId: string) => {
+        const id = parseInt(roleId, 10);
+        // For simplicity, this example only supports one role.
+        // For multi-role selection, you would manage an array of IDs.
+        setSelectedRoleIds([id]);
+    };
+    
+    const handleFormSave = () => {
+        onSave(formData, selectedRoleIds)
+    }
+
+	return (
+		<div className="space-y-4 py-4">
+			<div className="space-y-2">
+				<Label htmlFor="name">Họ và tên</Label>
+				<Input id="name" name="name" value={formData.name} onChange={handleChange} />
+			</div>
+            <div className="space-y-2">
+				<Label htmlFor="email">Email</Label>
+				<Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} />
+			</div>
+            <div className="space-y-2">
+				<Label htmlFor="avatarUrl">URL Ảnh đại diện</Label>
+				<Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleChange} />
+			</div>
+            <div className="space-y-2">
+                <Label htmlFor="role">Vai trò</Label>
+                <Select value={selectedRoleIds[0]?.toString() || ''} onValueChange={handleRoleChange}>
+                    <SelectTrigger><SelectValue placeholder="Chọn một vai trò" /></SelectTrigger>
+                    <SelectContent>
+                        {allRoles.map(role => (
+                            <SelectItem key={role.id} value={role.id.toString()}>
+                                {role.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Switch id="isActive" checked={formData.isActive} onCheckedChange={handleSwitchChange} />
+                <Label htmlFor="isActive">Kích hoạt tài khoản</Label>
+            </div>
+            <SheetFooter className="pt-4">
+				<Button variant="outline" onClick={onCancel}>Hủy</Button>
+                <Button onClick={handleFormSave}>Lưu thay đổi</Button>
+            </SheetFooter>
+		</div>
+	)
+}
+
+// Main Page Component
 export default function UsersPage() {
-	const router = useRouter()
-	const columns: ColumnDef<User>[] = [
-		{
-			id: 'select',
-			header: ({ table }) => (
-				<Checkbox
-					checked={table.getIsAllPageRowsSelected()}
-					onCheckedChange={(value: boolean | 'indeterminate') =>
-						table.toggleAllPageRowsSelected(!!value)
-					}
-					aria-label="Select all"
-				/>
-			),
-			cell: ({ row }) => (
-				<Checkbox
-					checked={row.getIsSelected()}
-					onCheckedChange={(value: boolean | 'indeterminate') =>
-						row.toggleSelected(!!value)
-					}
-					aria-label="Select row"
-				/>
-			),
-			enableSorting: false,
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'name',
-			header: 'Người dùng',
-			cell: ({ row }) => {
-				const user = row.original
-				return (
-					<div className="flex items-center gap-3">
-						<Avatar>
-							<AvatarImage src={user.avatar} alt={user.name} />
-							<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-						</Avatar>
-						<div className="grid gap-0.5">
-							<span className="font-medium">{user.name}</span>
-							<span className="text-xs text-muted-foreground">
-								{user.email}
-							</span>
-						</div>
-					</div>
-				)
-			},
-		},
-		{
-			accessorKey: 'role',
-			header: 'Vai trò',
-			cell: ({ row }) => {
-				const role = row.getValue('role') as User['role']
-				return <Badge variant="outline">{getRoleText(role)}</Badge>
-			},
-		},
-		{
-			accessorKey: 'status',
-			header: 'Trạng thái',
-			cell: ({ row }) => {
-				const status = row.getValue('status') as User['status']
-				return <Badge variant={getStatusVariant(status)}>{status}</Badge>
-			},
-		},
-		{
-			accessorKey: 'department',
-			header: 'Khoa/Phòng ban',
-		},
-		{
-			accessorKey: 'lastLogin',
-			header: 'Lần cuối truy cập',
-			cell: ({ row }) => {
-				const date = new Date(row.getValue('lastLogin'))
-				return <div>{date.toLocaleString('vi-VN')}</div>
-			},
-		},
-		{
-			id: 'actions',
-			cell: ({ row }) => {
-				const user = row.original
-				return (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" className="h-8 w-8 p-0">
-								<span className="sr-only">Open menu</span>
-								<MoreHorizontal className="h-4 w-4" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuLabel>Hành động</DropdownMenuLabel>
-							<DropdownMenuItem
-								onClick={() => router.push(`/users/${user.id}`)}
-							>
-								<Eye className="mr-2 h-4 w-4" />
-								Xem chi tiết
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => router.push(`/users/${user.id}/edit`)}
-							>
-								<Edit className="mr-2 h-4 w-4" />
-								Chỉnh sửa
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem>
-								<UserCheck className="mr-2 h-4 w-4" />
-								Kích hoạt
-							</DropdownMenuItem>
-							<DropdownMenuItem>
-								<UserX className="mr-2 h-4 w-4" />
-								Vô hiệu hóa
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<AlertDialog>
-								<AlertDialogTrigger asChild>
-									<DropdownMenuItem
-										onSelect={e => e.preventDefault()}
-										className="text-red-600"
-									>
-										<Trash2 className="mr-2 h-4 w-4" />
-										Xóa
-									</DropdownMenuItem>
-								</AlertDialogTrigger>
-								<AlertDialogContent>
-									<AlertDialogHeader>
-										<AlertDialogTitle>
-											Bạn có chắc chắn muốn xóa?
-										</AlertDialogTitle>
-										<AlertDialogDescription>
-											Hành động này không thể được hoàn tác. Dữ liệu
-											của người dùng sẽ bị xóa vĩnh viễn.
-										</AlertDialogDescription>
-									</AlertDialogHeader>
-									<AlertDialogFooter>
-										<AlertDialogCancel>Hủy</AlertDialogCancel>
-										<AlertDialogAction
-											onClick={() =>
-												console.log(`Deleting user ${user.id}`)
-											}
-										>
-											Tiếp tục
-										</AlertDialogAction>
-									</AlertDialogFooter>
-								</AlertDialogContent>
-							</AlertDialog>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				)
-			},
-		},
-	]
+	const [userData, setUserData] = useState<User[]>(users)
+	const [isSheetOpen, setSheetOpen] = useState(false)
+	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
+	const [selectedUser, setSelectedUser] = useState<User | null>(null)
+    const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
 
-	const totalUsers = users.length
-	const totalLecturers = users.filter(u => u.role === 'LECTURER').length
-	const totalStudents = users.filter(u => u.role === 'STUDENT').length
-	const totalAdmins = users.filter(u => u.role === 'ADMIN').length
+	const handleCreate = (data: Partial<User>, selectedRoleIds: number[]) => {
+		const newUser: User = {
+			id: Math.max(...userData.map(u => u.id), 0) + 1,
+            keycloakUserId: `uuid-placeholder-${Math.random()}`,
+			...data,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            userRoles: selectedRoleIds.map((roleId: number) => ({
+                userId: Math.max(...userData.map(u => u.id), 0) + 1,
+                roleId: roleId,
+                role: roles.find((r: Role) => r.id === roleId)!,
+            })),
+		} as User
+		setUserData(prev => [...prev, newUser])
+		setSheetOpen(false)
+	}
+
+	const handleUpdate = (data: Partial<User>, selectedRoleIds: number[]) => {
+		if (!selectedUser) return
+		setUserData(prev =>
+			prev.map(u => {
+                if (u.id === selectedUser.id) {
+                    const updatedUser = { ...u, ...data, updatedAt: new Date().toISOString() };
+                    updatedUser.userRoles = selectedRoleIds.map((roleId: number) => ({
+                        userId: u.id,
+                        roleId: roleId,
+                        role: roles.find((r: Role) => r.id === roleId)!,
+                        user: updatedUser
+                    }));
+                    return updatedUser;
+                }
+                return u;
+            })
+		)
+		setSheetOpen(false)
+		setSelectedUser(null)
+	}
+
+	const handleDelete = () => {
+		if (!selectedUser) return
+		setUserData(prev => prev.filter(u => u.id !== selectedUser.id))
+		setDeleteDialogOpen(false)
+		setSelectedUser(null)
+	}
+
+	const openSheet = (mode: 'create' | 'edit', user?: User) => {
+        setSheetMode(mode)
+        setSelectedUser(user || null)
+        setSheetOpen(true)
+    }
+
+	const openDeleteDialog = (user: User) => {
+		setSelectedUser(user)
+		setDeleteDialogOpen(true)
+	}
+
+	const dynamicColumns = columns.map(col => {
+		if (col.id === 'actions') {
+			return {
+				...col,
+				cell: ({ row }: { row: { original: User } }) => {
+					const user = row.original
+					return (
+						<div className="flex space-x-2">
+							<Button variant="outline" size="icon" onClick={() => openSheet('edit', user)}>
+								<Edit className="h-4 w-4" />
+							</Button>
+							<Button variant="destructive" size="icon" onClick={() => openDeleteDialog(user)}>
+								<Trash2 className="h-4 w-4" />
+							</Button>
+						</div>
+					)
+				},
+			}
+		}
+		return col
+	})
 
 	const breadcrumbs = [
 		{ label: 'Hệ thống Quản lý', href: '/dashboard' },
-		{ label: 'Quản lý Người dùng' },
+		{ label: 'Người dùng' },
 	]
 
 	return (
-		<PageHeader
-			title="Quản lý Người dùng"
-			description="Quản lý sinh viên, giảng viên và quản trị viên hệ thống"
-			breadcrumbs={breadcrumbs}
-			actions={
-				<Button>
-					<UserPlus className="mr-2 h-4 w-4" />
-					Thêm người dùng
-				</Button>
-			}
-		>
-			<div className="space-y-4">
-				{/* Summary Cards */}
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<Card>
-						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-							<CardTitle className="text-sm font-medium">Tổng số</CardTitle>
-							<Users className="h-4 w-4 text-muted-foreground" />
-						</CardHeader>
-						<CardContent>
-							<div className="text-2xl font-bold">{totalUsers}</div>
-							<p className="text-xs text-muted-foreground">
-								Người dùng trong hệ thống
-							</p>
-						</CardContent>
-					</Card>
+		<>
+			<PageHeader
+				title="Quản lý Người dùng"
+				description="Thêm, sửa, xóa và quản lý tài khoản người dùng trong hệ thống."
+				breadcrumbs={breadcrumbs}
+				actions={
+                    <Button onClick={() => openSheet('create')}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Thêm người dùng
+                    </Button>
+				}
+			>
+				<DataTable
+					columns={dynamicColumns}
+					data={userData}
+					searchableColumn="name"
+					searchPlaceholder="Tìm theo tên, email..."
+				/>
+			</PageHeader>
+            
+			{/* Create/Edit Sheet */}
+			<Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+				<SheetContent className="sm:max-w-lg">
+					<SheetHeader>
+						<SheetTitle>{sheetMode === 'create' ? 'Tạo tài khoản mới' : 'Chỉnh sửa tài khoản'}</SheetTitle>
+						<SheetDescription>
+                            {sheetMode === 'create' ? 'Điền thông tin để tạo một tài khoản mới.' : 'Cập nhật thông tin cho tài khoản đã chọn.'}
+                        </SheetDescription>
+					</SheetHeader>
+					<UserForm 
+                        user={sheetMode === 'edit' ? selectedUser : null} 
+                        allRoles={roles}
+                        onSave={sheetMode === 'create' ? handleCreate : handleUpdate} 
+                        onCancel={() => setSheetOpen(false)}
+                    />
+				</SheetContent>
+			</Sheet>
 
-					<Card>
-						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-							<CardTitle className="text-sm font-medium">
-								Giảng viên
-							</CardTitle>
-							<Users className="h-4 w-4 text-muted-foreground" />
-						</CardHeader>
-						<CardContent>
-							<div className="text-2xl font-bold">{totalLecturers}</div>
-							<p className="text-xs text-muted-foreground">
-								Tài khoản giảng viên
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-							<CardTitle className="text-sm font-medium">Sinh viên</CardTitle>
-							<Users className="h-4 w-4 text-muted-foreground" />
-						</CardHeader>
-						<CardContent>
-							<div className="text-2xl font-bold">{totalStudents}</div>
-							<p className="text-xs text-muted-foreground">
-								Tài khoản sinh viên
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-							<CardTitle className="text-sm font-medium">
-								Quản trị viên
-							</CardTitle>
-							<ShieldCheck className="h-4 w-4 text-muted-foreground" />
-						</CardHeader>
-						<CardContent>
-							<div className="text-2xl font-bold">{totalAdmins}</div>
-							<p className="text-xs text-muted-foreground">
-								Tài khoản quản trị
-							</p>
-						</CardContent>
-					</Card>
-				</div>
-
-				<Card>
-					<CardHeader>
-						<CardTitle>Danh sách người dùng</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<DataTable columns={columns} data={users} />
-					</CardContent>
-				</Card>
-			</div>
-		</PageHeader>
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Hành động này không thể được hoàn tác. Người dùng &quot;{selectedUser?.name}&quot; sẽ bị xóa vĩnh viễn.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel onClick={() => setSelectedUser(null)}>Hủy</AlertDialogCancel>
+						<AlertDialogAction onClick={handleDelete}>Xóa</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	)
 } 

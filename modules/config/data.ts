@@ -4,40 +4,67 @@ import {
 	Users,
 	BookOpen,
 	Briefcase,
-	FileText,
 	Settings,
 	BarChart,
+	Building2,
+	Library,
 } from 'lucide-react'
-import type { AppConfig } from './types'
+import type { AppConfig, User, Role, Permission, UserRole, RolePermission } from '@/modules/config/types'
+
+// Core permissions based on C# models
+const permissions: Permission[] = [
+	{ id: 1, module: 'dashboard', name: 'dashboard:view', description: 'Xem tổng quan' },
+	{ id: 2, module: 'users', name: 'users:manage', description: 'Quản lý người dùng' },
+	{ id: 3, module: 'thesis', name: 'thesis:manage', description: 'Quản lý khóa luận' },
+	{ id: 4, module: 'internship', name: 'internship:manage', description: 'Quản lý thực tập' },
+	{ id: 5, module: 'partners', name: 'partners:manage', description: 'Quản lý doanh nghiệp' },
+	{ id: 6, module: 'academic', name: 'academic:manage', description: 'Quản lý đào tạo' },
+	{ id: 7, module: 'analytics', name: 'analytics:view', description: 'Xem phân tích' },
+	{ id: 8, module: 'reports', name: 'reports:view', description: 'Xem báo cáo' },
+	{ id: 9, module: 'settings', name: 'settings:manage', description: 'Quản lý cài đặt' },
+]
+
+// Admin role with all permissions
+const adminRole: Role = {
+	id: 1,
+	name: 'ADMIN',
+	description: 'Quản trị viên hệ thống',
+}
+
+// Create role permissions for admin
+const adminRolePermissions: RolePermission[] = permissions.map(p => ({
+	roleId: adminRole.id,
+	permissionId: p.id,
+	permission: p,
+	role: adminRole,
+}))
+
+adminRole.rolePermissions = adminRolePermissions
+
+// Admin user
+const adminUser: User = {
+	id: 1,
+	keycloakUserId: 'admin-uuid-001',
+	name: 'Quản trị viên',
+	email: 'admin@university.edu.vn',
+	avatarUrl: '/avatars/admin.png',
+	isActive: true,
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+}
+
+// Create user role for admin
+const adminUserRole: UserRole = {
+	userId: adminUser.id,
+	roleId: adminRole.id,
+	user: adminUser,
+	role: adminRole,
+}
+
+adminUser.userRoles = [adminUserRole]
 
 export const appConfig: AppConfig = {
-	user: {
-		id: 'user-admin-01',
-		name: 'Admin User',
-		email: 'admin@example.com',
-		avatarUrl: '/avatars/admin.png',
-		roles: [
-			{
-				id: '1',
-				name: 'ADMIN',
-				permissions: [
-					'dashboard:view',
-					'users:manage',
-					'thesis:manage_all',
-					'thesis:register',
-					'thesis:view_own',
-					'thesis:view_all',
-					'internship:manage_all',
-					'internship:register',
-					'internship:view_own',
-					'internship:view_all',
-					'documents:manage',
-					'settings:manage',
-				],
-			},
-		],
-	},
-	teams: [],
+	user: adminUser,
 	navMain: [
 		{
 			title: 'Tổng quan',
@@ -49,13 +76,13 @@ export const appConfig: AppConfig = {
 			title: 'Phân tích',
 			url: '/dashboard/analytics',
 			icon: LineChart,
-			permission: 'dashboard:view',
+			permission: 'analytics:view',
 		},
 		{
 			title: 'Báo cáo',
 			url: '/dashboard/reports',
 			icon: BarChart,
-			permission: 'dashboard:view',
+			permission: 'reports:view',
 		},
 		{
 			title: 'Người dùng',
@@ -65,85 +92,42 @@ export const appConfig: AppConfig = {
 		},
 		{
 			title: 'Khóa luận',
-			icon: BookOpen,
-			permission: 'thesis:view_own',
 			url: '/thesis',
-			items: [
-				{
-					title: 'Đăng ký',
-					url: '/thesis/register',
-					permission: 'thesis:register',
-				},
-				{
-					title: 'Tiến độ',
-					url: '/thesis/progress',
-					permission: 'thesis:view_own',
-				},
-				{
-					title: 'Đang thực hiện',
-					url: '/thesis/active',
-					permission: 'thesis:view_all',
-				},
-				{
-					title: 'Phân công',
-					url: '/thesis/assignments',
-					permission: 'thesis:manage_all',
-				},
-				{
-					title: 'Bảo vệ',
-					url: '/thesis/defense',
-					permission: 'thesis:manage_all',
-				},
-			],
+			icon: BookOpen,
+			permission: 'thesis:manage',
 		},
 		{
 			title: 'Thực tập',
-			icon: Briefcase,
-			permission: 'internship:view_own',
 			url: '/internship',
-			items: [
-				{
-					title: 'Đăng ký',
-					url: '/internship/register',
-					permission: 'internship:register',
-				},
-				{
-					title: 'Doanh nghiệp',
-					url: '/internship/partners',
-					permission: 'internship:view_own',
-				},
-				{
-					title: 'Đang thực tập',
-					url: '/internship/active',
-					permission: 'internship:view_all',
-				},
-				{
-					title: 'Đánh giá',
-					url: '/internship/evaluation',
-					permission: 'internship:manage_all',
-				},
-				{
-					title: 'Giảng viên HD',
-					url: '/internship/supervisors',
-					permission: 'internship:manage_all',
-				},
-			],
+			icon: Briefcase,
+			permission: 'internship:manage',
 		},
 		{
-			title: 'Tài liệu',
-			url: '/documents',
-			icon: FileText,
-			permission: 'documents:manage',
+			title: 'Doanh nghiệp',
+			url: '/partners',
+			icon: Building2,
+			permission: 'partners:manage',
+		},
+		{
+			title: 'Quản lý đào tạo',
+			url: '/academic',
+			icon: Library,
+			permission: 'academic:manage',
 			items: [
 				{
-					title: 'Biểu mẫu',
-					url: '/documents/forms',
-					permission: 'documents:manage',
+					title: 'Niên khóa',
+					url: '/academic/years',
+					permission: 'academic:manage',
 				},
 				{
-					title: 'Hướng dẫn',
-					url: '/documents/guidelines',
-					permission: 'documents:manage',
+					title: 'Khoa & Chuyên ngành',
+					url: '/academic/departments',
+					permission: 'academic:manage',
+				},
+				{
+					title: 'Sinh viên',
+					url: '/academic/students',
+					permission: 'academic:manage',
 				},
 			],
 		},
@@ -154,5 +138,4 @@ export const appConfig: AppConfig = {
 			permission: 'settings:manage',
 		},
 	],
-	projects: [],
 } 

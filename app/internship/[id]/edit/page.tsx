@@ -1,7 +1,7 @@
 'use client'
 
 import { notFound, useRouter } from 'next/navigation'
-import { findInternshipById } from '@/modules/internship/data'
+import { internshipsData } from '@/modules/internship/data'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,14 +12,6 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select'
 import { Save } from 'lucide-react'
 
 export default function InternshipEditPage({
@@ -28,7 +20,7 @@ export default function InternshipEditPage({
 	params: { id: string }
 }) {
 	const router = useRouter()
-	const internship = findInternshipById(params.id)
+	const internship = internshipsData.find(i => i.id.toString() === params.id)
 
 	if (!internship) {
 		notFound()
@@ -37,7 +29,10 @@ export default function InternshipEditPage({
 	const breadcrumbs = [
 		{ label: 'Hệ thống Quản lý', href: '/dashboard' },
 		{ label: 'Quản lý Thực tập', href: '/internship' },
-		{ label: internship.title, href: `/internship/${internship.id}` },
+		{
+			label: `Thực tập của ${internship.student.fullName}`,
+			href: `/internship/${internship.id}`,
+		},
 		{ label: 'Chỉnh sửa' },
 	]
 
@@ -55,84 +50,52 @@ export default function InternshipEditPage({
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-6">
-					<div className="space-y-4">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{/* Read-only fields */}
 						<div>
-							<label className="text-sm font-medium">Tên công việc</label>
-							<Textarea
-								defaultValue={internship.title}
-								className="min-h-[100px]"
+							<label className="text-sm font-medium">Sinh viên</label>
+							<Input
+								defaultValue={internship.student.fullName}
+								disabled
 							/>
 						</div>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							<InputGroup>
-								<Label>Sinh viên</Label>
-								<Input defaultValue={internship.student} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Mã sinh viên</Label>
-								<Input defaultValue={internship.studentId} disabled />
-							</InputGroup>
-							<InputGroup>
-								<Label>Công ty</Label>
-								<Input defaultValue={internship.company} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Vị trí</Label>
-								<Input defaultValue={internship.position} />
-							</InputGroup>
-							<InputGroup>
-								<Label>GV Hướng dẫn</Label>
-								<Input defaultValue={internship.supervisor} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Người HD tại công ty</Label>
-								<Input defaultValue={internship.companySupervisor} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Địa điểm</Label>
-								<Input defaultValue={internship.location} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Ngày bắt đầu</Label>
-								<Input type="date" defaultValue={internship.startDate} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Ngày kết thúc</Label>
-								<Input type="date" defaultValue={internship.endDate} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Mức lương</Label>
-								<Input defaultValue={internship.salary} />
-							</InputGroup>
-							<InputGroup>
-								<Label>Đánh giá (0-5)</Label>
-								<Input
-									type="number"
-									defaultValue={internship.rating}
-									min="0"
-									max="5"
-									step="0.1"
-								/>
-							</InputGroup>
-							<InputGroup>
-								<Label>Trạng thái</Label>
-								<Select defaultValue={internship.status}>
-									<SelectTrigger>
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="APPROVED">Đã phê duyệt</SelectItem>
-										<SelectItem value="IN_PROGRESS">
-											Đang thực tập
-										</SelectItem>
-										<SelectItem value="PENDING_EVALUATION">
-											Chờ đánh giá
-										</SelectItem>
-										<SelectItem value="COMPLETED">Hoàn thành</SelectItem>
-										<SelectItem value="CANCELLED">Đã hủy</SelectItem>
-									</SelectContent>
-								</Select>
-							</InputGroup>
+						<div>
+							<label className="text-sm font-medium">Công ty</label>
+							<Input
+								defaultValue={internship.partner.name}
+								disabled
+							/>
+						</div>
+						<div>
+							<label className="text-sm font-medium">Học kỳ</label>
+							<Input
+								defaultValue={`${internship.semester.name} - ${internship.academicYear.name}`}
+								disabled
+							/>
+						</div>
+						<div className="h-10"></div> {/* Spacer */}
+						{/* Editable fields */}
+						<div>
+							<label className="text-sm font-medium">
+								Điểm thực tập (Thang 10)
+							</label>
+							<Input
+								type="number"
+								defaultValue={internship.grade ?? ''}
+								min="0"
+								max="10"
+								step="0.1"
+								placeholder="Chưa có điểm"
+							/>
+						</div>
+						<div>
+							<label className="text-sm font-medium">
+								Đường dẫn báo cáo
+							</label>
+							<Input
+								defaultValue={internship.reportUrl ?? ''}
+								placeholder="https://example.com/report.pdf"
+							/>
 						</div>
 					</div>
 					<div className="flex justify-end pt-4">
@@ -145,16 +108,4 @@ export default function InternshipEditPage({
 			</Card>
 		</PageHeader>
 	)
-}
-
-const InputGroup = ({
-	children,
-	className,
-}: {
-	children: React.ReactNode
-	className?: string
-}) => <div className={`space-y-2 ${className}`}>{children}</div>
-
-const Label = ({ children }: { children: React.ReactNode }) => (
-	<label className="text-sm font-medium">{children}</label>
-) 
+} 

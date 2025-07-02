@@ -1,8 +1,7 @@
 'use client'
 
 import { notFound, useRouter } from 'next/navigation'
-import { findInternshipById } from '@/modules/internship/data'
-import { getStatusBadge, renderStars } from '@/modules/internship/utils'
+import { internshipsData } from '@/modules/internship/data'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,12 +15,9 @@ import {
 	Edit,
 	User,
 	Building2,
-	Briefcase,
-	UserCheck,
 	Calendar as CalendarIcon,
-	MapPin,
-	DollarSign,
-	Star,
+	FileText,
+	GraduationCap,
 } from 'lucide-react'
 
 export default function InternshipDetailsPage({
@@ -30,7 +26,7 @@ export default function InternshipDetailsPage({
 	params: { id: string }
 }) {
 	const router = useRouter()
-	const internship = findInternshipById(params.id)
+	const internship = internshipsData.find(i => i.id.toString() === params.id)
 
 	if (!internship) {
 		notFound()
@@ -39,7 +35,7 @@ export default function InternshipDetailsPage({
 	const breadcrumbs = [
 		{ label: 'Hệ thống Quản lý', href: '/dashboard' },
 		{ label: 'Quản lý Thực tập', href: '/internship' },
-		{ label: internship.title },
+		{ label: `Chi tiết thực tập của ${internship.student.fullName}` },
 	]
 
 	return (
@@ -59,91 +55,84 @@ export default function InternshipDetailsPage({
 			<div className="space-y-6">
 				<Card>
 					<CardHeader>
-						<CardTitle>{internship.title}</CardTitle>
-						<CardDescription>
-							{getStatusBadge(internship.status)}
-						</CardDescription>
+						<CardTitle>
+							Thực tập tại {internship.partner.name}
+						</CardTitle>
+						<CardDescription>Mã số: {internship.id}</CardDescription>
 					</CardHeader>
-					<CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+					<CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
 						<div className="flex items-center">
 							<User className="w-5 h-5 mr-3 text-muted-foreground" />
 							<div>
 								<p className="text-sm text-muted-foreground">Sinh viên</p>
 								<p className="font-medium">
-									{internship.student} ({internship.studentId})
+									{internship.student.fullName} (
+									{internship.student.studentCode})
 								</p>
 							</div>
 						</div>
 						<div className="flex items-center">
 							<Building2 className="w-5 h-5 mr-3 text-muted-foreground" />
 							<div>
-								<p className="text-sm text-muted-foreground">Công ty</p>
-								<p className="font-medium">{internship.company}</p>
-							</div>
-						</div>
-						<div className="flex items-center">
-							<Briefcase className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">Vị trí</p>
-								<p className="font-medium">{internship.position}</p>
-							</div>
-						</div>
-						<div className="flex items-center">
-							<UserCheck className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
 								<p className="text-sm text-muted-foreground">
-									GV Hướng dẫn
+									Công ty/Đối tác
 								</p>
-								<p className="font-medium">{internship.supervisor}</p>
-							</div>
-						</div>
-						<div className="flex items-center">
-							<UserCheck className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">
-									Người HD tại công ty
-								</p>
-								<p className="font-medium">
-									{internship.companySupervisor}
-								</p>
-							</div>
-						</div>
-						<div className="flex items-center">
-							<MapPin className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">Địa điểm</p>
-								<p className="font-medium">{internship.location}</p>
+								<p className="font-medium">{internship.partner.name}</p>
 							</div>
 						</div>
 						<div className="flex items-center">
 							<CalendarIcon className="w-5 h-5 mr-3 text-muted-foreground" />
 							<div>
 								<p className="text-sm text-muted-foreground">
-									Thời gian thực tập
+									Năm học - Học kỳ
 								</p>
 								<p className="font-medium">
-									{internship.startDate} - {internship.endDate}
+									{internship.academicYear.name} -{' '}
+									{internship.semester.name}
 								</p>
 							</div>
 						</div>
-						<div className="flex items-center">
-							<DollarSign className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">Mức lương</p>
-								<p className="font-medium">{internship.salary}</p>
-							</div>
-						</div>
-						<div className="flex items-center">
-							<Star className="w-5 h-5 mr-3 text-muted-foreground" />
-							<div>
-								<p className="text-sm text-muted-foreground">Đánh giá</p>
-								<div className="flex items-center">
-									{renderStars(internship.rating)}
+
+						{internship.grade !== null && internship.grade !== undefined && (
+							<div className="flex items-center">
+								<GraduationCap className="w-5 h-5 mr-3 text-muted-foreground" />
+								<div>
+									<p className="text-sm text-muted-foreground">Điểm số</p>
+									<p className="font-medium">
+										{internship.grade.toFixed(1)}
+									</p>
 								</div>
 							</div>
-						</div>
+						)}
 					</CardContent>
 				</Card>
+				{internship.reportUrl && (
+					<Card>
+						<CardHeader>
+							<CardTitle>Báo cáo</CardTitle>
+							<CardDescription>
+								Báo cáo cuối kỳ của sinh viên.
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center justify-between p-2 border rounded-md">
+								<div className="flex items-center">
+									<FileText className="w-5 h-5 mr-3 text-muted-foreground" />
+									<p>Tải báo cáo của sinh viên</p>
+								</div>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() =>
+										window.open(internship.reportUrl, '_blank')
+									}
+								>
+									Tải xuống
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				)}
 			</div>
 		</PageHeader>
 	)

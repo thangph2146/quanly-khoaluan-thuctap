@@ -1,6 +1,7 @@
 export type FormCategory = 'THESIS' | 'INTERNSHIP'
 export type FormStatus = 'ACTIVE' | 'ARCHIVED' | 'DRAFT'
 export type SubmissionStatus = 'APPROVED' | 'REJECTED' | 'PENDING'
+export type FormFormat = 'PDF' | 'DOCX' | 'XLSX'
 
 export interface FormTemplate {
 	id: string
@@ -11,7 +12,7 @@ export interface FormTemplate {
 	lastUpdated: string
 	downloadCount: number
 	fileSize: string
-	format: 'PDF' | 'DOC'
+	format: FormFormat
 	status: FormStatus
 	requiredFields: string[]
 }

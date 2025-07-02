@@ -1,24 +1,34 @@
-import { User, Permission } from './types'
+import { User } from '@/modules/users/types'
 
 /**
- * Checks if a user has a specific permission.
+ * Checks if a user has a specific permission based on the permission name.
  * @param user The user object.
- * @param permission The permission to check for.
+ * @param permissionName The name of the permission to check for (e.g., "dashboard:view").
  * @returns `true` if the user has the permission, otherwise `false`.
  */
 export const hasPermission = (
 	user: User,
-	permission: Permission | undefined
+	permissionName: string | undefined
 ): boolean => {
-	if (!permission) {
+	if (!permissionName) {
 		// If the item doesn't require a permission, show it.
 		return true
 	}
 
-	if (user.roles.some((role) => role.name === 'ADMIN')) {
-		// Admins have all permissions.
+	// Check if any of the user's roles is 'ADMIN'
+	const isAdmin = user.userRoles?.some(
+		(userRole) => userRole.role?.name === 'ADMIN'
+	)
+	if (isAdmin) {
 		return true
 	}
 
-	return user.roles.some((role) => role.permissions.includes(permission))
+	// Check if any role explicitly grants the permission by name
+	return (
+		user.userRoles?.some((userRole) =>
+			userRole.role?.rolePermissions?.some(
+				(rp) => rp.permission?.name === permissionName
+			)
+		) ?? false
+	)
 } 

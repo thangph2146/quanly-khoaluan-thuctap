@@ -11,6 +11,17 @@ export const getCategoryColor = (category: FormCategory) => {
 	}
 }
 
+export const getCategoryText = (category: FormCategory) => {
+	switch (category) {
+		case 'THESIS':
+			return 'Khóa luận'
+		case 'INTERNSHIP':
+			return 'Thực tập'
+		default:
+			return 'Khác'
+	}
+}
+
 export const getStatusColor = (status: FormStatus) => {
 	switch (status) {
 		case 'ACTIVE':
@@ -21,6 +32,19 @@ export const getStatusColor = (status: FormStatus) => {
 			return 'bg-yellow-100 text-yellow-800'
 		default:
 			return 'bg-gray-100 text-gray-800'
+	}
+}
+
+export const getStatusText = (status: FormStatus) => {
+	switch (status) {
+		case 'ACTIVE':
+			return 'Đang hoạt động'
+		case 'ARCHIVED':
+			return 'Lưu trữ'
+		case 'DRAFT':
+			return 'Bản nháp'
+		default:
+			return 'Không rõ'
 	}
 }
 
