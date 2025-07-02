@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -34,8 +34,15 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { DataTable } from '@/components/common/data-table'
 import { columns } from './columns'
-import { users, roles } from '@/modules/users/data'
+import {
+	createUser,
+	deleteUser,
+	getRoles,
+	getUsers,
+	updateUser,
+} from '@/lib/api/users.api'
 import { User, Role } from '@/modules/users/types'
+import { useToast } from '@/components/ui/use-toast'
 
 // Form Component
 const UserForm = ({
@@ -46,7 +53,10 @@ const UserForm = ({
 }: {
 	user?: User | null
 	allRoles: Role[]
-	onSave: (data: Partial<User>, selectedRoleIds: number[]) => void
+	onSave: (
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userRoles' | 'roles'>,
+		selectedRoleIds: number[],
+	) => void
 	onCancel: () => void
 }) => {
 	const [formData, setFormData] = useState({
@@ -54,128 +64,201 @@ const UserForm = ({
 		email: user?.email || '',
 		avatarUrl: user?.avatarUrl || '',
 		isActive: user?.isActive ?? true,
+		keycloakUserId: user?.keycloakUserId || crypto.randomUUID(),
 	})
 	const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>(
-        user?.userRoles?.map(ur => ur.roleId) || []
-    );
+		user?.userRoles?.map(ur => ur.roleId) || [],
+	)
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target
 		setFormData(prev => ({ ...prev, [name]: value }))
 	}
 
-    const handleSwitchChange = (checked: boolean) => {
-        setFormData(prev => ({ ...prev, isActive: checked }));
-    };
+	const handleSwitchChange = (checked: boolean) => {
+		setFormData(prev => ({ ...prev, isActive: checked }))
+	}
 
 	const handleRoleChange = (roleId: string) => {
-        const id = parseInt(roleId, 10);
-        // For simplicity, this example only supports one role.
-        // For multi-role selection, you would manage an array of IDs.
-        setSelectedRoleIds([id]);
-    };
-    
-    const handleFormSave = () => {
-        onSave(formData, selectedRoleIds)
-    }
+		const id = parseInt(roleId, 10)
+		setSelectedRoleIds([id])
+	}
+
+	const handleFormSave = () => {
+		onSave(formData, selectedRoleIds)
+	}
 
 	return (
-		<div className="space-y-4 py-4">
+		<div className="space-y-4 p-4">
 			<div className="space-y-2">
 				<Label htmlFor="name">Họ và tên</Label>
-				<Input id="name" name="name" value={formData.name} onChange={handleChange} />
+				<Input
+					id="name"
+					name="name"
+					value={formData.name}
+					onChange={handleChange}
+				/>
 			</div>
-            <div className="space-y-2">
+			<div className="space-y-2">
 				<Label htmlFor="email">Email</Label>
-				<Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} />
+				<Input
+					id="email"
+					name="email"
+					type="email"
+					value={formData.email}
+					onChange={handleChange}
+				/>
 			</div>
-            <div className="space-y-2">
+			<div className="space-y-2">
 				<Label htmlFor="avatarUrl">URL Ảnh đại diện</Label>
-				<Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl} onChange={handleChange} />
+				<Input
+					id="avatarUrl"
+					name="avatarUrl"
+					value={formData.avatarUrl}
+					onChange={handleChange}
+					placeholder="https://example.com/avatar.jpg"
+				/>
 			</div>
-            <div className="space-y-2">
-                <Label htmlFor="role">Vai trò</Label>
-                <Select value={selectedRoleIds[0]?.toString() || ''} onValueChange={handleRoleChange}>
-                    <SelectTrigger><SelectValue placeholder="Chọn một vai trò" /></SelectTrigger>
-                    <SelectContent>
-                        {allRoles.map(role => (
-                            <SelectItem key={role.id} value={role.id.toString()}>
-                                {role.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Switch id="isActive" checked={formData.isActive} onCheckedChange={handleSwitchChange} />
-                <Label htmlFor="isActive">Kích hoạt tài khoản</Label>
-            </div>
-            <SheetFooter className="pt-4">
-				<Button variant="outline" onClick={onCancel}>Hủy</Button>
-                <Button onClick={handleFormSave}>Lưu thay đổi</Button>
-            </SheetFooter>
+			{/* KeycloakUserId is hidden - auto-generated */}
+			<input type="hidden" name="keycloakUserId" value={formData.keycloakUserId} />
+			<div className="space-y-2">
+				<Label htmlFor="role">Vai trò</Label>
+				<Select
+					value={selectedRoleIds[0]?.toString() || ''}
+					onValueChange={handleRoleChange}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Chọn một vai trò" />
+					</SelectTrigger>
+					<SelectContent>
+						{allRoles.map(role => (
+							<SelectItem key={role.id} value={role.id.toString()}>
+								{role.name}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
+			<div className="flex items-center space-x-2">
+				<Switch
+					id="isActive"
+					checked={formData.isActive}
+					onCheckedChange={handleSwitchChange}
+				/>
+				<Label htmlFor="isActive">Kích hoạt tài khoản</Label>
+			</div>
+			<SheetFooter className="pt-4">
+				<Button variant="outline" onClick={onCancel}>
+					Hủy
+				</Button>
+				<Button onClick={handleFormSave}>Lưu thay đổi</Button>
+			</SheetFooter>
 		</div>
 	)
 }
 
 // Main Page Component
 export default function UsersPage() {
-	const [userData, setUserData] = useState<User[]>(users)
+	const [users, setUsers] = useState<User[]>([])
+	const [roles, setRoles] = useState<Role[]>([])
+	const [isLoading, setIsLoading] = useState(true)
 	const [isSheetOpen, setSheetOpen] = useState(false)
 	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
 	const [selectedUser, setSelectedUser] = useState<User | null>(null)
-    const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
+	const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
+	const { toast } = useToast()
 
-	const handleCreate = (data: Partial<User>, selectedRoleIds: number[]) => {
-		const newUser: User = {
-			id: Math.max(...userData.map(u => u.id), 0) + 1,
-            keycloakUserId: `uuid-placeholder-${Math.random()}`,
-			...data,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            userRoles: selectedRoleIds.map((roleId: number) => ({
-                userId: Math.max(...userData.map(u => u.id), 0) + 1,
-                roleId: roleId,
-                role: roles.find((r: Role) => r.id === roleId)!,
-            })),
-		} as User
-		setUserData(prev => [...prev, newUser])
-		setSheetOpen(false)
+	const fetchUsersAndRoles = async () => {
+		try {
+			setIsLoading(true)
+			const [usersData, rolesData] = await Promise.all([getUsers(), getRoles()])
+			setUsers(usersData)
+			setRoles(Array.isArray(rolesData) ? rolesData : [])
+		} catch (error) {
+			console.error('Failed to fetch data:', error)
+			toast({
+				title: 'Lỗi',
+				description: 'Không thể tải dữ liệu người dùng và vai trò.',
+				variant: 'destructive',
+			})
+		} finally {
+			setIsLoading(false)
+		}
 	}
 
-	const handleUpdate = (data: Partial<User>, selectedRoleIds: number[]) => {
-		if (!selectedUser) return
-		setUserData(prev =>
-			prev.map(u => {
-                if (u.id === selectedUser.id) {
-                    const updatedUser = { ...u, ...data, updatedAt: new Date().toISOString() };
-                    updatedUser.userRoles = selectedRoleIds.map((roleId: number) => ({
-                        userId: u.id,
-                        roleId: roleId,
-                        role: roles.find((r: Role) => r.id === roleId)!,
-                        user: updatedUser
-                    }));
-                    return updatedUser;
-                }
-                return u;
-            })
-		)
-		setSheetOpen(false)
-		setSelectedUser(null)
+	useEffect(() => {
+		fetchUsersAndRoles()
+	}, [])
+
+	const handleCreate = async (
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roles'>,
+		selectedRoleIds: number[],
+	) => {
+		try {
+			await createUser({ ...data, roleIds: selectedRoleIds })
+			toast({
+				title: 'Thành công',
+				description: 'Người dùng đã được tạo thành công.',
+			})
+			fetchUsersAndRoles()
+			setSheetOpen(false)
+		} catch (error) {
+			console.error('Failed to create user:', error)
+			toast({
+				title: 'Lỗi',
+				description: 'Không thể tạo người dùng.',
+				variant: 'destructive',
+			})
+		}
 	}
 
-	const handleDelete = () => {
+	const handleUpdate = async (data: Partial<User>, selectedRoleIds: number[]) => {
 		if (!selectedUser) return
-		setUserData(prev => prev.filter(u => u.id !== selectedUser.id))
-		setDeleteDialogOpen(false)
-		setSelectedUser(null)
+		try {
+			await updateUser(selectedUser.id, { ...data, roleIds: selectedRoleIds })
+			toast({
+				title: 'Thành công',
+				description: 'Người dùng đã được cập nhật thành công.',
+			})
+			fetchUsersAndRoles()
+			setSheetOpen(false)
+			setSelectedUser(null)
+		} catch (error) {
+			console.error('Failed to update user:', error)
+			toast({
+				title: 'Lỗi',
+				description: 'Không thể cập nhật người dùng.',
+				variant: 'destructive',
+			})
+		}
+	}
+
+	const handleDelete = async () => {
+		if (!selectedUser) return
+		try {
+			await deleteUser(selectedUser.id)
+			toast({
+				title: 'Thành công',
+				description: 'Người dùng đã được xóa thành công.',
+			})
+			fetchUsersAndRoles()
+			setDeleteDialogOpen(false)
+			setSelectedUser(null)
+		} catch (error) {
+			console.error('Failed to delete user:', error)
+			toast({
+				title: 'Lỗi',
+				description: 'Không thể xóa người dùng.',
+				variant: 'destructive',
+			})
+		}
 	}
 
 	const openSheet = (mode: 'create' | 'edit', user?: User) => {
-        setSheetMode(mode)
-        setSelectedUser(user || null)
-        setSheetOpen(true)
-    }
+		setSheetMode(mode)
+		setSelectedUser(user || null)
+		setSheetOpen(true)
+	}
 
 	const openDeleteDialog = (user: User) => {
 		setSelectedUser(user)
@@ -190,10 +273,18 @@ export default function UsersPage() {
 					const user = row.original
 					return (
 						<div className="flex space-x-2">
-							<Button variant="outline" size="icon" onClick={() => openSheet('edit', user)}>
+							<Button
+								variant="outline"
+								size="icon"
+								onClick={() => openSheet('edit', user)}
+							>
 								<Edit className="h-4 w-4" />
 							</Button>
-							<Button variant="destructive" size="icon" onClick={() => openDeleteDialog(user)}>
+							<Button
+								variant="destructive"
+								size="icon"
+								onClick={() => openDeleteDialog(user)}
+							>
 								<Trash2 className="h-4 w-4" />
 							</Button>
 						</div>
@@ -216,49 +307,62 @@ export default function UsersPage() {
 				description="Thêm, sửa, xóa và quản lý tài khoản người dùng trong hệ thống."
 				breadcrumbs={breadcrumbs}
 				actions={
-                    <Button onClick={() => openSheet('create')}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Thêm người dùng
-                    </Button>
+					<Button onClick={() => openSheet('create')}>
+						<Plus className="h-4 w-4 mr-2" />
+						Thêm người dùng
+					</Button>
 				}
 			>
 				<DataTable
 					columns={dynamicColumns}
-					data={userData}
+					data={users}
+					isLoading={isLoading}
 					searchableColumn="name"
 					searchPlaceholder="Tìm theo tên, email..."
 				/>
 			</PageHeader>
-            
+
 			{/* Create/Edit Sheet */}
 			<Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
 				<SheetContent className="sm:max-w-lg">
 					<SheetHeader>
-						<SheetTitle>{sheetMode === 'create' ? 'Tạo tài khoản mới' : 'Chỉnh sửa tài khoản'}</SheetTitle>
+						<SheetTitle>
+							{sheetMode === 'create'
+								? 'Tạo tài khoản mới'
+								: 'Chỉnh sửa tài khoản'}
+						</SheetTitle>
 						<SheetDescription>
-                            {sheetMode === 'create' ? 'Điền thông tin để tạo một tài khoản mới.' : 'Cập nhật thông tin cho tài khoản đã chọn.'}
-                        </SheetDescription>
+							{sheetMode === 'create'
+								? 'Điền thông tin để tạo một tài khoản mới.'
+								: 'Cập nhật thông tin cho tài khoản đã chọn.'}
+						</SheetDescription>
 					</SheetHeader>
-					<UserForm 
-                        user={sheetMode === 'edit' ? selectedUser : null} 
-                        allRoles={roles}
-                        onSave={sheetMode === 'create' ? handleCreate : handleUpdate} 
-                        onCancel={() => setSheetOpen(false)}
-                    />
+					<UserForm
+						user={sheetMode === 'edit' ? selectedUser : null}
+						allRoles={Array.isArray(roles) ? roles : []}
+						onSave={sheetMode === 'create' ? handleCreate : handleUpdate}
+						onCancel={() => setSheetOpen(false)}
+					/>
 				</SheetContent>
 			</Sheet>
 
 			{/* Delete Confirmation Dialog */}
-			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+			<AlertDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setDeleteDialogOpen}
+			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Hành động này không thể được hoàn tác. Người dùng &quot;{selectedUser?.name}&quot; sẽ bị xóa vĩnh viễn.
+							Hành động này không thể được hoàn tác. Tài khoản của người dùng{' '}
+							<strong>{selectedUser?.name}</strong> sẽ bị xóa vĩnh viễn.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel onClick={() => setSelectedUser(null)}>Hủy</AlertDialogCancel>
+						<AlertDialogCancel onClick={() => setSelectedUser(null)}>
+							Hủy
+						</AlertDialogCancel>
 						<AlertDialogAction onClick={handleDelete}>Xóa</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

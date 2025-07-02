@@ -31,7 +31,7 @@ export function PageHeader({
   children,
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="w-full flex flex-col gap-4 p-4">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
         <Separator

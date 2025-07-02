@@ -41,8 +41,9 @@ export interface User {
 	email: string
 	avatarUrl?: string
 	isActive: boolean
-	createdAt: string // DateTime in C# is string in TS
-	updatedAt: string // DateTime in C# is string in TS
+	roles: Role[]
+	createdAt?: string
+	updatedAt?: string
 
 	// Navigation property from User.cs
 	userRoles?: UserRole[]

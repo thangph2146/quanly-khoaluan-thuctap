@@ -8,6 +8,7 @@ import {
 	BarChart,
 	Building2,
 	Library,
+	Shield,
 } from 'lucide-react'
 import type { AppConfig } from '@/modules/config/types'
 import type { User, Role, UserRole } from '@/modules/users/types'
@@ -17,13 +18,14 @@ import type { Permission, RolePermission } from '@/modules/auth/types'
 const permissions: Permission[] = [
 	{ id: 1, module: 'dashboard', name: 'dashboard:view', description: 'Xem tổng quan' },
 	{ id: 2, module: 'users', name: 'users:manage', description: 'Quản lý người dùng' },
-	{ id: 3, module: 'thesis', name: 'thesis:manage', description: 'Quản lý khóa luận' },
-	{ id: 4, module: 'internship', name: 'internship:manage', description: 'Quản lý thực tập' },
-	{ id: 5, module: 'partners', name: 'partners:manage', description: 'Quản lý doanh nghiệp' },
-	{ id: 6, module: 'academic', name: 'academic:manage', description: 'Quản lý đào tạo' },
-	{ id: 7, module: 'analytics', name: 'analytics:view', description: 'Xem phân tích' },
-	{ id: 8, module: 'reports', name: 'reports:view', description: 'Xem báo cáo' },
-	{ id: 9, module: 'settings', name: 'settings:manage', description: 'Quản lý cài đặt' },
+	{ id: 3, module: 'roles', name: 'roles:manage', description: 'Quản lý vai trò' },
+	{ id: 4, module: 'thesis', name: 'thesis:manage', description: 'Quản lý khóa luận' },
+	{ id: 5, module: 'internship', name: 'internship:manage', description: 'Quản lý thực tập' },
+	{ id: 6, module: 'partners', name: 'partners:manage', description: 'Quản lý doanh nghiệp' },
+	{ id: 7, module: 'academic', name: 'academic:manage', description: 'Quản lý đào tạo' },
+	{ id: 8, module: 'analytics', name: 'analytics:view', description: 'Xem phân tích' },
+	{ id: 9, module: 'reports', name: 'reports:view', description: 'Xem báo cáo' },
+	{ id: 10, module: 'settings', name: 'settings:manage', description: 'Quản lý cài đặt' },
 ]
 
 // Admin role with all permissions
@@ -53,6 +55,7 @@ const adminUser: User = {
 	isActive: true,
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
+	roles: [adminRole],
 }
 
 // Create user role for admin
@@ -91,6 +94,12 @@ export const appConfig: AppConfig = {
 			url: '/users',
 			icon: Users,
 			permission: 'users:manage',
+		},
+		{
+			title: 'Vai trò',
+			url: '/roles',
+			icon: Shield,
+			permission: 'roles:manage',
 		},
 		{
 			title: 'Khóa luận',

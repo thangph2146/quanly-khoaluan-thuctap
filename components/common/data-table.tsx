@@ -31,10 +31,12 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
+import { TableSkeleton } from './table-skeleton'
 
 export interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[]
 	data: TData[]
+	isLoading?: boolean
 	searchableColumn?: string
 	searchPlaceholder?: string
 	onRowClick?: (row: TData) => void
@@ -43,6 +45,7 @@ export interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
 	columns,
 	data,
+	isLoading,
 	searchableColumn,
 	searchPlaceholder = 'Tìm kiếm...',
 	onRowClick,
@@ -85,58 +88,62 @@ export function DataTable<TData, TValue>({
 					/>
 				</div>
 			)}
-			<div className="rounded-md border">
-				<Table>
-					<TableHeader>
-						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow key={headerGroup.id}>
-								{headerGroup.headers.map((header) => {
-									return (
-										<TableHead key={header.id}>
-											{header.isPlaceholder
-												? null
-												: flexRender(
-														header.column.columnDef.header,
-														header.getContext()
-												  )}
-										</TableHead>
-									)
-								})}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody>
-						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map((row) => (
-								<TableRow
-									key={row.id}
-									data-state={row.getIsSelected() && 'selected'}
-									onClick={() => onRowClick?.(row.original)}
-									className={onRowClick ? 'cursor-pointer' : ''}
-								>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
-											{flexRender(
-												cell.column.columnDef.cell,
-												cell.getContext()
-											)}
-										</TableCell>
-									))}
+			{isLoading ? (
+				<TableSkeleton columns={columns.length} />
+			) : (
+				<div className="rounded-md border">
+					<Table>
+						<TableHeader>
+							{table.getHeaderGroups().map(headerGroup => (
+								<TableRow key={headerGroup.id}>
+									{headerGroup.headers.map(header => {
+										return (
+											<TableHead key={header.id}>
+												{header.isPlaceholder
+													? null
+													: flexRender(
+															header.column.columnDef.header,
+															header.getContext(),
+													  )}
+											</TableHead>
+										)
+									})}
 								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="h-24 text-center"
-								>
-									Không có dữ liệu.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-			</div>
+							))}
+						</TableHeader>
+						<TableBody>
+							{table.getRowModel().rows?.length ? (
+								table.getRowModel().rows.map(row => (
+									<TableRow
+										key={row.id}
+										data-state={row.getIsSelected() && 'selected'}
+										onClick={() => onRowClick?.(row.original)}
+										className={onRowClick ? 'cursor-pointer' : ''}
+									>
+										{row.getVisibleCells().map(cell => (
+											<TableCell key={cell.id}>
+												{flexRender(
+													cell.column.columnDef.cell,
+													cell.getContext(),
+												)}
+											</TableCell>
+										))}
+									</TableRow>
+								))
+							) : (
+								<TableRow>
+									<TableCell
+										colSpan={columns.length}
+										className="h-24 text-center"
+									>
+										Không có dữ liệu.
+									</TableCell>
+								</TableRow>
+							)}
+						</TableBody>
+					</Table>
+				</div>
+			)}
 			<div className="flex items-center justify-end space-x-2 py-4">
 				<Button
 					variant="outline"
@@ -162,7 +169,7 @@ export function DataTable<TData, TValue>({
 // Helper for sortable headers
 export const renderSortableHeader = <TData, TValue>(
 	column: Column<TData, TValue>,
-	label: string
+	label: string,
 ) => {
 	return (
 		<Button
@@ -183,7 +190,7 @@ export const renderActionsCell = <TData,>(
 		icon?: React.ComponentType<{ className?: string }>
 		onClick: (row: TData) => void
 		variant?: 'default' | 'destructive'
-	}[]
+	}[],
 ) => {
 	return (
 		<DropdownMenu>
@@ -197,14 +204,12 @@ export const renderActionsCell = <TData,>(
 				{actions.map((action, index) => (
 					<DropdownMenuItem
 						key={index}
-						onClick={(e) => {
+						onClick={e => {
 							e.stopPropagation() // Prevent row click event
 							action.onClick(row.original)
 						}}
 						className={
-							action.variant === 'destructive'
-								? 'text-destructive'
-								: ''
+							action.variant === 'destructive' ? 'text-destructive' : ''
 						}
 					>
 						{action.icon && <action.icon className="mr-2 h-4 w-4" />}

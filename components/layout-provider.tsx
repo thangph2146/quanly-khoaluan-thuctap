@@ -1,32 +1,27 @@
-'use client'
+"use client";
 
-import { usePathname } from 'next/navigation'
-import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
-import { useEffect } from 'react'
-import { initToolbar } from '@stagewise/toolbar'
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Toaster } from "@/components/ui/toaster";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
-	const pathname = usePathname()
-	// Apply sidebar layout to all pages except the landing page
-	const isAppPage = pathname !== '/'
+  const isMobile = useIsMobile();
 
-	useEffect(() => {
-		if (process.env.NODE_ENV === 'development') {
-			initToolbar({
-				plugins: [],
-			})
-		}
-	}, [])
+  if (isMobile) {
+    return (
+      <>
+        <main>{children}</main>
+        <Toaster />
+      </>
+    );
+  }
 
-	if (isAppPage) {
-		return (
-			<SidebarProvider>
-				<AppSidebar />
-				<SidebarInset>{children}</SidebarInset>
-			</SidebarProvider>
-		)
-	}
-
-	return <>{children}</>
-} 
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>{children}</SidebarInset>
+      <Toaster />
+    </SidebarProvider>
+  );
+}

@@ -6,7 +6,7 @@ import axios, {
 
 // Lấy base URL từ biến môi trường, với giá trị mặc định cho môi trường dev
 const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5155/api'
+	process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5100/api'
 
 // Định nghĩa cấu hình chung cho Axios
 const axiosConfig: AxiosRequestConfig = {

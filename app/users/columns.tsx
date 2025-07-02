@@ -31,12 +31,14 @@ export const columns: ColumnDef<User>[] = [
         }
 	},
     {
-		accessorKey: 'userRoles',
-		header: ({ column }) => renderSortableHeader(column, 'Vai trò'),
-        cell: ({ row }) => {
-            const roles = row.original.userRoles?.map(ur => ur.role.name).join(', ')
-            return <Badge variant="outline">{roles || 'N/A'}</Badge>
-        }
+		id: 'roles',
+		header: 'Vai trò',
+		cell: ({ row }) => {
+			const user = row.original
+			return user.roles && user.roles.length > 0
+				? user.roles.map(r => r.name).join(', ')
+				: 'N/a'
+		}
 	},
 	{
 		accessorKey: 'isActive',
@@ -54,7 +56,7 @@ export const columns: ColumnDef<User>[] = [
 		accessorKey: 'createdAt',
 		header: ({ column }) => renderSortableHeader(column, 'Ngày tham gia'),
 		cell: ({ row }) => {
-			return new Date(row.original.createdAt).toLocaleDateString('vi-VN')
+			return new Date(row.original.createdAt || '').toLocaleDateString('vi-VN')
 		},
 	},
 	{
