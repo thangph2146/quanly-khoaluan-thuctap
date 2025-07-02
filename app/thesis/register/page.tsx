@@ -1,3 +1,4 @@
+'use client'
 import {
 	Card,
 	CardContent,
@@ -16,11 +17,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
-
 import {
 	Save,
-	X,
 	Upload,
 	Calendar,
 	User,
@@ -32,50 +30,13 @@ import {
 	BookOpen,
 } from 'lucide-react'
 import { PageHeader } from '@/components/common'
-
-// Mock data for available supervisors
-const availableSupervisors = [
-	{
-		id: "GV001",
-		name: "TS. Trần Thị D",
-		department: "Công nghệ phần mềm",
-		specialization: "Web Development, Database",
-		currentTheses: 8,
-		maxTheses: 12,
-		researchAreas: ["Web Applications", "Database Design", "Software Engineering"]
-	},
-	{
-		id: "GV002",
-		name: "PGS. Nguyễn Văn E",
-		department: "Trí tuệ nhân tạo",
-		specialization: "Machine Learning, AI",
-		currentTheses: 15,
-		maxTheses: 18,
-		researchAreas: ["Machine Learning", "Computer Vision", "Natural Language Processing"]
-	},
-	{
-		id: "GV003",
-		name: "ThS. Lê Thị F",
-		department: "Hệ thống thông tin",
-		specialization: "Mobile Development, IoT",
-		currentTheses: 5,
-		maxTheses: 10,
-		researchAreas: ["Mobile Applications", "IoT Systems", "Cloud Computing"]
-	}
-]
-
-const researchTopics = [
-	"Phát triển ứng dụng web",
-	"Machine Learning và AI",
-	"Phát triển ứng dụng di động",
-	"Blockchain và Cryptocurrency",
-	"Internet of Things (IoT)",
-	"Cybersecurity",
-	"Data Analytics",
-	"Cloud Computing",
-	"Game Development",
-	"E-commerce Systems"
-]
+import {
+	availableSupervisors,
+	researchTopics,
+} from '@/modules/thesis/data'
+import { Supervisor } from '@/modules/thesis/types'
+import { Label } from '@/components/ui/label'
+import Link from 'next/link'
 
 export default function ThesisRegisterPage() {
 	const breadcrumbs = [
@@ -163,7 +124,7 @@ export default function ThesisRegisterPage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
-						{availableSupervisors.map(supervisor => (
+						{availableSupervisors.map((supervisor: Supervisor) => (
 							<div
 								key={supervisor.id}
 								className="border rounded-lg p-4 space-y-3"
@@ -171,9 +132,11 @@ export default function ThesisRegisterPage() {
 								<div className="flex items-start justify-between">
 									<div className="space-y-2">
 										<div className="flex items-center space-x-2">
-											<h3 className="text-lg font-semibold">
-												{supervisor.name}
-											</h3>
+											<Link href={`/thesis/supervisors/${supervisor.id}`}>
+												<h3 className="text-lg font-semibold hover:underline">
+													{supervisor.name}
+												</h3>
+											</Link>
 											<Badge variant="outline">{supervisor.department}</Badge>
 											<Badge
 												variant={
@@ -238,7 +201,7 @@ export default function ThesisRegisterPage() {
 							</h3>
 							<div className="grid gap-4 md:grid-cols-2">
 								<div className="space-y-2">
-									<label className="text-sm font-medium">Mã sinh viên</label>
+									<Label>Mã sinh viên</Label>
 									<Input
 										placeholder="20210001"
 										value="20210001"
@@ -246,7 +209,7 @@ export default function ThesisRegisterPage() {
 									/>
 								</div>
 								<div className="space-y-2">
-									<label className="text-sm font-medium">Họ và tên</label>
+									<Label>Họ và tên</Label>
 									<Input
 										placeholder="Nguyễn Văn A"
 										value="Nguyễn Văn A"
@@ -254,54 +217,49 @@ export default function ThesisRegisterPage() {
 									/>
 								</div>
 								<div className="space-y-2">
-									<label className="text-sm font-medium">Lớp</label>
+									<Label>Lớp</Label>
 									<Input placeholder="CNTT-K64" value="CNTT-K64" disabled />
 								</div>
 								<div className="space-y-2">
-									<label className="text-sm font-medium">Email</label>
+									<Label>Email</Label>
 									<Input
-										placeholder="student@university.edu.vn"
-										value="nguyenvana@university.edu.vn"
+										placeholder="nguyenvana@email.com"
+										value="nguyenvana@email.com"
 										disabled
 									/>
 								</div>
 								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Số điện thoại *
-									</label>
-									<Input placeholder="0123456789" />
+									<Label>Điện thoại</Label>
+									<Input placeholder="0987654321" value="0987654321" />
 								</div>
 								<div className="space-y-2">
-									<label className="text-sm font-medium">GPA tích lũy</label>
+									<Label>GPA tích lũy</Label>
 									<Input placeholder="3.2" value="3.2" disabled />
 								</div>
 							</div>
 						</div>
 
-						<Separator />
-
 						{/* Thesis Information */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold flex items-center">
 								<BookOpen className="mr-2 h-5 w-5" />
-								Thông tin khóa luận
+								Thông tin đề tài
 							</h3>
-							<div className="grid gap-4">
+							<div className="space-y-2">
+								<Label>Tên đề tài dự kiến</Label>
+								<Textarea placeholder="Ví dụ: Xây dựng hệ thống quản lý thư viện trực tuyến sử dụng React và Node.js" />
+							</div>
+
+							<div className="grid gap-4 md:grid-cols-2">
 								<div className="space-y-2">
-									<label className="text-sm font-medium">Tên đề tài *</label>
-									<Input placeholder="Nhập tên đề tài khóa luận..." />
-								</div>
-								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Lĩnh vực nghiên cứu *
-									</label>
+									<Label>Lĩnh vực nghiên cứu</Label>
 									<Select>
 										<SelectTrigger>
 											<SelectValue placeholder="Chọn lĩnh vực nghiên cứu" />
 										</SelectTrigger>
 										<SelectContent>
-											{researchTopics.map(topic => (
-												<SelectItem key={topic} value={topic}>
+											{researchTopics.map((topic, index) => (
+												<SelectItem key={index} value={topic}>
 													{topic}
 												</SelectItem>
 											))}
@@ -309,51 +267,30 @@ export default function ThesisRegisterPage() {
 									</Select>
 								</div>
 								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Mô tả đề tài *
-									</label>
-									<Textarea
-										placeholder="Mô tả chi tiết về đề tài, mục tiêu, phạm vi nghiên cứu..."
-										className="min-h-[100px]"
-									/>
-								</div>
-								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Giảng viên hướng dẫn mong muốn *
-									</label>
+									<Label>Giảng viên hướng dẫn</Label>
 									<Select>
 										<SelectTrigger>
-											<SelectValue placeholder="Chọn giảng viên hướng dẫn" />
+											<SelectValue placeholder="Chọn giảng viên" />
 										</SelectTrigger>
 										<SelectContent>
-											{availableSupervisors
-												.filter(sup => sup.currentTheses < sup.maxTheses)
-												.map(supervisor => (
-													<SelectItem
-														key={supervisor.id}
-														value={supervisor.id}
-													>
-														{supervisor.name} - {supervisor.department} (
-														{supervisor.currentTheses}/
-														{supervisor.maxTheses})
-													</SelectItem>
-												))}
+											{availableSupervisors.map(supervisor => (
+												<SelectItem
+													key={supervisor.id}
+													value={supervisor.id}
+													disabled={
+														supervisor.currentTheses >=
+														supervisor.maxTheses
+													}
+												>
+													{supervisor.name} ({supervisor.currentTheses}/
+													{supervisor.maxTheses})
+												</SelectItem>
+											))}
 										</SelectContent>
 									</Select>
 								</div>
-								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Lý do chọn GVHD *
-									</label>
-									<Textarea
-										placeholder="Lý do bạn muốn được hướng dẫn bởi giảng viên này..."
-										className="min-h-[80px]"
-									/>
-								</div>
 							</div>
 						</div>
-
-						<Separator />
 
 						{/* Technical Information */}
 						<div className="space-y-4">
@@ -389,63 +326,28 @@ export default function ThesisRegisterPage() {
 							</div>
 						</div>
 
-						<Separator />
-
 						{/* File Upload */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold flex items-center">
 								<FileText className="mr-2 h-5 w-5" />
-								Tài liệu đính kèm
+								Đề cương và tài liệu
 							</h3>
-							<div className="grid gap-4 md:grid-cols-2">
-								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Đề cương sơ bộ (PDF)
-									</label>
-									<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-										<Upload className="mx-auto h-12 w-12 text-gray-400" />
-										<p className="mt-2 text-sm text-gray-600">
-											Kéo thả file hoặc{' '}
-											<span className="text-blue-600 cursor-pointer">
-												chọn file
-											</span>
-										</p>
-										<p className="text-xs text-gray-500">
-											PDF, tối đa 10MB
-										</p>
-									</div>
-								</div>
-								<div className="space-y-2">
-									<label className="text-sm font-medium">
-										Bảng điểm (PDF)
-									</label>
-									<div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-										<Upload className="mx-auto h-12 w-12 text-gray-400" />
-										<p className="mt-2 text-sm text-gray-600">
-											Kéo thả file hoặc{' '}
-											<span className="text-blue-600 cursor-pointer">
-												chọn file
-											</span>
-										</p>
-										<p className="text-xs text-gray-500">PDF, tối đa 5MB</p>
-									</div>
+							<div className="space-y-2">
+								<Label>Tải lên đề cương sơ bộ (PDF, DOCX)</Label>
+								<div className="flex items-center space-x-2">
+									<Input type="file" className="flex-1" />
+									<Button variant="outline">
+										<Upload className="mr-2 h-4 w-4" /> Tải lên
+									</Button>
 								</div>
 							</div>
 						</div>
 
-						{/* Action Buttons */}
-						<div className="flex justify-end space-x-4 pt-6">
-							<Button variant="outline">
-								<X className="mr-2 h-4 w-4" />
-								Hủy bỏ
-							</Button>
-							<Button variant="outline">
-								<Save className="mr-2 h-4 w-4" />
-								Lưu nháp
-							</Button>
+						<div className="flex justify-end pt-4 space-x-2">
+							<Button variant="outline">Hủy bỏ</Button>
 							<Button>
-								<BookOpen className="mr-2 h-4 w-4" />
-								Nộp đăng ký
+								<Save className="mr-2 h-4 w-4" />
+								Nộp đơn đăng ký
 							</Button>
 						</div>
 					</CardContent>

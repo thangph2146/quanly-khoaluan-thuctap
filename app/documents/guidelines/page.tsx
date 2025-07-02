@@ -19,12 +19,14 @@ import { BookOpen, Download, Search, Eye, Calendar, User, Plus } from 'lucide-re
 import { guidelines } from '@/modules/guidelines/data'
 import { getCategoryColor, getCategoryText } from '@/modules/guidelines/utils'
 import { Guideline, GuidelineCategory } from '@/modules/guidelines/types'
+import { useRouter } from 'next/navigation'
 
 export default function GuidelinesPage() {
 	const [searchTerm, setSearchTerm] = useState('')
 	const [selectedCategory, setSelectedCategory] = useState<
 		GuidelineCategory | 'ALL'
 	>('ALL')
+	const router = useRouter()
 
 	const filteredGuidelines = guidelines.filter(g => {
 		const matchesSearch =
@@ -82,7 +84,7 @@ export default function GuidelinesPage() {
 							</p>
 						</div>
 						<div className="flex space-x-2">
-							<Button>
+							<Button onClick={() => router.push('/documents/guidelines/new')}>
 								<Plus className="mr-2 h-4 w-4" />
 								Thêm tài liệu mới
 							</Button>
@@ -185,7 +187,14 @@ export default function GuidelinesPage() {
 									<Download className="h-4 w-4 mr-2" />
 									Tải về
 								</Button>
-								<Button size="sm" variant="outline" className="flex-1">
+								<Button
+									size="sm"
+									variant="outline"
+									className="flex-1"
+									onClick={() =>
+										router.push(`/documents/guidelines/${guideline.id}`)
+									}
+								>
 									<Eye className="h-4 w-4 mr-2" />
 									Xem chi tiết
 								</Button>

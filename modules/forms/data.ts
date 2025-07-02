@@ -168,4 +168,12 @@ export const submissions: Submission[] = [
 		comments:
 			'Đề tài chưa rõ ràng, cần bổ sung phương pháp nghiên cứu',
 	},
-] 
+]
+
+export function findFormTemplateById(id: string) {
+	return formTemplates.find(template => template.id === id)
+}
+
+export function findSubmissionById(id: string) {
+	return submissions.find(submission => submission.id === id)
+} 

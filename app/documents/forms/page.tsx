@@ -24,6 +24,7 @@ import {
 	Eye,
 	Calendar,
 	User,
+	MoreHorizontal,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formTemplates, submissions } from '@/modules/forms/data'
@@ -33,8 +34,16 @@ import {
 	getSubmissionStatusColor,
 } from '@/modules/forms/utils'
 import { FormTemplate } from '@/modules/forms/types'
+import { useRouter } from 'next/navigation'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function DocumentFormsPage() {
+	const router = useRouter()
 	const [searchTerm, setSearchTerm] = useState('')
 	const [selectedCategory, setSelectedCategory] = useState('ALL')
 
@@ -95,11 +104,14 @@ export default function DocumentFormsPage() {
 							</p>
 						</div>
 						<div className="flex space-x-2">
-							<Button variant="outline">
+							<Button
+								variant="outline"
+								onClick={() => router.push('/documents/forms/new')}
+							>
 								<Upload className="mr-2 h-4 w-4" />
 								Tải lên mẫu mới
 							</Button>
-							<Button>
+							<Button onClick={() => router.push('/documents/forms/new')}>
 								<Plus className="mr-2 h-4 w-4" />
 								Tạo biểu mẫu
 							</Button>
@@ -253,6 +265,31 @@ export default function DocumentFormsPage() {
 														? 'Đang sử dụng'
 														: 'Lưu trữ'}
 												</Badge>
+											</div>
+											<div className="absolute top-4 right-4">
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button variant="ghost" size="icon">
+															<MoreHorizontal className="h-4 w-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end">
+														<DropdownMenuItem
+															onClick={() =>
+																router.push(
+																	`/documents/forms/${template.id}`
+																)
+															}
+														>
+															<Eye className="mr-2 h-4 w-4" />
+															Xem chi tiết
+														</DropdownMenuItem>
+														<DropdownMenuItem>
+															<Download className="mr-2 h-4 w-4" />
+															Tải xuống
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
 											</div>
 										</div>
 									</CardHeader>
@@ -443,6 +480,31 @@ export default function DocumentFormsPage() {
 												<Badge className={getStatusColor(template.status)}>
 													Lưu trữ
 												</Badge>
+											</div>
+											<div className="absolute top-4 right-4">
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button variant="ghost" size="icon">
+															<MoreHorizontal className="h-4 w-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end">
+														<DropdownMenuItem
+															onClick={() =>
+																router.push(
+																	`/documents/forms/${template.id}`
+																)
+															}
+														>
+															<Eye className="mr-2 h-4 w-4" />
+															Xem chi tiết
+														</DropdownMenuItem>
+														<DropdownMenuItem>
+															<Download className="mr-2 h-4 w-4" />
+															Tải xuống
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
 											</div>
 										</div>
 									</CardHeader>

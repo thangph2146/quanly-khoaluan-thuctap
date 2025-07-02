@@ -10,8 +10,12 @@ export interface User {
 	status: UserStatus
 	department: string
 	studentId?: string
+	employeeId?: string
 	company?: string
 	lastLogin: string
-	thesesManaged: number
-	internshipsSupervised: number
+	thesesManaged?: number
+	internshipsSupervised?: number
+	phone?: string
+	address?: string
+	dateOfBirth?: string
 } 

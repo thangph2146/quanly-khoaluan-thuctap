@@ -66,4 +66,8 @@ export const guidelines: Guideline[] = [
 		contentUrl: '/docs/general-regulations-2024.pdf',
 		relatedDocs: [],
 	},
-] 
+]
+
+export function findGuidelineById(id: string) {
+	return guidelines.find(g => g.id === id)
+} 

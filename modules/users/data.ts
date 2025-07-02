@@ -77,3 +77,7 @@ export const users: User[] = [
 		internshipsSupervised: 0,
 	},
 ] 
+
+export const findUserById = (id: string) => {
+	return users.find(user => user.id === id)
+} 

@@ -30,8 +30,21 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { PageHeader } from '@/components/common'
+import { useRouter } from 'next/navigation'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 export default function UsersPage() {
+	const router = useRouter()
 	const columns: ColumnDef<User>[] = [
 		{
 			id: 'select',
@@ -107,7 +120,8 @@ export default function UsersPage() {
 		},
 		{
 			id: 'actions',
-			cell: () => {
+			cell: ({ row }) => {
+				const user = row.original
 				return (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
@@ -118,11 +132,15 @@ export default function UsersPage() {
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>Hành động</DropdownMenuLabel>
-							<DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => router.push(`/users/${user.id}`)}
+							>
 								<Eye className="mr-2 h-4 w-4" />
 								Xem chi tiết
 							</DropdownMenuItem>
-							<DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => router.push(`/users/${user.id}/edit`)}
+							>
 								<Edit className="mr-2 h-4 w-4" />
 								Chỉnh sửa
 							</DropdownMenuItem>
@@ -136,10 +154,38 @@ export default function UsersPage() {
 								Vô hiệu hóa
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem className="text-red-600">
-								<Trash2 className="mr-2 h-4 w-4" />
-								Xóa người dùng
-							</DropdownMenuItem>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<DropdownMenuItem
+										onSelect={e => e.preventDefault()}
+										className="text-red-600"
+									>
+										<Trash2 className="mr-2 h-4 w-4" />
+										Xóa
+									</DropdownMenuItem>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>
+											Bạn có chắc chắn muốn xóa?
+										</AlertDialogTitle>
+										<AlertDialogDescription>
+											Hành động này không thể được hoàn tác. Dữ liệu
+											của người dùng sẽ bị xóa vĩnh viễn.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Hủy</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={() =>
+												console.log(`Deleting user ${user.id}`)
+											}
+										>
+											Tiếp tục
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				)

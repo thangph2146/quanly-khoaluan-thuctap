@@ -20,180 +20,10 @@ import {
   Download,
   User,
   MapPin,
-  Star
 } from 'lucide-react'
 import { PageHeader } from '@/components/common'
-
-// Mock data for thesis defense
-const defenseSchedules = [
-  {
-    id: 'DEF001',
-    thesis: {
-      id: 'TH001',
-      title: 'Ứng dụng AI trong chẩn đoán y tế',
-      student: {
-        name: 'Nguyễn Văn An',
-        code: '20IT001',
-        email: 'an.nv@student.edu.vn'
-      },
-      supervisor: 'TS. Trần Thị Bình'
-    },
-    date: '2024-06-15',
-    time: '08:00',
-    duration: 45,
-    room: 'Phòng 301 - Tòa A',
-    status: 'SCHEDULED',
-    council: {
-      chairman: 'PGS.TS. Nguyễn Văn Chủ tịch',
-      secretary: 'TS. Lê Thị Thư ký',
-      members: [
-        'TS. Phạm Văn Thành viên 1',
-        'TS. Hoàng Thị Thành viên 2',
-        'ThS. Trần Văn Thành viên 3'
-      ]
-    },
-    documents: {
-      thesis: { submitted: true, approved: true },
-      presentation: { submitted: true, approved: false },
-      summary: { submitted: false, approved: false }
-    },
-    result: null
-  },
-  {
-    id: 'DEF002',
-    thesis: {
-      id: 'TH002',
-      title: 'Hệ thống quản lý thư viện thông minh',
-      student: {
-        name: 'Lê Thị Cẩm',
-        code: '20IT002',
-        email: 'cam.lt@student.edu.vn'
-      },
-      supervisor: 'PGS.TS. Phạm Văn Dũng'
-    },
-    date: '2024-06-20',
-    time: '09:00',
-    duration: 45,
-    room: 'Phòng 302 - Tòa A',
-    status: 'PENDING_APPROVAL',
-    council: {
-      chairman: 'PGS.TS. Nguyễn Văn Chủ tịch',
-      secretary: 'TS. Lê Thị Thư ký',
-      members: [
-        'TS. Phạm Văn Thành viên 1',
-        'TS. Hoàng Thị Thành viên 2',
-        'ThS. Trần Văn Thành viên 3'
-      ]
-    },
-    documents: {
-      thesis: { submitted: false, approved: false },
-      presentation: { submitted: false, approved: false },
-      summary: { submitted: false, approved: false }
-    },
-    result: null
-  },
-  {
-    id: 'DEF003',
-    thesis: {
-      id: 'TH003',
-      title: 'Phân tích dữ liệu lớn với Hadoop và Spark',
-      student: {
-        name: 'Hoàng Minh Đức',
-        code: '20IT003',
-        email: 'duc.hm@student.edu.vn'
-      },
-      supervisor: 'TS. Lê Văn Giang'
-    },
-    date: '2024-05-25',
-    time: '14:00',
-    duration: 45,
-    room: 'Phòng 303 - Tòa A',
-    status: 'COMPLETED',
-    council: {
-      chairman: 'PGS.TS. Nguyễn Văn Chủ tịch',
-      secretary: 'TS. Lê Thị Thư ký',
-      members: [
-        'TS. Phạm Văn Thành viên 1',
-        'TS. Hoàng Thị Thành viên 2',
-        'ThS. Trần Văn Thành viên 3'
-      ]
-    },
-    documents: {
-      thesis: { submitted: true, approved: true },
-      presentation: { submitted: true, approved: true },
-      summary: { submitted: true, approved: true }
-    },
-    result: {
-      grade: 8.5,
-      classification: 'GOOD',
-      chairman_score: 8.5,
-      secretary_score: 8.0,
-      member_scores: [8.5, 9.0, 8.0],
-      comments: 'Sinh viên thể hiện tốt kiến thức chuyên môn, trình bày rõ ràng và trả lời câu hỏi thuyết phục.',
-      recommendations: 'Tiếp tục nghiên cứu sâu hơn về tối ưu hóa hiệu suất xử lý dữ liệu lớn.'
-    }
-  }
-]
-
-const councilMembers = [
-  {
-    id: 'CM001',
-    name: 'PGS.TS. Nguyễn Văn Chủ tịch',
-    title: 'Phó Giáo sư - Tiến sĩ',
-    department: 'Khoa Công nghệ Thông tin',
-    specialization: 'Trí tuệ nhân tạo, Machine Learning',
-    role: 'CHAIRMAN',
-    experience: 15,
-    defensesCount: 45
-  },
-  {
-    id: 'CM002',
-    name: 'TS. Lê Thị Thư ký',
-    title: 'Tiến sĩ',
-    department: 'Khoa Công nghệ Thông tin',
-    specialization: 'Hệ thống thông tin, Cơ sở dữ liệu',
-    role: 'SECRETARY',
-    experience: 8,
-    defensesCount: 32
-  },
-  {
-    id: 'CM003',
-    name: 'TS. Phạm Văn Thành viên 1',
-    title: 'Tiến sĩ',
-    department: 'Khoa Công nghệ Thông tin',
-    specialization: 'Kỹ thuật phần mềm, Kiểm thử phần mềm',
-    role: 'MEMBER',
-    experience: 10,
-    defensesCount: 38
-  },
-  {
-    id: 'CM004',
-    name: 'TS. Hoàng Thị Thành viên 2',
-    title: 'Tiến sĩ',
-    department: 'Khoa Công nghệ Thông tin',
-    specialization: 'An toàn thông tin, Mật mã học',
-    role: 'MEMBER',
-    experience: 12,
-    defensesCount: 41
-  },
-  {
-    id: 'CM005',
-    name: 'ThS. Trần Văn Thành viên 3',
-    title: 'Thạc sĩ',
-    department: 'Khoa Công nghệ Thông tin',
-    specialization: 'Mạng máy tính, IoT',
-    role: 'MEMBER',
-    experience: 6,
-    defensesCount: 25
-  }
-]
-
-const rooms = [
-  { id: 'R301', name: 'Phòng 301 - Tòa A', capacity: 50, equipment: ['Projector', 'Microphone', 'Whiteboard'] },
-  { id: 'R302', name: 'Phòng 302 - Tòa A', capacity: 40, equipment: ['Projector', 'Sound System'] },
-  { id: 'R303', name: 'Phòng 303 - Tòa A', capacity: 30, equipment: ['Projector', 'Whiteboard'] },
-  { id: 'R401', name: 'Phòng 401 - Tòa B', capacity: 60, equipment: ['Projector', 'Microphone', 'Camera'] }
-]
+import { defenseSchedules, councilMembers, rooms } from '@/modules/thesis/defense/data'
+import { CouncilMember, DefenseRoom, DefenseSchedule } from '@/modules/thesis/types'
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -239,7 +69,7 @@ export default function ThesisDefensePage() {
   const [selectedStatus, setSelectedStatus] = useState('ALL')
   const [selectedDate, setSelectedDate] = useState('ALL')
 
-  const filteredDefenses = defenseSchedules.filter(defense => {
+  const filteredDefenses = defenseSchedules.filter((defense: DefenseSchedule) => {
     const matchesSearch = defense.thesis.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          defense.thesis.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          defense.thesis.student.code.toLowerCase().includes(searchTerm.toLowerCase())
@@ -247,6 +77,15 @@ export default function ThesisDefensePage() {
     const matchesDate = selectedDate === 'ALL' || defense.date.startsWith(selectedDate)
     return matchesSearch && matchesStatus && matchesDate
   })
+
+  const filteredMembers = councilMembers.filter((member: CouncilMember) =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredRooms = rooms.filter((room: DefenseRoom) =>
+    room.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const completedDefenses = defenseSchedules.filter(d => d.status === 'COMPLETED')
   const avgGrade = completedDefenses.length > 0 ? 
@@ -338,7 +177,7 @@ export default function ThesisDefensePage() {
 				<Tabs defaultValue="schedule" className="space-y-4">
 					<TabsList>
 						<TabsTrigger value="schedule">Lịch bảo vệ</TabsTrigger>
-						<TabsTrigger value="council">Hội đồng</TabsTrigger>
+						<TabsTrigger value="councils">Hội đồng</TabsTrigger>
 						<TabsTrigger value="results">Kết quả</TabsTrigger>
 						<TabsTrigger value="rooms">Phòng bảo vệ</TabsTrigger>
 					</TabsList>
@@ -382,7 +221,7 @@ export default function ThesisDefensePage() {
 
 						{/* Defense Schedule List */}
 						<div className="grid gap-4">
-							{filteredDefenses.map((defense) => (
+							{filteredDefenses.map((defense: DefenseSchedule) => (
 								<Card key={defense.id}>
 									<CardContent className="pt-6">
 										<div className="space-y-4">
@@ -504,48 +343,52 @@ export default function ThesisDefensePage() {
 					</TabsContent>
 
 					{/* Council Tab */}
-					<TabsContent value="council" className="space-y-4">
+					<TabsContent value="councils" className="space-y-4">
 						<Card>
 							<CardHeader>
-								<CardTitle>Danh sách thành viên hội đồng</CardTitle>
-								<CardDescription>Quản lý thông tin các thành viên tham gia hội đồng bảo vệ</CardDescription>
+								<CardTitle>Quản lý Hội đồng</CardTitle>
+								<CardDescription>Danh sách các thành viên hội đồng chấm khóa luận.</CardDescription>
+								<div className='flex items-center gap-4 pt-4'>
+									<Input 
+										placeholder="Tìm kiếm thành viên..." 
+										className="max-w-sm"
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+									/>
+									<Button><Plus className='w-4 h-4 mr-2' /> Thêm thành viên</Button>
+								</div>
 							</CardHeader>
 							<CardContent>
 								<Table>
 									<TableHeader>
 										<TableRow>
 											<TableHead>Họ tên</TableHead>
-											<TableHead>Học hàm/Học vị</TableHead>
-											<TableHead>Chuyên môn</TableHead>
+											<TableHead>Chuyên ngành</TableHead>
 											<TableHead>Vai trò</TableHead>
 											<TableHead>Kinh nghiệm</TableHead>
-											<TableHead>Số buổi bảo vệ</TableHead>
-											<TableHead>Thao tác</TableHead>
+											<TableHead>Số lần tham gia</TableHead>
+											<TableHead>Hành động</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{councilMembers.map((member) => (
+										{filteredMembers.map((member: CouncilMember) => (
 											<TableRow key={member.id}>
-												<TableCell className="font-medium">{member.name}</TableCell>
-												<TableCell>{member.title}</TableCell>
+												<TableCell>
+													<div className="font-medium">{member.name}</div>
+													<div className="text-sm text-muted-foreground">{member.title}</div>
+												</TableCell>
 												<TableCell>{member.specialization}</TableCell>
 												<TableCell>
-													<Badge variant={member.role === 'CHAIRMAN' ? 'default' : 
-																  member.role === 'SECRETARY' ? 'secondary' : 'outline'}>
-														{member.role === 'CHAIRMAN' ? 'Chủ tịch' :
-														 member.role === 'SECRETARY' ? 'Thư ký' : 'Thành viên'}
+													<Badge variant={member.role === 'CHAIRMAN' ? 'destructive' : member.role === 'SECRETARY' ? 'secondary' : 'default'}>
+														{member.role === 'CHAIRMAN' ? 'Chủ tịch' : member.role === 'SECRETARY' ? 'Thư ký' : 'Thành viên'}
 													</Badge>
 												</TableCell>
 												<TableCell>{member.experience} năm</TableCell>
 												<TableCell>{member.defensesCount}</TableCell>
 												<TableCell>
-													<div className="flex gap-2">
-														<Button size="sm" variant="outline">
-															<Eye className="h-4 w-4" />
-														</Button>
-														<Button size="sm" variant="outline">
-															<Edit className="h-4 w-4" />
-														</Button>
+													<div className='flex items-center gap-2'>
+														<Button variant="outline" size="sm"><Eye className="w-4 h-4" /> Chi tiết</Button>
+														<Button variant="outline" size="sm"><Edit className="w-4 h-4" /> Sửa</Button>
 													</div>
 												</TableCell>
 											</TableRow>
@@ -558,81 +401,38 @@ export default function ThesisDefensePage() {
 
 					{/* Results Tab */}
 					<TabsContent value="results" className="space-y-4">
-						<div className="grid gap-4">
-							{defenseSchedules.filter(d => d.status === 'COMPLETED').map((defense) => (
-								<Card key={defense.id}>
+						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+							{filteredDefenses
+								.filter(d => d.result)
+								.map((defense: DefenseSchedule) => (
+								<Card key={defense.id} className='flex flex-col'>
 									<CardHeader>
-										<div className="flex items-center justify-between">
-											<div>
-												<CardTitle className="text-lg">{defense.thesis.title}</CardTitle>
-												<CardDescription>
-													{defense.thesis.student.name} ({defense.thesis.student.code}) • {defense.date}
-												</CardDescription>
-											</div>
-											<div className="text-right">
-												<div className={`text-2xl font-bold ${getGradeColor(defense.result!.grade)}`}>
-													{defense.result!.grade}/10
-												</div>
-												<Badge variant="outline" className="mt-1">
-													{getClassificationText(defense.result!.classification)}
-												</Badge>
-											</div>
-										</div>
+										<CardTitle className='text-lg'>{defense.thesis.title}</CardTitle>
+										<CardDescription>{defense.thesis.student.name} - {defense.thesis.student.code}</CardDescription>
 									</CardHeader>
-									<CardContent className="space-y-4">
-										{/* Detailed Scores */}
-										<div>
-											<h4 className="font-medium mb-2">Điểm chi tiết:</h4>
-											<div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-												<div>
-													<span className="text-muted-foreground">Chủ tịch HĐ:</span>
-													<span className="ml-2 font-medium">{defense.result!.chairman_score}</span>
-												</div>
-												<div>
-													<span className="text-muted-foreground">Thư ký HĐ:</span>
-													<span className="ml-2 font-medium">{defense.result!.secretary_score}</span>
-												</div>
-												<div>
-													<span className="text-muted-foreground">Thành viên:</span>
-													<span className="ml-2 font-medium">
-														{defense.result!.member_scores.join(', ')}
-													</span>
-												</div>
+									<CardContent className='flex-grow'>
+										<div className='space-y-4'>
+											<div className='flex justify-between items-center'>
+												<span className='font-semibold text-2xl'>Điểm tổng kết:</span>
+												<span className={`text-3xl font-bold ${getGradeColor(defense.result!.grade)}`}>
+													{defense.result!.grade.toFixed(1)}
+												</span>
 											</div>
-										</div>
-
-										{/* Comments */}
-										<div>
-											<h4 className="font-medium mb-2">Nhận xét của hội đồng:</h4>
-											<p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded">
-												{defense.result!.comments}
-											</p>
-										</div>
-
-										{/* Recommendations */}
-										<div>
-											<h4 className="font-medium mb-2">Kiến nghị:</h4>
-											<p className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
-												{defense.result!.recommendations}
-											</p>
-										</div>
-
-										{/* Rating */}
-										<div className="flex items-center space-x-2">
-											<span className="text-sm font-medium">Đánh giá chung:</span>
-											<div className="flex">
-												{[1, 2, 3, 4, 5].map((star) => (
-													<Star 
-														key={star} 
-														className={`h-4 w-4 ${
-															star <= Math.round(defense.result!.grade / 2) ? 
-															'text-yellow-400 fill-current' : 'text-gray-300'
-														}`} 
-													/>
-												))}
+											<div className='text-center text-lg font-semibold'>
+												Phân loại: <span className={getGradeColor(defense.result!.grade)}>{getClassificationText(defense.result!.classification)}</span>
+											</div>
+											<div className='text-sm text-gray-600 border-t pt-4 mt-4'>
+												<p><strong>Nhận xét của hội đồng:</strong> {defense.result!.comments}</p>
+											</div>
+											<div className='text-sm text-gray-600'>
+												<p><strong>Đề xuất:</strong> {defense.result!.recommendations}</p>
 											</div>
 										</div>
 									</CardContent>
+									<div className='p-4 border-t flex justify-end gap-2'>
+										<Button variant="outline" size="sm"><Download className="w-4 h-4 mr-2" /> Tải biên bản</Button>
+										<Button size="sm"><Eye className="w-4 h-4 mr-2" /> Xem chi tiết</Button>
+									</div>
 								</Card>
 							))}
 						</div>
@@ -642,46 +442,47 @@ export default function ThesisDefensePage() {
 					<TabsContent value="rooms" className="space-y-4">
 						<Card>
 							<CardHeader>
-								<CardTitle>Phòng bảo vệ khóa luận</CardTitle>
-								<CardDescription>Quản lý thông tin các phòng dành cho bảo vệ khóa luận</CardDescription>
+								<CardTitle>Quản lý phòng bảo vệ</CardTitle>
+								<CardDescription>Danh sách và thông tin các phòng được sử dụng để bảo vệ khóa luận.</CardDescription>
+								<div className='flex items-center gap-4 pt-4'>
+									<Input 
+										placeholder="Tìm kiếm phòng..." 
+										className="max-w-sm"
+										value={searchTerm}
+										onChange={(e) => setSearchTerm(e.target.value)}
+									/>
+									<Button><Plus className='w-4 h-4 mr-2' /> Thêm phòng</Button>
+								</div>
 							</CardHeader>
 							<CardContent>
-								<div className="grid gap-4 md:grid-cols-2">
-									{rooms.map((room) => (
-										<Card key={room.id}>
-											<CardContent className="pt-6">
-												<div className="space-y-3">
-													<div className="flex items-center justify-between">
-														<h3 className="font-semibold">{room.name}</h3>
-														<Badge variant="outline">
-															{room.capacity} chỗ ngồi
-														</Badge>
+								<Table>
+									<TableHeader>
+										<TableRow>
+											<TableHead>Tên phòng</TableHead>
+											<TableHead>Sức chứa</TableHead>
+											<TableHead>Thiết bị</TableHead>
+											<TableHead>Hành động</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{filteredRooms.map((room: DefenseRoom) => (
+											<TableRow key={room.id}>
+												<TableCell className="font-medium">{room.name}</TableCell>
+												<TableCell>{room.capacity} người</TableCell>
+												<TableCell>
+													<div className='flex flex-wrap gap-2'>
+														{room.equipment.map(e => <Badge key={e} variant="secondary">{e}</Badge>)}
 													</div>
-													<div>
-														<h4 className="text-sm font-medium mb-2">Trang thiết bị:</h4>
-														<div className="flex flex-wrap gap-1">
-															{room.equipment.map((eq, index) => (
-																<Badge key={index} variant="secondary" className="text-xs">
-																	{eq}
-																</Badge>
-															))}
-														</div>
+												</TableCell>
+												<TableCell>
+													<div className='flex items-center gap-2'>
+														<Button variant="outline" size="sm"><Edit className="w-4 h-4" /> Sửa</Button>
 													</div>
-													<div className="flex gap-2">
-														<Button size="sm" variant="outline" className="flex-1">
-															<Calendar className="h-4 w-4 mr-2" />
-															Xem lịch
-														</Button>
-														<Button size="sm" variant="outline" className="flex-1">
-															<Edit className="h-4 w-4 mr-2" />
-															Chỉnh sửa
-														</Button>
-													</div>
-												</div>
-											</CardContent>
-										</Card>
-									))}
-								</div>
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
 							</CardContent>
 						</Card>
 					</TabsContent>

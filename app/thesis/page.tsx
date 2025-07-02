@@ -6,7 +6,6 @@ import { StatisticsCard } from "@/components/common/statistics-card"
 import {
 	DataTable,
 	renderSortableHeader,
-	renderActionsCell,
 } from "@/components/common/data-table"
 import { StatusBadge } from "@/components/common/status-badge"
 import { Button } from "@/components/ui/button"
@@ -20,34 +19,37 @@ import {
 	CheckCircle,
 	Clock,
 	AlertCircle,
-	XCircle
+	XCircle,
+	MoreHorizontal
 } from "lucide-react"
-import { thesesData, statusMap } from "@/modules/thesis/data"
+import { thesisData } from "@/modules/thesis/data"
 import { Thesis, ThesisStatus } from "@/modules/thesis/types"
+import { StatusType } from "@/modules/common/types"
+import { useRouter } from 'next/navigation'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function ThesisPage() {
+	const router = useRouter()
 	const breadcrumbs = [
 		{ label: "Hệ thống Quản lý", href: "/dashboard" },
 		{ label: "Quản lý Khóa luận" }
-	]
-
-	const tableActions = [
-		{
-			label: "Xem chi tiết",
-			icon: Eye,
-			onClick: (row: Thesis) => console.log('view', row.id),
-		},
-		{
-			label: "Chỉnh sửa",
-			icon: Edit,
-			onClick: (row: Thesis) => console.log('edit', row.id),
-		},
-		{
-			label: "Xóa",
-			icon: Trash2,
-			onClick: (row: Thesis) => console.log('delete', row.id),
-			variant: 'destructive' as const,
-		},
 	]
 
 	const columns: ColumnDef<Thesis>[] = [
@@ -94,7 +96,7 @@ export default function ThesisPage() {
 			header: "Trạng thái",
 			cell: ({ row }) => {
 				const status = row.getValue("status") as ThesisStatus
-				return <StatusBadge status={statusMap[status] ?? "inactive"} />
+				return <StatusBadge status={status as StatusType} />
 			},
 		},
 		{
@@ -117,8 +119,66 @@ export default function ThesisPage() {
 			header: ({ column }) => renderSortableHeader(column, "Hạn nộp"),
 		},
 		{
-			id: "actions",
-			cell: ({ row }) => renderActionsCell(row, tableActions),
+			id: 'actions',
+			cell: ({ row }) => (
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="ghost" className="h-8 w-8 p-0">
+							<span className="sr-only">Mở menu</span>
+							<MoreHorizontal className="h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end">
+						<DropdownMenuItem
+							onClick={() => router.push(`/thesis/${row.original.id}`)}
+						>
+							<Eye className="mr-2 h-4 w-4" />
+							Xem chi tiết
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onClick={() =>
+								router.push(`/thesis/${row.original.id}/edit`)
+							}
+						>
+							<Edit className="mr-2 h-4 w-4" />
+							Chỉnh sửa
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<DropdownMenuItem
+									onSelect={e => e.preventDefault()}
+									className="text-red-600"
+								>
+									<Trash2 className="mr-2 h-4 w-4" />
+									Xóa
+								</DropdownMenuItem>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>
+										Bạn có chắc chắn muốn xóa?
+									</AlertDialogTitle>
+									<AlertDialogDescription>
+										Hành động này không thể được hoàn tác. Dữ liệu khóa
+										luận sẽ bị xóa vĩnh viễn.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Hủy</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={() =>
+											console.log(`Deleting thesis ${row.original.id}`)
+										}
+									>
+										Tiếp tục
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			),
 		},
 	]
 
@@ -128,7 +188,7 @@ export default function ThesisPage() {
 			description="Quản lý toàn bộ khóa luận sinh viên trong hệ thống"
 			breadcrumbs={breadcrumbs}
 			actions={
-				<Button>
+				<Button onClick={() => router.push('/thesis/new')}>
 					<Plus className="mr-2 h-4 w-4" />
 					Thêm khóa luận mới
 				</Button>
@@ -147,7 +207,7 @@ export default function ThesisPage() {
 				{/* Data Table */}
 				<DataTable
 					columns={columns}
-					data={thesesData}
+					data={thesisData}
 					searchableColumn="title"
 					searchPlaceholder="Tìm kiếm theo tên KL, SV..."
 				/>

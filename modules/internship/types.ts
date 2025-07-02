@@ -1,6 +1,7 @@
 export type InternshipStatus =
-	| 'UPCOMING'
+	| 'APPROVED'
 	| 'IN_PROGRESS'
+	| 'PENDING_EVALUATION'
 	| 'COMPLETED'
 	| 'CANCELLED'
 
@@ -21,10 +22,17 @@ export interface Supervisor {
 
 export interface Internship {
 	id: string
-	student: Student
-	company: Company
-	supervisor: Supervisor
+	title: string
+	student: string
+	studentId: string
+	company: string
+	position: string
+	supervisor: string
+	companySupervisor: string
+	status: InternshipStatus
 	startDate: string
 	endDate: string
-	status: InternshipStatus
+	location: string
+	salary: string
+	rating: number
 } 
