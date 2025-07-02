@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,7 +32,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { DataTable } from '@/components/common/data-table'
-import { columns } from './columns'
+import { getColumns } from './columns'
 import { internshipsData, students, partners, academicYears, semesters } from '@/modules/internship/data'
 import { Internship } from '@/modules/internship/types'
 
@@ -218,6 +218,8 @@ export default function InternshipPage() {
 		} as Internship
 		setInternships(prev => [...prev, newInternship])
 		setSheetOpen(false)
+		setDeleteDialogOpen(false)
+		setSelectedInternship(null)
 	}
 
 	const handleUpdate = (data: Partial<Internship>) => {
@@ -259,29 +261,10 @@ export default function InternshipPage() {
 		setDeleteDialogOpen(true)
 	}
 
-	const dynamicColumns = columns.map(col => {
-		if (col.id === 'actions') {
-			return {
-				...col,
-				cell: ({ row }: { row: { original: Internship } }) => {
-					const internship = row.original
-					return (
-						<div className="flex space-x-2">
-                            <Button variant="outline" size="icon" onClick={() => alert('View details for ' + internship.student.fullName)}>
-								<Eye className="h-4 w-4" />
-							</Button>
-							<Button variant="outline" size="icon" onClick={() => openSheet('edit', internship)}>
-								<Edit className="h-4 w-4" />
-							</Button>
-							<Button variant="destructive" size="icon" onClick={() => openDeleteDialog(internship)}>
-								<Trash2 className="h-4 w-4" />
-							</Button>
-						</div>
-					)
-				},
-			}
-		}
-		return col
+	const columns = getColumns({
+		onEdit: (internship) => openSheet('edit', internship),
+		onDelete: openDeleteDialog,
+		onView: (internship) => console.log('View', internship), // Placeholder for now
 	})
 
 	const breadcrumbs = [
@@ -303,10 +286,10 @@ export default function InternshipPage() {
 				}
 			>
 				<DataTable
-					columns={dynamicColumns}
+					columns={columns}
 					data={internships}
-					searchableColumn="student.fullName"
-					searchPlaceholder="Tìm theo sinh viên, doanh nghiệp..."
+					searchableColumn="studentFullName"
+					searchPlaceholder="Tìm kiếm theo tên sinh viên..."
 				/>
 			</PageHeader>
             

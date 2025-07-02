@@ -9,25 +9,36 @@ import { Internship } from '@/modules/internship/types'
 import { Badge } from '@/components/ui/badge'
 import { Edit, Trash2, Eye } from 'lucide-react'
 
-export const columns: ColumnDef<Internship>[] = [
+type GetColumnsOptions = {
+	onEdit: (internship: Internship) => void
+	onDelete: (internship: Internship) => void
+	onView: (internship: Internship) => void
+}
+
+export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): ColumnDef<Internship>[] => [
     {
-		accessorKey: 'student.fullName',
+		accessorFn: row => row.student.fullName,
+		id: 'studentFullName',
 		header: ({ column }) => renderSortableHeader(column, 'Sinh viên'),
 	},
 	{
-		accessorKey: 'student.studentCode',
+		accessorFn: row => row.student.studentCode,
+		id: 'studentStudentCode',
 		header: ({ column }) => renderSortableHeader(column, 'Mã SV'),
 	},
     {
-		accessorKey: 'partner.name',
+		accessorFn: row => row.partner.name,
+		id: 'partnerName',
 		header: ({ column }) => renderSortableHeader(column, 'Doanh nghiệp'),
 	},
 	{
-		accessorKey: 'academicYear.name',
+		accessorFn: row => row.academicYear.name,
+		id: 'academicYearName',
 		header: ({ column }) => renderSortableHeader(column, 'Niên khóa'),
 	},
 	{
-		accessorKey: 'semester.name',
+		accessorFn: row => row.semester.name,
+		id: 'semesterName',
 		header: ({ column }) => renderSortableHeader(column, 'Học kỳ'),
 	},
 	{
@@ -67,17 +78,17 @@ export const columns: ColumnDef<Internship>[] = [
                 {
 					label: 'Xem chi tiết',
 					icon: Eye,
-					onClick: (rowData) => console.log('View:', rowData),
+					onClick: onView,
 				},
 				{
 					label: 'Chỉnh sửa',
 					icon: Edit,
-					onClick: (rowData) => console.log('Edit:', rowData),
+					onClick: onEdit,
 				},
 				{
 					label: 'Xóa',
 					icon: Trash2,
-					onClick: (rowData) => console.log('Delete:', rowData),
+					onClick: onDelete,
 					variant: 'destructive',
 				},
 			]),

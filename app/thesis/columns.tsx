@@ -17,19 +17,23 @@ export const columns: ColumnDef<Thesis>[] = [
         }
 	},
     {
-		accessorKey: 'student.fullName',
+		accessorFn: row => row.student.fullName,
+		id: 'studentFullName',
 		header: ({ column }) => renderSortableHeader(column, 'Sinh viên'),
 	},
 	{
-		accessorKey: 'student.studentCode',
+		accessorFn: row => row.student.studentCode,
+		id: 'studentStudentCode',
 		header: ({ column }) => renderSortableHeader(column, 'Mã SV'),
 	},
 	{
-		accessorKey: 'academicYear.name',
+		accessorFn: row => row.academicYear.name,
+		id: 'academicYearName',
 		header: ({ column }) => renderSortableHeader(column, 'Niên khóa'),
 	},
 	{
-		accessorKey: 'semester.name',
+		accessorFn: row => row.semester.name,
+		id: 'semesterName',
 		header: ({ column }) => renderSortableHeader(column, 'Học kỳ'),
 	},
 	{
