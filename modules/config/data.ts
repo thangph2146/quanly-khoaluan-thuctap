@@ -55,18 +55,9 @@ const adminUser: User = {
 	isActive: true,
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
-	roles: [adminRole],
+	userRoles: ['ADMIN'], // Changed to string array
+	roles: [adminRole], // Keep for backward compatibility if needed
 }
-
-// Create user role for admin
-const adminUserRole: UserRole = {
-	userId: adminUser.id,
-	roleId: adminRole.id,
-	user: adminUser,
-	role: adminRole,
-}
-
-adminUser.userRoles = [adminUserRole]
 
 export const appConfig: AppConfig = {
 	user: adminUser,

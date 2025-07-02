@@ -9,7 +9,7 @@ import {
   Sparkles,
 } from "lucide-react"
 
-import { User } from "@/modules/auth/types"
+import { User } from "@/modules/users/types"
 import {
   Avatar,
   AvatarFallback,

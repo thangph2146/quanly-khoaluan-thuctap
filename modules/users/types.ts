@@ -41,10 +41,10 @@ export interface User {
 	email: string
 	avatarUrl?: string
 	isActive: boolean
-	roles: Role[]
-	createdAt?: string
-	updatedAt?: string
+	createdAt: string
+	updatedAt: string
+	userRoles: string[] // Changed from UserRole[] to string[]
 
-	// Navigation property from User.cs
-	userRoles?: UserRole[]
+	// Keep for backward compatibility if needed
+	roles?: Role[]
 } 

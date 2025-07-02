@@ -54,7 +54,7 @@ const UserForm = ({
 	user?: User | null
 	allRoles: Role[]
 	onSave: (
-		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userRoles' | 'roles'>,
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userRoles'>,
 		selectedRoleIds: number[],
 	) => void
 	onCancel: () => void
@@ -67,7 +67,10 @@ const UserForm = ({
 		keycloakUserId: user?.keycloakUserId || crypto.randomUUID(),
 	})
 	const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>(
-		user?.userRoles?.map(ur => ur.roleId) || [],
+		user?.userRoles ? 
+			// Convert role names back to IDs if editing existing user
+			allRoles.filter(role => user.userRoles?.includes(role.name)).map(role => role.id) : 
+			[]
 	)
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,7 +194,7 @@ export default function UsersPage() {
 	}, [])
 
 	const handleCreate = async (
-		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roles'>,
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userRoles'>,
 		selectedRoleIds: number[],
 	) => {
 		try {
@@ -212,7 +215,10 @@ export default function UsersPage() {
 		}
 	}
 
-	const handleUpdate = async (data: Partial<User>, selectedRoleIds: number[]) => {
+	const handleUpdate = async (
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userRoles'>, 
+		selectedRoleIds: number[]
+	) => {
 		if (!selectedUser) return
 		try {
 			await updateUser(selectedUser.id, { ...data, roleIds: selectedRoleIds })

@@ -13,8 +13,9 @@ export {
 // Table Components
 export { 
   DataTable, 
-  type DataTableColumn, 
-  type DataTableAction 
+  type DataTableProps,
+  renderSortableHeader,
+  renderActionsCell
 } from './data-table'
 
 // Form Components

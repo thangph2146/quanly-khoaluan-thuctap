@@ -31,7 +31,7 @@ export const formTemplates: FormTemplate[] = [
 		lastUpdated: '2024-11-15',
 		downloadCount: 89,
 		fileSize: '180 KB',
-		format: 'DOC',
+		format: 'DOCX',
 		status: 'ACTIVE',
 		requiredFields: [
 			'Thời gian họp',
@@ -70,7 +70,7 @@ export const formTemplates: FormTemplate[] = [
 		lastUpdated: '2024-10-20',
 		downloadCount: 167,
 		fileSize: '156 KB',
-		format: 'DOC',
+		format: 'DOCX',
 		status: 'ACTIVE',
 		requiredFields: [
 			'Tuần thực tập',
@@ -109,7 +109,7 @@ export const formTemplates: FormTemplate[] = [
 		lastUpdated: '2024-09-15',
 		downloadCount: 203,
 		fileSize: '312 KB',
-		format: 'DOC',
+		format: 'DOCX',
 		status: 'ARCHIVED',
 		requiredFields: [
 			'Tên đề tài',

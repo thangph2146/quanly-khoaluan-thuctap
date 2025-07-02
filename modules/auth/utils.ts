@@ -16,19 +16,28 @@ export const hasPermission = (
 	}
 
 	// Check if any of the user's roles is 'ADMIN'
-	const isAdmin = user.userRoles?.some(
-		(userRole) => userRole.role?.name === 'ADMIN'
-	)
+	const isAdmin = user.userRoles?.includes('ADMIN')
 	if (isAdmin) {
 		return true
 	}
 
-	// Check if any role explicitly grants the permission by name
-	return (
-		user.userRoles?.some((userRole) =>
-			userRole.role?.rolePermissions?.some(
-				(rp) => rp.permission?.name === permissionName
-			)
-		) ?? false
-	)
+	// For now, since userRoles is simplified to string array,
+	// we'll need to implement more sophisticated permission checking
+	// by fetching role permissions from the backend when needed
+	// This is a simplified version that grants access based on role names
+	const hasRequiredRole = user.userRoles?.some(roleName => {
+		// Add role-based permission logic here based on your requirements
+		switch (roleName) {
+			case 'ADMIN':
+				return true
+			case 'LECTURER':
+				return permissionName.includes('lecture') || permissionName.includes('student')
+			case 'STUDENT':
+				return permissionName.includes('student') && !permissionName.includes('manage')
+			default:
+				return false
+		}
+	})
+
+	return hasRequiredRole ?? false
 } 

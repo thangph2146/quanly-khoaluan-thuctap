@@ -35,8 +35,8 @@ export const columns: ColumnDef<User>[] = [
 		header: 'Vai trò',
 		cell: ({ row }) => {
 			const user = row.original
-			return user.roles && user.roles.length > 0
-				? user.roles.map(r => r.name).join(', ')
+			return user.userRoles && user.userRoles.length > 0
+				? user.userRoles.join(', ')
 				: 'N/a'
 		}
 	},
@@ -56,7 +56,7 @@ export const columns: ColumnDef<User>[] = [
 		accessorKey: 'createdAt',
 		header: ({ column }) => renderSortableHeader(column, 'Ngày tham gia'),
 		cell: ({ row }) => {
-			return new Date(row.original.createdAt || '').toLocaleDateString('vi-VN')
+			return new Date(row.original.createdAt).toLocaleDateString('vi-VN')
 		},
 	},
 	{
