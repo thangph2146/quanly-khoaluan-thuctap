@@ -45,8 +45,14 @@ export const getUserById = async (id: number): Promise<User> => {
  * @returns A promise that resolves to the newly created user object.
  */
 export const createUser = async (data: CreateUserData): Promise<User> => {
-	const response = (await httpsAPI.post('/Users', data)) as User
-	return response
+	try {
+		const response = (await httpsAPI.post('/Users', data)) as User
+		return response
+	} catch (error: any) {
+		// Extract the error message from the API response
+		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+		throw new Error(message)
+	}
 }
 
 /**
@@ -59,8 +65,14 @@ export const updateUser = async (
 	id: number,
 	data: UpdateUserData,
 ): Promise<User> => {
-	const response = (await httpsAPI.put(`/Users/${id}`, data)) as User
-	return response
+	try {
+		const response = (await httpsAPI.put(`/Users/${id}`, data)) as User
+		return response
+	} catch (error: any) {
+		// Extract the error message from the API response
+		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+		throw new Error(message)
+	}
 }
 
 /**
@@ -69,7 +81,13 @@ export const updateUser = async (
  * @returns A promise that resolves when the user is deleted.
  */
 export const deleteUser = async (id: number): Promise<void> => {
-	await httpsAPI.delete(`/Users/${id}`)
+	try {
+		await httpsAPI.delete(`/Users/${id}`)
+	} catch (error: any) {
+		// Extract the error message from the API response
+		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+		throw new Error(message)
+	}
 }
 
 /**

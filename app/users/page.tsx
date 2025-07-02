@@ -205,11 +205,11 @@ export default function UsersPage() {
 			})
 			fetchUsersAndRoles()
 			setSheetOpen(false)
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Failed to create user:', error)
 			toast({
 				title: 'Lỗi',
-				description: 'Không thể tạo người dùng.',
+				description: error.message || 'Không thể tạo người dùng.',
 				variant: 'destructive',
 			})
 		}
@@ -229,11 +229,11 @@ export default function UsersPage() {
 			fetchUsersAndRoles()
 			setSheetOpen(false)
 			setSelectedUser(null)
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Failed to update user:', error)
 			toast({
 				title: 'Lỗi',
-				description: 'Không thể cập nhật người dùng.',
+				description: error.message || 'Không thể cập nhật người dùng.',
 				variant: 'destructive',
 			})
 		}
@@ -250,11 +250,11 @@ export default function UsersPage() {
 			fetchUsersAndRoles()
 			setDeleteDialogOpen(false)
 			setSelectedUser(null)
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Failed to delete user:', error)
 			toast({
 				title: 'Lỗi',
-				description: 'Không thể xóa người dùng.',
+				description: error.message || 'Không thể xóa người dùng.',
 				variant: 'destructive',
 			})
 		}
@@ -324,7 +324,7 @@ export default function UsersPage() {
 					data={users}
 					isLoading={isLoading}
 					searchableColumn="name"
-					searchPlaceholder="Tìm theo tên, email..."
+					searchPlaceholder="Tìm theo tên..."
 				/>
 			</PageHeader>
 
