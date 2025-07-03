@@ -6,7 +6,7 @@ import {
 	renderActionsCell,
 } from '@/components/common/data-table'
 import { AcademicYear } from '@/modules/academic/types'
-import { Edit, Trash2 } from 'lucide-react'
+import { Eye, Edit, Trash2 } from 'lucide-react'
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -35,20 +35,19 @@ export const columns: ColumnDef<AcademicYear>[] = [
 		cell: ({ row }) =>
 			renderActionsCell(row, [
 				{
+					label: 'Xem chi tiết',
+					icon: Eye,
+					onClick: () => {}, // Will be handled by parent component
+				},
+				{
 					label: 'Chỉnh sửa',
 					icon: Edit,
-					onClick: (rowData) => {
-						// Handle edit logic here
-						alert(`Chỉnh sửa: ${rowData.name}`)
-					},
+					onClick: () => {}, // Will be handled by parent component
 				},
 				{
 					label: 'Xóa',
 					icon: Trash2,
-					onClick: (rowData) => {
-						// Handle delete logic here
-						alert(`Xóa: ${rowData.name}`)
-					},
+					onClick: () => {}, // Will be handled by parent component
 					variant: 'destructive',
 				},
 			]),

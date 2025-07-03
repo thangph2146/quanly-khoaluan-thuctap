@@ -122,6 +122,11 @@ export const appConfig: AppConfig = {
 					permission: 'academic:manage',
 				},
 				{
+					title: 'Học kỳ',
+					url: '/academic/semesters',
+					permission: 'academic:manage',
+				},
+				{
 					title: 'Khoa & Chuyên ngành',
 					url: '/academic/departments',
 					permission: 'academic:manage',
@@ -140,4 +145,4 @@ export const appConfig: AppConfig = {
 			permission: 'settings:manage',
 		},
 	],
-} 
+}

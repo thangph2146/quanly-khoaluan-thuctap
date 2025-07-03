@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,14 +22,28 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/components/ui/use-toast'
 
 import { DataTable } from '@/components/common/data-table'
 import { columns } from './columns'
-import { partnersData } from '@/modules/partners/data'
 import { Partner } from '@/modules/partners/types'
+import {
+	createPartner,
+	deletePartner,
+	getPartners,
+	updatePartner,
+	type CreatePartnerData,
+} from '@/lib/api/partners.api'
 
 // Form Component
 const PartnerForm = ({
@@ -38,10 +52,10 @@ const PartnerForm = ({
 	onCancel,
 }: {
 	partner?: Partner | null
-	onSave: (data: Partial<Partner>) => void
+	onSave: (data: CreatePartnerData) => void
 	onCancel: () => void
 }) => {
-	const [formData, setFormData] = useState({
+	const [formData, setFormData] = useState<CreatePartnerData>({
 		name: partner?.name || '',
 		email: partner?.email || '',
 		phoneNumber: partner?.phoneNumber || '',
@@ -58,7 +72,7 @@ const PartnerForm = ({
     }
 
 	return (
-		<div className="space-y-4 py-4">
+		<div className="space-y-4 p-4">
 			<div className="space-y-2">
 				<Label htmlFor="name">Tên doanh nghiệp</Label>
 				<Input id="name" name="name" value={formData.name} onChange={handleChange} />
@@ -83,37 +97,145 @@ const PartnerForm = ({
 	)
 }
 
+// Partner Details Component
+const PartnerDetails = ({
+	partner,
+	isOpen,
+	onClose,
+}: {
+	partner: Partner | null
+	isOpen: boolean
+	onClose: () => void
+}) => {
+	if (!partner) return null
+
+	return (
+		<Dialog open={isOpen} onOpenChange={onClose}>
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>Chi tiết doanh nghiệp</DialogTitle>
+					<DialogDescription>
+						Thông tin chi tiết về doanh nghiệp đối tác
+					</DialogDescription>
+				</DialogHeader>
+				<div className="space-y-4 py-4">
+					<div className="space-y-2">
+						<Label className="text-sm font-medium text-gray-500">ID</Label>
+						<div className="text-sm">{partner.id}</div>
+					</div>
+					<div className="space-y-2">
+						<Label className="text-sm font-medium text-gray-500">Tên doanh nghiệp</Label>
+						<div className="text-sm font-medium">{partner.name}</div>
+					</div>
+					<div className="space-y-2">
+						<Label className="text-sm font-medium text-gray-500">Email</Label>
+						<div className="text-sm">{partner.email}</div>
+					</div>
+					<div className="space-y-2">
+						<Label className="text-sm font-medium text-gray-500">Số điện thoại</Label>
+						<div className="text-sm font-mono">{partner.phoneNumber}</div>
+					</div>
+					<div className="space-y-2">
+						<Label className="text-sm font-medium text-gray-500">Địa chỉ</Label>
+						<div className="text-sm">{partner.address}</div>
+					</div>
+				</div>
+			</DialogContent>
+		</Dialog>
+	)
+}
+
 // Main Page Component
 export default function PartnersPage() {
-	const [partnerData, setPartnerData] = useState<Partner[]>(partnersData)
+	const [partners, setPartners] = useState<Partner[]>([])
+	const [isLoading, setIsLoading] = useState(true)
 	const [isSheetOpen, setSheetOpen] = useState(false)
 	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
+	const [isDetailsDialogOpen, setDetailsDialogOpen] = useState(false)
 	const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
     const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
+	const { toast } = useToast()
 
-	const handleCreate = (data: Partial<Partner>) => {
-		const newPartner: Partner = {
-			id: Math.max(...partnerData.map(p => p.id), 0) + 1,
-			...data,
-		} as Partner
-		setPartnerData(prev => [...prev, newPartner])
-		setSheetOpen(false)
+	const fetchPartners = async () => {
+		try {
+			setIsLoading(true)
+			const partnersData = await getPartners()
+			setPartners(partnersData)
+		} catch (error: any) {
+			console.error('Failed to fetch partners:', error)
+			toast({
+				title: 'Lỗi',
+				description: error.message || 'Không thể tải dữ liệu đối tác.',
+				variant: 'destructive',
+			})
+		} finally {
+			setIsLoading(false)
+		}
 	}
 
-	const handleUpdate = (data: Partial<Partner>) => {
-		if (!selectedPartner) return
-		setPartnerData(prev =>
-			prev.map(p => (p.id === selectedPartner.id ? { ...p, ...data } : p))
-		)
-		setSheetOpen(false)
-		setSelectedPartner(null)
+	useEffect(() => {
+		fetchPartners()
+	}, [])
+
+	const handleCreate = async (data: CreatePartnerData) => {
+		try {
+			await createPartner(data)
+			toast({
+				title: 'Thành công',
+				description: 'Đối tác đã được tạo thành công.',
+			})
+			fetchPartners()
+			setSheetOpen(false)
+		} catch (error: any) {
+			console.error('Failed to create partner:', error)
+			toast({
+				title: 'Lỗi',
+				description: error.message || 'Không thể tạo đối tác.',
+				variant: 'destructive',
+			})
+		}
 	}
 
-	const handleDelete = () => {
+	const handleUpdate = async (data: CreatePartnerData) => {
 		if (!selectedPartner) return
-		setPartnerData(prev => prev.filter(p => p.id !== selectedPartner.id))
-		setDeleteDialogOpen(false)
-		setSelectedPartner(null)
+		try {
+			await updatePartner(selectedPartner.id, data)
+			toast({
+				title: 'Thành công',
+				description: 'Đối tác đã được cập nhật thành công.',
+			})
+			fetchPartners()
+			setSheetOpen(false)
+			setSelectedPartner(null)
+		} catch (error: any) {
+			console.error('Failed to update partner:', error)
+			toast({
+				title: 'Lỗi',
+				description: error.message || 'Không thể cập nhật đối tác.',
+				variant: 'destructive',
+			})
+		}
+	}
+
+	const handleDelete = async () => {
+		if (!selectedPartner) return
+		try {
+			await deletePartner(selectedPartner.id)
+			toast({
+				title: 'Thành công',
+				description: 'Đối tác đã được xóa thành công.',
+			})
+			fetchPartners()
+			setDeleteDialogOpen(false)
+			setSelectedPartner(null)
+		} catch (error: any) {
+			console.error('Failed to delete partner:', error)
+			toast({
+				title: 'Lỗi',
+				description: error.message || 'Không thể xóa đối tác.',
+				variant: 'destructive',
+			})
+		}
 	}
 
 	const openSheet = (mode: 'create' | 'edit', partner?: Partner) => {
@@ -127,6 +249,11 @@ export default function PartnersPage() {
 		setDeleteDialogOpen(true)
 	}
 
+	const openDetailsDialog = (partner: Partner) => {
+		setSelectedPartner(partner)
+		setDetailsDialogOpen(true)
+	}
+
 	const dynamicColumns = columns.map(col => {
 		if (col.id === 'actions') {
 			return {
@@ -135,10 +262,13 @@ export default function PartnersPage() {
 					const partner = row.original
 					return (
 						<div className="flex space-x-2">
-							<Button variant="outline" size="icon" onClick={() => openSheet('edit', partner)}>
+							<Button variant="outline" size="icon" onClick={() => openDetailsDialog(partner)} title="Xem chi tiết">
+								<Eye className="h-4 w-4" />
+							</Button>
+							<Button variant="outline" size="icon" onClick={() => openSheet('edit', partner)} title="Chỉnh sửa">
 								<Edit className="h-4 w-4" />
 							</Button>
-							<Button variant="destructive" size="icon" onClick={() => openDeleteDialog(partner)}>
+							<Button variant="destructive" size="icon" onClick={() => openDeleteDialog(partner)} title="Xóa">
 								<Trash2 className="h-4 w-4" />
 							</Button>
 						</div>
@@ -169,7 +299,8 @@ export default function PartnersPage() {
 			>
 				<DataTable
 					columns={dynamicColumns}
-					data={partnerData}
+					data={partners}
+					isLoading={isLoading}
 					searchableColumn="name"
 					searchPlaceholder="Tìm theo tên, email..."
 				/>
@@ -192,6 +323,16 @@ export default function PartnersPage() {
 				</SheetContent>
 			</Sheet>
 
+			{/* Partner Details Dialog */}
+			<PartnerDetails
+				partner={selectedPartner}
+				isOpen={isDetailsDialogOpen}
+				onClose={() => {
+					setDetailsDialogOpen(false)
+					setSelectedPartner(null)
+				}}
+			/>
+
 			{/* Delete Confirmation Dialog */}
 			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
@@ -210,4 +351,4 @@ export default function PartnersPage() {
 			</AlertDialog>
 		</>
 	)
-} 
+}

@@ -1,49 +1,79 @@
 'use client'
 
 import { type ColumnDef } from '@tanstack/react-table'
-import {
-	renderSortableHeader,
-	renderActionsCell,
-} from '@/components/common/data-table'
 import { Student } from '@/modules/academic/types'
-import { Edit, Trash2 } from 'lucide-react'
 
 export const columns: ColumnDef<Student>[] = [
 	{
-		accessorKey: 'fullName',
-		header: ({ column }) => renderSortableHeader(column, 'Họ và tên'),
+		id: "stt",
+		header: "STT",
+		cell: ({ row }) => {
+			return <div className="text-center font-medium">{row.index + 1}</div>
+		},
 	},
 	{
-		accessorKey: 'studentCode',
-		header: ({ column }) => renderSortableHeader(column, 'MSSV'),
+		accessorKey: "studentCode",
+		header: "Mã sinh viên",
+		cell: ({ row }) => {
+			return (
+				<div className="font-mono text-sm bg-blue-50 px-2 py-1 rounded border">
+					{row.getValue("studentCode")}
+				</div>
+			)
+		},
 	},
 	{
-		accessorKey: 'email',
-		header: ({ column }) => renderSortableHeader(column, 'Email'),
-	},
-    {
-		accessorKey: 'phoneNumber',
-		header: 'Số điện thoại',
+		accessorKey: "fullName",
+		header: "Họ và tên",
+		cell: ({ row }) => {
+			return (
+				<div className="font-medium text-gray-900">
+					{row.getValue("fullName")}
+				</div>
+			)
+		},
 	},
 	{
-		id: 'actions',
-		cell: ({ row }) =>
-			renderActionsCell(row, [
-				{
-					label: 'Chỉnh sửa',
-					icon: Edit,
-					onClick: (rowData) => {
-						console.log('Edit:', rowData)
-					},
-				},
-				{
-					label: 'Xóa',
-					icon: Trash2,
-					onClick: (rowData) => {
-						console.log('Delete:', rowData)
-					},
-					variant: 'destructive',
-				},
-			]),
+		accessorKey: "dateOfBirth",
+		header: "Ngày sinh",
+		cell: ({ row }) => {
+			const dateOfBirth = row.getValue("dateOfBirth") as string
+			const formattedDate = new Date(dateOfBirth).toLocaleDateString('vi-VN')
+			return (
+				<div className="text-sm text-gray-600">
+					{formattedDate}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "email",
+		header: "Email",
+		cell: ({ row }) => {
+			return (
+				<div className="text-sm text-blue-600">
+					{row.getValue("email")}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "phoneNumber",
+		header: "Số điện thoại",
+		cell: ({ row }) => {
+			return (
+				<div className="text-sm text-gray-700">
+					{row.getValue("phoneNumber")}
+				</div>
+			)
+		},
+	},
+	{
+		id: "actions",
+		header: "Thao tác",
+		cell: ({ row }) => {
+			// This will be replaced with actual action buttons in the main component
+			return <div className="text-center">Actions</div>
+		},
 	},
 ] 
