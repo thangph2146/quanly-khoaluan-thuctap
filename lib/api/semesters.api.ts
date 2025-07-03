@@ -39,15 +39,29 @@ export const getSemesterById = async (id: number): Promise<Semester> => {
  */
 export const createSemester = async (data: CreateSemesterData): Promise<Semester> => {
 	try {
-		// Send minimal data that matches what the backend can handle
-		const semesterPayload = {
+		// Prepare payload with both academicYearId and complete AcademicYear object
+		const payload = {
 			name: data.name,
-			academicYearId: data.academicYearId
+			academicYearId: data.academicYearId,
+			academicYear: {
+				id: data.academicYearId,
+				name: 'AcademicYear', // Add required name field
+				startDate: new Date().toISOString(), // Add required dates
+				endDate: new Date().toISOString(),
+			},
 		}
-		const response = (await httpsAPI.post('/Semesters', semesterPayload)) as Semester
+
+		const response = (await httpsAPI.post('/Semesters', payload)) as Semester
 		return response
 	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+		console.error('Error creating semester:', error)
+		const message =
+			error.response?.data?.message ||
+			(error.response?.data?.errors
+				? JSON.stringify(error.response.data.errors)
+				: null) ||
+			error.message ||
+			'Không thể tạo học kỳ mới'
 		throw new Error(message)
 	}
 }
@@ -62,18 +76,9 @@ export const updateSemester = async (
 	id: number,
 	data: UpdateSemesterData,
 ): Promise<Semester> => {
-	try {
-		// Send minimal data that matches what the backend can handle
-		const semesterPayload = {
-			name: data.name,
-			academicYearId: data.academicYearId
-		}
-		const response = (await httpsAPI.put(`/Semesters/${id}`, semesterPayload)) as Semester
-		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
-	}
+	const { name, academicYearId } = data
+	const response = (await httpsAPI.put(`/Semesters/${id}`, { name, academicYearId })) as Semester
+	return response
 }
 
 /**
@@ -97,4 +102,3 @@ export const SemestersApi = {
 	update: updateSemester,
 	delete: deleteSemester,
 }
-	

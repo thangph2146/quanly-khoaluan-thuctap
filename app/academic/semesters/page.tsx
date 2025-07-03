@@ -209,7 +209,12 @@ export default function SemestersPage() {
 	const handleCreate = async (data: CreateSemesterData) => {
 		try {
 			setIsSubmitting(true)
-			await SemestersApi.create(data)
+			// Only send the required data, without academicYear object
+			const semesterData = {
+				name: data.name,
+				academicYearId: data.academicYearId
+			}
+			await SemestersApi.create(semesterData)
 			await loadData()
 			setCreateSheetOpen(false)
 			toast({

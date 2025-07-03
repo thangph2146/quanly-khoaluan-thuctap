@@ -57,12 +57,67 @@ export const getInternshipById = async (id: number): Promise<Internship> => {
  */
 export const createInternship = async (data: CreateInternshipData): Promise<Internship> => {
 	try {
-		const response = (await httpsAPI.post('/Internships', data)) as Internship
-		return response
+		// Debug log the payload
+		console.log('Creating internship with payload:', data);
+		
+		// Create a simplified payload with only the necessary fields
+		const payload = {
+			studentId: data.studentId,
+			partnerId: data.partnerId,
+			academicYearId: data.academicYearId,
+			semesterId: data.semesterId,
+			// Only include these if they're not null/undefined
+			...(data.reportUrl ? { reportUrl: data.reportUrl } : {}),
+			...(data.grade !== null && data.grade !== undefined ? { grade: data.grade } : {})
+		};
+
+		console.log('Sending simplified payload:', payload);
+
+		// Try to fetch student, partner, academic year and semester to verify they exist
+		try {
+			const studentCheck = await httpsAPI.get(`/Internships/debug/student/${data.studentId}`);
+			console.log('Student check result:', studentCheck);
+			
+			const partnerCheck = await httpsAPI.get(`/Internships/debug/partner/${data.partnerId}`);
+			console.log('Partner check result:', partnerCheck);
+			
+			const academicYearCheck = await httpsAPI.get(`/Internships/debug/academic-year/${data.academicYearId}`);
+			console.log('Academic year check result:', academicYearCheck);
+			
+			const semesterCheck = await httpsAPI.get(`/Internships/debug/semester/${data.semesterId}`);
+			console.log('Semester check result:', semesterCheck);
+		} catch (checkError) {
+			console.error('Entity validation error:', checkError);
+		}
+
+		const response = (await httpsAPI.post('/Internships', payload)) as Internship;
+		return response;
 	} catch (error: any) {
-		// Extract the error message from the API response
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
+		console.error('Failed to create internship:', error);
+		
+		// Extract the most detailed error information possible
+		let errorMessage = 'Không thể tạo thực tập mới';
+		
+		// Check for detailed error information in the response
+		if (error.response?.data) {
+			if (error.response.data.details) {
+				console.error('Server error details:', error.response.data.details);
+				errorMessage = `Lỗi hệ thống: ${error.response.data.details}`;
+			} else if (error.response.data.message) {
+				errorMessage = error.response.data.message;
+			}
+		} else if (error.message) {
+			errorMessage = error.message;
+		}
+		
+		// Log additional debugging information
+		if (error.response) {
+			console.error('Response status:', error.response.status);
+			console.error('Response headers:', error.response.headers);
+			console.error('Response data:', error.response.data);
+		}
+		
+		throw new Error(errorMessage);
 	}
 }
 

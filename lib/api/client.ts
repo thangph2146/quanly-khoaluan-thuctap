@@ -52,8 +52,40 @@ httpsAPI.interceptors.response.use(
 		}
 
 		// Xử lý các lỗi khác
-		const message = error.response?.data?.message || error.message
-		console.error(`API call failed: ${message}`)
+		let errorMessage = 'Đã có lỗi xảy ra'
+
+		if (error.response?.data) {
+			// Handle structured error responses
+			if (
+				typeof error.response.data === 'object' &&
+				error.response.data.message
+			) {
+				errorMessage = error.response.data.message
+
+				// Include details if available
+				if (error.response.data.details) {
+					console.error('Error details:', error.response.data.details)
+				}
+			}
+			// Handle string error responses
+			else if (typeof error.response.data === 'string') {
+				errorMessage = error.response.data
+			}
+		} else if (error.message) {
+			errorMessage = error.message
+		}
+
+		// Log detailed information for debugging
+		console.error(
+			`API call failed: ${errorMessage}`,
+			{
+				url: error.config?.url,
+				method: error.config?.method,
+				status: error.response?.status,
+				statusText: error.response?.statusText,
+				data: error.response?.data,
+			},
+		)
 
 		return Promise.reject(error)
 	},
