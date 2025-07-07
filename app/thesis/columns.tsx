@@ -15,8 +15,6 @@ type GetColumnsOptions = {
 }
 
 export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): ColumnDef<Thesis>[] => {
-	console.log('getColumns called with options:', { onEdit, onDelete, onView })
-	
 	return [
 	{
 		accessorKey: 'title',
@@ -26,10 +24,7 @@ export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): Col
         }
 	},
     {
-		accessorFn: row => {
-			console.log('Student accessor - row:', row)
-			return row.student?.fullName || 'N/A'
-		},
+		accessorFn: row => row.student?.fullName || 'N/A',
 		id: 'studentFullName',
 		header: ({ column }) => renderSortableHeader(column, 'Sinh viên'),
 	},

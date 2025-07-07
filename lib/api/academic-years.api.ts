@@ -6,8 +6,8 @@ import type { AcademicYear } from '@/modules/config/types'
  * @returns A promise that resolves to an array of academic years.
  */
 export const getAcademicYears = async (): Promise<AcademicYear[]> => {
-	const response = (await httpsAPI.get('/AcademicYears')) as AcademicYear[]
-	return response
+	const response = await httpsAPI.get('/AcademicYears')
+	return response.data
 }
 
 /**
@@ -16,8 +16,8 @@ export const getAcademicYears = async (): Promise<AcademicYear[]> => {
  * @returns A promise that resolves to the academic year object.
  */
 export const getAcademicYearById = async (id: number): Promise<AcademicYear> => {
-	const response = (await httpsAPI.get(`/AcademicYears/${id}`)) as AcademicYear
-	return response
+	const response = await httpsAPI.get(`/AcademicYears/${id}`)
+	return response.data
 }
 
 /**
@@ -27,8 +27,8 @@ export const getAcademicYearById = async (id: number): Promise<AcademicYear> => 
  */
 export const createAcademicYear = async (data: Omit<AcademicYear, 'id'>): Promise<AcademicYear> => {
 	try {
-		const response = (await httpsAPI.post('/AcademicYears', data)) as AcademicYear
-		return response
+		const response = await httpsAPI.post('/AcademicYears', data)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -46,8 +46,8 @@ export const updateAcademicYear = async (
 	data: AcademicYear,
 ): Promise<AcademicYear> => {
 	try {
-		const response = (await httpsAPI.put(`/AcademicYears/${id}`, data)) as AcademicYear
-		return response
+		const response = await httpsAPI.put(`/AcademicYears/${id}`, data)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)

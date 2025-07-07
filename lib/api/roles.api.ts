@@ -4,7 +4,8 @@ import { Role, CreateRoleRequest, UpdateRoleRequest } from '@/modules/roles/type
 // Get all roles
 export const getRoles = async (): Promise<Role[]> => {
 	try {
-		return await httpsAPI.get('/Roles')
+		const response = await httpsAPI.get('/Roles')
+		return response.data
 	} catch (error) {
 		console.error('Failed to fetch roles:', error)
 		throw error
@@ -14,7 +15,8 @@ export const getRoles = async (): Promise<Role[]> => {
 // Get role by ID
 export const getRoleById = async (id: number): Promise<Role> => {
 	try {
-		return await httpsAPI.get(`/Roles/${id}`)
+		const response = await httpsAPI.get(`/Roles/${id}`)
+		return response.data
 	} catch (error) {
 		console.error(`Failed to fetch role ${id}:`, error)
 		throw error
@@ -24,7 +26,8 @@ export const getRoleById = async (id: number): Promise<Role> => {
 // Create a new role
 export const createRole = async (data: CreateRoleRequest): Promise<Role> => {
 	try {
-		return await httpsAPI.post('/Roles', data)
+		const response = await httpsAPI.post('/Roles', data)
+		return response.data
 	} catch (error) {
 		console.error('Failed to create role:', error)
 		throw error
@@ -37,7 +40,8 @@ export const updateRole = async (
 	data: UpdateRoleRequest,
 ): Promise<Role> => {
 	try {
-		return await httpsAPI.put(`/Roles/${id}`, data)
+		const response = await httpsAPI.put(`/Roles/${id}`, data)
+		return response.data
 	} catch (error) {
 		console.error(`Failed to update role ${id}:`, error)
 		throw error

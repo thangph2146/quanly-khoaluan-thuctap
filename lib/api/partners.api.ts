@@ -23,8 +23,8 @@ export interface UpdatePartnerData {
  */
 export const getPartners = async (): Promise<Partner[]> => {
 	try {
-		const response = (await httpsAPI.get('/Partners')) as Partner[]
-		return response
+		const response = await httpsAPI.get('/Partners')
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -38,8 +38,8 @@ export const getPartners = async (): Promise<Partner[]> => {
  */
 export const getPartnerById = async (id: number): Promise<Partner> => {
 	try {
-		const response = (await httpsAPI.get(`/Partners/${id}`)) as Partner
-		return response
+		const response = await httpsAPI.get(`/Partners/${id}`)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -53,8 +53,8 @@ export const getPartnerById = async (id: number): Promise<Partner> => {
  */
 export const createPartner = async (data: CreatePartnerData): Promise<Partner> => {
 	try {
-		const response = (await httpsAPI.post('/Partners', data)) as Partner
-		return response
+		const response = await httpsAPI.post('/Partners', data)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)

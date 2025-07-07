@@ -81,12 +81,6 @@ export default function ThesesPage() {
 				SemestersApi.getAll(),
 			])
 			
-			// Debug logging
-			console.log('Fetched theses data:', thesesData)
-			console.log('Fetched students data:', studentsData)
-			console.log('Fetched academic years data:', academicYearsData)
-			console.log('Fetched semesters data:', semestersData)
-			
 			setTheses(Array.isArray(thesesData) ? thesesData : [])
 			setStudents(Array.isArray(studentsData) ? studentsData : [])
 			setAcademicYears(Array.isArray(academicYearsData) ? academicYearsData : [])
@@ -300,24 +294,13 @@ const ThesisForm = ({
 	const [errors, setErrors] = useState<Record<string, string>>({})
 	const [filteredSemesters, setFilteredSemesters] = useState<Semester[]>(semesters)
 
-	// Update formData when data loads
-	useEffect(() => {
-		if (!thesis && formData.studentId === 0) {
-			setFormData(prev => ({
-				...prev,
-				studentId: students.length > 0 ? students[0].id : 0,
-				academicYearId: academicYears.length > 0 ? academicYears[0].id : 0,
-				semesterId: filteredSemesters.length > 0 ? filteredSemesters[0].id : 0,
-			}))
-		}
-	}, [students, academicYears, filteredSemesters, thesis, formData.studentId])
-
 	// Filter semesters when academic year changes
 	useEffect(() => {
 		if (formData.academicYearId) {
 			const yearSemesters = semesters.filter(s => s.academicYearId === formData.academicYearId)
 			setFilteredSemesters(yearSemesters)
 			
+			// Only update semester if current one is not valid for the selected year
 			if (yearSemesters.length > 0 && !yearSemesters.some(s => s.id === formData.semesterId)) {
 				setFormData(prev => ({
 					...prev,
@@ -325,7 +308,33 @@ const ThesisForm = ({
 				}))
 			}
 		}
-	}, [formData.academicYearId, formData.semesterId, semesters])
+	}, [formData.academicYearId, semesters])
+
+	// Initialize form data when component mounts and data is available
+	useEffect(() => {
+		if (thesis) {
+			// For edit mode, use thesis data
+			setFormData({
+				title: thesis.title,
+				studentId: thesis.studentId,
+				academicYearId: thesis.academicYearId,
+				semesterId: thesis.semesterId,
+				submissionDate: thesis.submissionDate,
+			})
+		} else if (students.length > 0 && academicYears.length > 0 && semesters.length > 0 && formData.studentId === 0) {
+			// For create mode, set defaults only once when all data is loaded
+			const defaultAcademicYear = academicYears[0]
+			const defaultSemesters = semesters.filter(s => s.academicYearId === defaultAcademicYear.id)
+			
+			setFormData({
+				title: '',
+				studentId: students[0].id,
+				academicYearId: defaultAcademicYear.id,
+				semesterId: defaultSemesters.length > 0 ? defaultSemesters[0].id : 0,
+				submissionDate: '',
+			})
+		}
+	}, [thesis, students, academicYears, semesters])
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {}

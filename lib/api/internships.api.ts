@@ -27,8 +27,8 @@ export interface UpdateInternshipData {
  */
 export const getInternships = async (): Promise<Internship[]> => {
 	try {
-		const response = (await httpsAPI.get('/Internships')) as Internship[]
-		return response
+		const response = await httpsAPI.get('/Internships')
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -42,8 +42,8 @@ export const getInternships = async (): Promise<Internship[]> => {
  */
 export const getInternshipById = async (id: number): Promise<Internship> => {
 	try {
-		const response = (await httpsAPI.get(`/Internships/${id}`)) as Internship
-		return response
+		const response = await httpsAPI.get(`/Internships/${id}`)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -73,8 +73,8 @@ export const createInternship = async (data: CreateInternshipData): Promise<Inte
 
 		console.log('Sending simplified payload:', payload);
 		
-		const response = (await httpsAPI.post('/Internships', payload)) as Internship;
-		return response;
+		const response = await httpsAPI.post('/Internships', payload);
+		return response.data;
 	} catch (error: unknown) {
 		console.error('Failed to create internship:', error);
 		const message = error instanceof Error ? error.message : 'Không thể tạo thực tập mới';

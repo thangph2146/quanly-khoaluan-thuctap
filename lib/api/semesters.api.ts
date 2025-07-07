@@ -18,8 +18,8 @@ export interface UpdateSemesterData {
  * @returns A promise that resolves to an array of semesters.
  */
 export const getSemesters = async (): Promise<Semester[]> => {
-	const response = (await httpsAPI.get('/Semesters')) as Semester[]
-	return response
+	const response = await httpsAPI.get('/Semesters')
+	return response.data
 }
 
 /**
@@ -28,8 +28,8 @@ export const getSemesters = async (): Promise<Semester[]> => {
  * @returns A promise that resolves to the semester object.
  */
 export const getSemesterById = async (id: number): Promise<Semester> => {
-	const response = (await httpsAPI.get(`/Semesters/${id}`)) as Semester
-	return response
+	const response = await httpsAPI.get(`/Semesters/${id}`)
+	return response.data
 }
 
 /**
@@ -51,8 +51,8 @@ export const createSemester = async (data: CreateSemesterData): Promise<Semester
 			},
 		}
 
-		const response = (await httpsAPI.post('/Semesters', payload)) as Semester
-		return response
+		const response = await httpsAPI.post('/Semesters', payload)
+		return response.data
 	} catch (error: unknown) {
 		console.error('Error creating semester:', error)
 		const message = error instanceof Error ? error.message : 'Không thể tạo học kỳ mới'
@@ -71,8 +71,8 @@ export const updateSemester = async (
 	data: UpdateSemesterData,
 ): Promise<Semester> => {
 	const { name, academicYearId } = data
-	const response = (await httpsAPI.put(`/Semesters/${id}`, { name, academicYearId })) as Semester
-	return response
+	const response = await httpsAPI.put(`/Semesters/${id}`, { name, academicYearId })
+	return response.data
 }
 
 /**

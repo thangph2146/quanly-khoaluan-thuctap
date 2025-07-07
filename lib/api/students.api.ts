@@ -6,8 +6,8 @@ export class StudentsApi {
 	// Lấy danh sách tất cả sinh viên
 	static async getAll(): Promise<Student[]> {
 		try {
-			const response = await httpsAPI.get('/Students') as Student[]
-			return response
+			const response = await httpsAPI.get('/Students')
+			return response.data
 		} catch (error) {
 			console.error('Error fetching students:', error)
 			if (error instanceof AxiosError) {
@@ -20,8 +20,8 @@ export class StudentsApi {
 	// Lấy thông tin sinh viên theo ID
 	static async getById(id: number): Promise<Student> {
 		try {
-			const response = await httpsAPI.get(`/Students/${id}`) as Student
-			return response
+			const response = await httpsAPI.get(`/Students/${id}`)
+			return response.data
 		} catch (error) {
 			console.error('Error fetching student:', error)
 			if (error instanceof AxiosError) {
@@ -34,8 +34,8 @@ export class StudentsApi {
 	// Tạo sinh viên mới
 	static async create(student: Omit<Student, 'id'>): Promise<Student> {
 		try {
-			const response = await httpsAPI.post('/Students', student) as Student
-			return response
+			const response = await httpsAPI.post('/Students', student)
+			return response.data
 		} catch (error) {
 			console.error('Error creating student:', error)
 			if (error instanceof AxiosError) {
@@ -48,8 +48,8 @@ export class StudentsApi {
 	// Cập nhật thông tin sinh viên
 	static async update(id: number, student: Student): Promise<Student> {
 		try {
-			const response = await httpsAPI.put(`/Students/${id}`, student) as Student
-			return response
+			const response = await httpsAPI.put(`/Students/${id}`, student)
+			return response.data
 		} catch (error) {
 			console.error('Error updating student:', error)
 			if (error instanceof AxiosError) {

@@ -84,13 +84,21 @@ export default function InternshipsPage() {
 				AcademicYearsApi.getAll(),
 				SemestersApi.getAll(),
 			])
-			setInternships(internshipsData)
-			setUsers(usersData)
-			setPartners(partnersData)
-			setAcademicYears(academicYearsData)
-			setSemesters(semestersData)
+			
+			// Ensure all data is in the expected format
+			setInternships(Array.isArray(internshipsData) ? internshipsData : [])
+			setUsers(Array.isArray(usersData) ? usersData : [])
+			setPartners(Array.isArray(partnersData) ? partnersData : [])
+			setAcademicYears(Array.isArray(academicYearsData) ? academicYearsData : [])
+			setSemesters(Array.isArray(semestersData) ? semestersData : [])
 		} catch (error: unknown) {
 			console.error('Failed to fetch data:', error)
+			// Ensure states remain as empty arrays on error
+			setInternships([])
+			setUsers([])
+			setPartners([])
+			setAcademicYears([])
+			setSemesters([])
 			toast({
 				title: 'Lỗi',
 				description: error instanceof Error ? error.message : 'Không thể tải dữ liệu.',
@@ -324,11 +332,11 @@ const InternshipForm = ({
 	// Filter users to only show students (assuming students have specific role)
 	// Since userRoles might be empty, we'll show all users for now
 	// TODO: Update this logic when proper role filtering is implemented
-	const students = users.filter(user => 
+	const students = Array.isArray(users) ? users.filter(user => 
 		// Check if user has student role, or if userRoles is empty/undefined, include all users
 		!user.userRoles || user.userRoles.length === 0 || 
 		user.userRoles.some(role => role.toLowerCase().includes('student'))
-	)
+	) : []
 
 	const [formData, setFormData] = useState<CreateInternshipData>({
 		studentId: internship?.studentId || 0,
@@ -341,27 +349,13 @@ const InternshipForm = ({
 	const [errors, setErrors] = useState<Record<string, string>>({})
 	const [filteredSemesters, setFilteredSemesters] = useState<Semester[]>(semesters)
 
-	// Update formData when data loads
-	useEffect(() => {
-		if (!internship && formData.studentId === 0) {
-			setFormData(prev => ({
-				...prev,
-				studentId: students.length > 0 ? students[0].id : 0,
-				partnerId: partners.length > 0 ? partners[0].id : 0,
-				academicYearId: academicYears.length > 0 ? academicYears[0].id : 0,
-				semesterId: filteredSemesters.length > 0 ? filteredSemesters[0].id : 0,
-			}))
-		}
-	}, [students, partners, academicYears, filteredSemesters, internship, formData.studentId])
-
 	// Filter semesters when academic year changes
 	useEffect(() => {
 		if (formData.academicYearId) {
 			const yearSemesters = semesters.filter(s => s.academicYearId === formData.academicYearId)
 			setFilteredSemesters(yearSemesters)
 			
-			// If there are semesters for this year but current selection is not valid,
-			// update semesterId to the first available option
+			// Only update semester if current one is not valid for the selected year
 			if (yearSemesters.length > 0 && !yearSemesters.some(s => s.id === formData.semesterId)) {
 				setFormData(prev => ({
 					...prev,
@@ -369,7 +363,35 @@ const InternshipForm = ({
 				}))
 			}
 		}
-	}, [formData.academicYearId, formData.semesterId, semesters])
+	}, [formData.academicYearId, semesters])
+
+	// Initialize form data when component mounts and data is available
+	useEffect(() => {
+		if (internship) {
+			// For edit mode, use internship data
+			setFormData({
+				studentId: internship.studentId,
+				partnerId: internship.partnerId,
+				academicYearId: internship.academicYearId,
+				semesterId: internship.semesterId,
+				reportUrl: internship.reportUrl,
+				grade: internship.grade,
+			})
+		} else if (students.length > 0 && partners.length > 0 && academicYears.length > 0 && semesters.length > 0 && formData.studentId === 0) {
+			// For create mode, set defaults only once when all data is loaded
+			const defaultAcademicYear = academicYears[0]
+			const defaultSemesters = semesters.filter(s => s.academicYearId === defaultAcademicYear.id)
+			
+			setFormData({
+				studentId: students[0].id,
+				partnerId: partners[0].id,
+				academicYearId: defaultAcademicYear.id,
+				semesterId: defaultSemesters.length > 0 ? defaultSemesters[0].id : 0,
+				reportUrl: '',
+				grade: null,
+			})
+		}
+	}, [internship, students, partners, academicYears, semesters])
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {}

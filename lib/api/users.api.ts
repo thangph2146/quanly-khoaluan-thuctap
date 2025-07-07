@@ -25,8 +25,8 @@ export interface UpdateUserData {
  * @returns A promise that resolves to an array of users.
  */
 export const getUsers = async (): Promise<User[]> => {
-	const response = (await httpsAPI.get('/Users')) as User[]
-	return response
+	const response = await httpsAPI.get('/Users')
+	return response.data
 }
 
 /**
@@ -35,8 +35,8 @@ export const getUsers = async (): Promise<User[]> => {
  * @returns A promise that resolves to the user object.
  */
 export const getUserById = async (id: number): Promise<User> => {
-	const response = (await httpsAPI.get(`/Users/${id}`)) as User
-	return response
+	const response = await httpsAPI.get(`/Users/${id}`)
+	return response.data
 }
 
 /**
@@ -46,8 +46,8 @@ export const getUserById = async (id: number): Promise<User> => {
  */
 export const createUser = async (data: CreateUserData): Promise<User> => {
 	try {
-		const response = (await httpsAPI.post('/Users', data)) as User
-		return response
+		const response = await httpsAPI.post('/Users', data)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -65,8 +65,8 @@ export const updateUser = async (
 	data: UpdateUserData,
 ): Promise<User> => {
 	try {
-		const response = (await httpsAPI.put(`/Users/${id}`, data)) as User
-		return response
+		const response = await httpsAPI.put(`/Users/${id}`, data)
+		return response.data
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
@@ -92,6 +92,6 @@ export const deleteUser = async (id: number): Promise<void> => {
  * @returns A promise that resolves to an array of roles.
  */
 export const getRoles = async (): Promise<Role[]> => {
-	const response = (await httpsAPI.get('/Roles')) as Role[]
-	return response
+	const response = await httpsAPI.get('/Roles')
+	return response.data
 }
