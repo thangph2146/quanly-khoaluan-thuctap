@@ -55,7 +55,19 @@ function flattenTreeStructure<TData>(
 ): TData[] {
 	const result: TData[] = []
 	
+	// Safety check: ensure data is an array
+	if (!Array.isArray(data)) {
+		console.warn('DataTable: flattenTreeStructure called with non-array data:', data)
+		return []
+	}
+	
 	const flatten = (items: TData[], level: number = 0) => {
+		// Safety check: ensure items is an array
+		if (!Array.isArray(items)) {
+			console.warn('DataTable: flatten called with non-array items:', items)
+			return
+		}
+		
 		items.forEach(item => {
 			// Add a temporary level property for rendering
 			;(item as TData & { _level: number })._level = level
@@ -91,7 +103,7 @@ export function DataTable<TData, TValue>({
 
 	// Auto-expand root items that have children
 	React.useEffect(() => {
-		if (isTreeTable && getId && getChildren && data.length > 0) {
+		if (isTreeTable && getId && getChildren && Array.isArray(data) && data.length > 0) {
 			const rootsWithChildren = data
 				.filter(item => getChildren(item).length > 0)
 				.map(item => getId(item))
@@ -104,12 +116,15 @@ export function DataTable<TData, TValue>({
 
 	// Process data for tree structure if needed
 	const processedData = React.useMemo(() => {
+		// Safety check: ensure data is an array
+		const safeData = Array.isArray(data) ? data : []
+		
 		if (!isTreeTable || !getId || !getChildren) {
-			return data
+			return safeData
 		}
 		
 		// Flatten the tree structure for display
-		return flattenTreeStructure(data, getId, getChildren)
+		return flattenTreeStructure(safeData, getId, getChildren)
 	}, [data, isTreeTable, getId, getChildren])
 
 	const table = useReactTable({

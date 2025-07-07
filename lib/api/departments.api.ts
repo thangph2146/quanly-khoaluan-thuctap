@@ -6,8 +6,8 @@ export class DepartmentsApi {
   // Lấy danh sách tất cả departments
   static async getAll(): Promise<Department[]> {
     try {
-      const response = await httpsAPI.get('/Departments') as Department[]
-      return response
+      const response = await httpsAPI.get('/Departments')
+      return response.data as Department[]
     } catch (error) {
       console.error('Lỗi khi lấy danh sách đơn vị:', error)
       throw new Error('Không thể lấy danh sách đơn vị. Vui lòng thử lại sau.')
@@ -17,8 +17,8 @@ export class DepartmentsApi {
   // Lấy department theo ID
   static async getById(id: number): Promise<Department> {
     try {
-      const response = await httpsAPI.get(`/Departments/${id}`) as Department
-      return response
+      const response = await httpsAPI.get(`/Departments/${id}`)
+      return response.data as Department
     } catch (error) {
       console.error('Lỗi khi lấy thông tin đơn vị:', error)
       if (error instanceof AxiosError && error.response?.status === 404) {
@@ -31,8 +31,8 @@ export class DepartmentsApi {
   // Tạo department mới
   static async create(department: Omit<Department, 'id'>): Promise<Department> {
     try {
-      const response = await httpsAPI.post('/Departments', department) as Department
-      return response
+      const response = await httpsAPI.post('/Departments', department)
+      return response.data as Department
     } catch (error) {
       console.error('Lỗi khi tạo đơn vị:', error)
       throw error

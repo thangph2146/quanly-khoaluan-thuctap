@@ -52,7 +52,7 @@ export const getPermissionsByModule = async (module: string): Promise<Permission
  * Fetches all available modules.
  * @returns A promise that resolves to an array of module names.
  */
-export const getModules = async (): Promise<string[]> => {
+export const getPermissionModules = async (): Promise<string[]> => {
 	try {
 		const response = await httpsAPI.get('/Permissions/modules')
 		return response.data
@@ -62,6 +62,9 @@ export const getModules = async (): Promise<string[]> => {
 		throw new Error(message)
 	}
 }
+
+// Alias for backward compatibility
+export const getModules = getPermissionModules
 
 /**
  * Creates a new permission.

@@ -1,52 +1,80 @@
-import { AcademicYear, Semester } from '@/modules/config/types'
-import { Student } from '@/modules/academic/types'
+import { AcademicYear, Semester } from "@/modules/config/types";
+import { Student } from "@/modules/academic/types";
 
 // Thesis status type
-export type ThesisStatus = 'COMPLETED' | 'IN_PROGRESS' | 'PENDING_DEFENSE' | 'APPROVED' | 'OVERDUE' | 'CANCELLED'
+export type ThesisStatus =
+  | "COMPLETED"
+  | "IN_PROGRESS"
+  | "PENDING_DEFENSE"
+  | "APPROVED"
+  | "OVERDUE"
+  | "CANCELLED";
 
 // Based on Thesis.cs - simplified to match backend exactly
 export interface Thesis {
-	id: number
-	title: string
-	studentId: number
-	student: Student
-	academicYearId: number
-	academicYear: AcademicYear
-	semesterId: number
-	semester: Semester
-	submissionDate: string
+  id: number;
+  title: string;
+  studentId: number;
+  student: Student;
+  academicYearId: number;
+  academicYear: AcademicYear;
+  semesterId: number;
+  semester: Semester;
+  submissionDate: string;
 }
 
 // Additional types for thesis defense
 export interface CouncilMember {
-	id: string
-	name: string
-	title: string
-	role: 'CHAIR' | 'MEMBER' | 'SECRETARY'
-	department: string
+  id: string;
+  name: string;
+  title: string;
+  role: "CHAIR" | "MEMBER" | "SECRETARY";
+  department: string;
 }
 
 export interface DefenseRoom {
-	id: string
-	name: string
-	capacity: number
-	equipment: string[]
+  id: string;
+  name: string;
+  capacity: number;
+  equipment: string[];
 }
 
 export interface DefenseSchedule {
-	id: string
-	thesis: {
-		id: string
-		title: string
-		student: {
-			id: string
-			name: string
-			studentCode: string
-		}
-	}
-	room: DefenseRoom
-	dateTime: string
-	duration: number
-	councilMembers: CouncilMember[]
-	status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
+  id: string;
+  thesis: {
+    id: string;
+    title: string;
+    student: {
+      id: string;
+      name: string;
+      studentCode: string;
+    };
+  };
+  room: DefenseRoom;
+  dateTime: string;
+  duration: number;
+  councilMembers: CouncilMember[];
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+}
+
+// Create and Update types for thesis
+export interface CreateThesisData {
+  title: string;
+  description?: string;
+  studentId: number;
+  supervisor: string;
+  academicYearId: number;
+  semesterId: number;
+  status?: string;
+  submissionDate: string;
+}
+
+export interface UpdateThesisData {
+  title?: string;
+  description?: string;
+  studentId?: number;
+  supervisor?: string;
+  academicYearId?: number;
+  semesterId?: number;
+  status?: string;
 }

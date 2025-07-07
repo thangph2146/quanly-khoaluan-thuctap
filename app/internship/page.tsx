@@ -1,14 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { Plus } from 'lucide-react'
+import React, { useState } from 'react'
 import { PageHeader } from '@/components/common'
-import { Button } from '@/components/ui/button'
 import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
-	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 } from '@/components/ui/sheet'
@@ -29,650 +26,207 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select'
-import { useToast } from '@/components/ui/use-toast'
 
-import { DataTable } from '@/components/common/data-table'
-import { getColumns } from './columns'
-import { Internship } from '@/modules/internship/types'
+// Import from internship module
 import {
-	createInternship,
-	deleteInternship,
-	getInternships,
-	updateInternship,
+	InternshipList,
+	InternshipForm,
+	InternshipDetails,
+	useInternships,
+	useInternshipActions,
+	type Internship,
 	type CreateInternshipData,
-} from '@/lib/api/internships.api'
-import { getUsers } from '@/lib/api/users.api'
-import { getPartners } from '@/lib/api/partners.api'
-import { AcademicYearsApi } from '@/lib/api/academic-years.api'
-import { SemestersApi } from '@/lib/api/semesters.api'
-import { User } from '@/modules/users/types'
-import { Partner } from '@/modules/partners/types'
-import { AcademicYear, Semester } from '@/modules/config/types'
+	type UpdateInternshipData,
+} from '@/modules/internship'
 
-// Main Page Component
-export default function InternshipsPage() {
-	const [internships, setInternships] = useState<Internship[]>([])
-	const [users, setUsers] = useState<User[]>([])
-	const [partners, setPartners] = useState<Partner[]>([])
-	const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
-	const [semesters, setSemesters] = useState<Semester[]>([])
-	const [isLoading, setIsLoading] = useState(true)
+// Import from other modules for form data
+import { useUsers } from '@/modules/users/hooks'
+import { usePartners } from '@/modules/partners/hooks'
+import { useAcademicYears, useSemesters } from '@/modules/config/hooks'
+
+export default function InternshipPage() {
+	// States for UI components
 	const [isSheetOpen, setSheetOpen] = useState(false)
 	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
 	const [isDetailsDialogOpen, setDetailsDialogOpen] = useState(false)
 	const [selectedInternship, setSelectedInternship] = useState<Internship | null>(null)
 	const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
-	const { toast } = useToast()
 
-	// Fetch data from API
-	const fetchData = useCallback(async () => {
-		try {
-			setIsLoading(true)
-			const [internshipsData, usersData, partnersData, academicYearsData, semestersData] = await Promise.all([
-				getInternships(),
-				getUsers(),
-				getPartners(),
-				AcademicYearsApi.getAll(),
-				SemestersApi.getAll(),
-			])
-			
-			// Ensure all data is in the expected format
-			setInternships(Array.isArray(internshipsData) ? internshipsData : [])
-			setUsers(Array.isArray(usersData) ? usersData : [])
-			setPartners(Array.isArray(partnersData) ? partnersData : [])
-			setAcademicYears(Array.isArray(academicYearsData) ? academicYearsData : [])
-			setSemesters(Array.isArray(semestersData) ? semestersData : [])
-		} catch (error: unknown) {
-			console.error('Failed to fetch data:', error)
-			// Ensure states remain as empty arrays on error
-			setInternships([])
-			setUsers([])
-			setPartners([])
-			setAcademicYears([])
-			setSemesters([])
-			toast({
-				title: 'Lỗi',
-				description: error instanceof Error ? error.message : 'Không thể tải dữ liệu.',
-				variant: 'destructive',
-			})
-		} finally {
-			setIsLoading(false)
-		}
-	}, [toast])
+	// Use custom hooks from internship module
+	const { internships, isLoading, refetch } = useInternships()
+	const { createInternship, updateInternship, deleteInternship, isCreating, isUpdating, isDeleting } = 
+		useInternshipActions(refetch)
 
-	useEffect(() => {
-		fetchData()
-	}, [fetchData])
+	// Data for form
+	const { users } = useUsers()
+	const { partners } = usePartners()
+	const { academicYears } = useAcademicYears()
+	const { semesters } = useSemesters()
 
-	const handleCreate = async (data: CreateInternshipData) => {
-		try {
-			setIsLoading(true);
-			
-			// Validate the data before sending
-			const errors = validateInternshipData(data);
-			if (Object.keys(errors).length > 0) {
-				toast({
-					title: 'Dữ liệu không hợp lệ',
-					description: 'Vui lòng kiểm tra lại thông tin nhập vào.',
-					variant: 'destructive',
-				});
-				return;
-			}
-			
-			console.log('Attempting to create internship with data:', data);
-			await createInternship(data);
-			
-			toast({
-				title: 'Thành công',
-				description: 'Thực tập đã được tạo thành công.',
-			});
-			
-			fetchData();
-			setSheetOpen(false);
-		} catch (error: unknown) {
-			console.error('Failed to create internship:', error);
-			
-			// Show appropriate error messages based on the error
-			if (error instanceof Error && error.message.includes('Lỗi khi tạo mới đợt thực tập')) {
-				toast({
-					title: 'Lỗi hệ thống',
-					description: 'Không thể tạo thực tập. Vui lòng liên hệ quản trị viên.',
-					variant: 'destructive',
-				});
-			} else {
-				toast({
-					title: 'Lỗi',
-					description: error instanceof Error ? error.message : 'Không thể tạo thực tập.',
-					variant: 'destructive',
-				});
-			}
-			
-			// Try to provide more helpful information if possible
-			if (error instanceof Error && error.message.includes('Inner exception')) {
-				toast({
-					title: 'Chi tiết kỹ thuật',
-					description: 'Có lỗi với cơ sở dữ liệu. Vui lòng thử lại sau.',
-					variant: 'destructive',
-				});
-			}
-		} finally {
-			setIsLoading(false);
-		}
-	}
-
-	const handleUpdate = async (data: CreateInternshipData) => {
-		if (!selectedInternship) return
-		try {
-			await updateInternship(selectedInternship.id, data)
-			toast({
-				title: 'Thành công',
-				description: 'Thực tập đã được cập nhật thành công.',
-			})
-			fetchData()
-			setSheetOpen(false)
-			setSelectedInternship(null)
-		} catch (error: unknown) {
-			console.error('Failed to update internship:', error)
-			toast({
-				title: 'Lỗi',
-				description: error instanceof Error ? error.message : 'Không thể cập nhật thực tập.',
-				variant: 'destructive',
-			})
-		}
-	}
-
-	const handleDelete = async () => {
-		if (!selectedInternship) return
-		try {
-			await deleteInternship(selectedInternship.id)
-			toast({
-				title: 'Thành công',
-				description: 'Thực tập đã được xóa thành công.',
-			})
-			fetchData()
-			setDeleteDialogOpen(false)
-			setSelectedInternship(null)
-		} catch (error: unknown) {
-			console.error('Failed to delete internship:', error)
-			toast({
-				title: 'Lỗi',
-				description: error instanceof Error ? error.message : 'Không thể xóa thực tập.',
-				variant: 'destructive',
-			})
-		}
-	}
-
-	const openSheet = (mode: 'create' | 'edit', internship?: Internship) => {
-		setSheetMode(mode)
-		setSelectedInternship(internship || null)
+	// Event handlers
+	const handleCreate = () => {
+		setSheetMode('create')
+		setSelectedInternship(null)
 		setSheetOpen(true)
 	}
 
-	const openDeleteDialog = (internship: Internship) => {
+	const handleEdit = (internship: Internship) => {
+		setSheetMode('edit')
+		setSelectedInternship(internship)
+		setSheetOpen(true)
+	}
+
+	const handleDelete = (internship: Internship) => {
 		setSelectedInternship(internship)
 		setDeleteDialogOpen(true)
 	}
 
-	const openDetailsDialog = (internship: Internship) => {
+	const handleView = (internship: Internship) => {
 		setSelectedInternship(internship)
 		setDetailsDialogOpen(true)
 	}
 
-	const dynamicColumns = getColumns({
-		onView: openDetailsDialog,
-		onEdit: (internship) => openSheet('edit', internship),
-		onDelete: openDeleteDialog,
-	})
+	// Form submission handlers
+	const handleFormSubmit = async (data: CreateInternshipData | UpdateInternshipData) => {
+		try {
+			if (sheetMode === 'create') {
+				await createInternship(data as CreateInternshipData)
+			} else if (selectedInternship) {
+				await updateInternship(selectedInternship.id, data as UpdateInternshipData)
+			}
+			setSheetOpen(false)
+			setSelectedInternship(null)
+		} catch (error) {
+			// Error handling is done in the hook
+			console.error('Form submission error:', error)
+		}
+	}
 
-	const breadcrumbs = [
-		{ label: 'Hệ thống Quản lý', href: '/dashboard' },
-		{ label: 'Thực tập' },
-	]
+	const handleDeleteConfirm = async () => {
+		if (selectedInternship) {
+			const success = await deleteInternship(selectedInternship.id)
+			if (success) {
+				setDeleteDialogOpen(false)
+				setSelectedInternship(null)
+			}
+		}
+	}
+
+	const isFormLoading = isCreating || isUpdating
+
+	// Transform data for form
+	const formStudents = users?.map((user: any) => ({
+		id: user.id?.toString() || '',
+		name: user.name || '',
+		studentId: user.email || '',
+	})) || []
+
+	const formPartners = partners?.map((partner: any) => ({
+		id: partner.id?.toString() || '',
+		name: partner.name || '',
+	})) || []
+
+	const formAcademicYears = academicYears?.map((year: any) => ({
+		id: year.id?.toString() || '',
+		name: year.name || '',
+	})) || []
+
+	const formSemesters = semesters?.map((semester: any) => ({
+		id: semester.id?.toString() || '',
+		name: semester.name || '',
+	})) || []
 
 	return (
-		<>
+		<div className="container mx-auto py-6 space-y-6">
+			{/* Page Header */}
 			<PageHeader
 				title="Quản lý Thực tập"
-				description="Quản lý danh sách các đợt thực tập của sinh viên tại các doanh nghiệp đối tác."
-				breadcrumbs={breadcrumbs}
-				actions={
-					<Button onClick={() => openSheet('create')}>
-						<Plus className="h-4 w-4 mr-2" />
-						Thêm thực tập
-					</Button>
-				}
+				description="Quản lý các đợt thực tập sinh viên trong hệ thống"
+				breadcrumbs={[
+					{ label: 'Trang chủ', href: '/' },
+					{ label: 'Thực tập', href: '/internship' },
+				]}
 			>
-				<DataTable
-					columns={dynamicColumns}
-					data={internships}
-					isLoading={isLoading}
-					searchableColumn="studentFullName"
-					searchPlaceholder="Tìm theo tên sinh viên..."
-				/>
+				<div></div>
 			</PageHeader>
+
+			{/* Internship List */}
+			<InternshipList
+				internships={internships || []}
+				isLoading={isLoading}
+				onCreate={handleCreate}
+				onEdit={handleEdit}
+				onDelete={handleDelete}
+				onView={handleView}
+			/>
 
 			{/* Create/Edit Sheet */}
 			<Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-				<SheetContent className="sm:max-w-lg">
+				<SheetContent className="sm:max-w-md">
 					<SheetHeader>
-						<SheetTitle>{sheetMode === 'create' ? 'Thêm thực tập mới' : 'Chỉnh sửa thực tập'}</SheetTitle>
+						<SheetTitle>
+							{sheetMode === 'create' ? 'Tạo thực tập mới' : 'Chỉnh sửa thực tập'}
+						</SheetTitle>
 						<SheetDescription>
-							{sheetMode === 'create' ? 'Điền thông tin để thêm một đợt thực tập mới.' : 'Cập nhật thông tin cho đợt thực tập đã chọn.'}
+							{sheetMode === 'create' 
+								? 'Điền thông tin để tạo thực tập mới'
+								: 'Cập nhật thông tin thực tập'
+							}
 						</SheetDescription>
 					</SheetHeader>
-					<InternshipForm
-						internship={sheetMode === 'edit' ? selectedInternship : null}
-						users={users}
-						partners={partners}
-						academicYears={academicYears}
-						semesters={semesters}
-						onSave={sheetMode === 'create' ? handleCreate : handleUpdate}
-						onCancel={() => setSheetOpen(false)}
-					/>
+					<div className="mt-6">
+						<InternshipForm
+							internship={selectedInternship}
+							students={formStudents}
+							partners={formPartners}
+							academicYears={formAcademicYears}
+							semesters={formSemesters}
+							onSubmit={handleFormSubmit}
+							onCancel={() => setSheetOpen(false)}
+							isLoading={isFormLoading}
+							mode={sheetMode}
+						/>
+					</div>
 				</SheetContent>
 			</Sheet>
-
-			{/* Internship Details Dialog */}
-			<InternshipDetails
-				internship={selectedInternship}
-				isOpen={isDetailsDialogOpen}
-				onClose={() => {
-					setDetailsDialogOpen(false)
-					setSelectedInternship(null)
-				}}
-			/>
 
 			{/* Delete Confirmation Dialog */}
 			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+						<AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
 						<AlertDialogDescription>
-							Thao tác này không thể hoàn tác. Đợt thực tập của sinh viên{' '}
-							<strong>{selectedInternship?.student?.name}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống.
+							Bạn có chắc chắn muốn xóa thực tập này không?
+							Hành động này không thể hoàn tác.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel>Hủy</AlertDialogCancel>
-						<AlertDialogAction onClick={handleDelete}>Xóa</AlertDialogAction>
+						<AlertDialogAction
+							onClick={handleDeleteConfirm}
+							className="bg-red-600 hover:bg-red-700"
+							disabled={isDeleting}
+						>
+							{isDeleting ? 'Đang xóa...' : 'Xóa'}
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</>
-	)
-}
 
-// Form Component
-const InternshipForm = ({
-	internship,
-	users,
-	partners,
-	academicYears,
-	semesters,
-	onSave,
-	onCancel,
-}: {
-	internship?: Internship | null
-	users: User[]
-	partners: Partner[]
-	academicYears: AcademicYear[]
-	semesters: Semester[]
-	onSave: (data: CreateInternshipData) => void
-	onCancel: () => void
-}) => {
-	// Filter users to only show students (assuming students have specific role)
-	// Since userRoles might be empty, we'll show all users for now
-	// TODO: Update this logic when proper role filtering is implemented
-	const students = Array.isArray(users) ? users.filter(user => 
-		// Check if user has student role, or if userRoles is empty/undefined, include all users
-		!user.userRoles || user.userRoles.length === 0 || 
-		user.userRoles.some(role => role.toLowerCase().includes('student'))
-	) : []
-
-	const [formData, setFormData] = useState<CreateInternshipData>({
-		studentId: internship?.studentId || 0,
-		partnerId: internship?.partnerId || 0,
-		academicYearId: internship?.academicYearId || 0,
-		semesterId: internship?.semesterId || 0,
-		reportUrl: internship?.reportUrl || '',
-		grade: internship?.grade || null,
-	})
-	const [errors, setErrors] = useState<Record<string, string>>({})
-	const [filteredSemesters, setFilteredSemesters] = useState<Semester[]>(semesters)
-
-	// Filter semesters when academic year changes
-	useEffect(() => {
-		if (formData.academicYearId) {
-			const yearSemesters = semesters.filter(s => s.academicYearId === formData.academicYearId)
-			setFilteredSemesters(yearSemesters)
-			
-			// Only update semester if current one is not valid for the selected year
-			if (yearSemesters.length > 0 && !yearSemesters.some(s => s.id === formData.semesterId)) {
-				setFormData(prev => ({
-					...prev,
-					semesterId: yearSemesters[0].id
-				}))
-			}
-		}
-	}, [formData.academicYearId, semesters])
-
-	// Initialize form data when component mounts and data is available
-	useEffect(() => {
-		if (internship) {
-			// For edit mode, use internship data
-			setFormData({
-				studentId: internship.studentId,
-				partnerId: internship.partnerId,
-				academicYearId: internship.academicYearId,
-				semesterId: internship.semesterId,
-				reportUrl: internship.reportUrl,
-				grade: internship.grade,
-			})
-		} else if (students.length > 0 && partners.length > 0 && academicYears.length > 0 && semesters.length > 0 && formData.studentId === 0) {
-			// For create mode, set defaults only once when all data is loaded
-			const defaultAcademicYear = academicYears[0]
-			const defaultSemesters = semesters.filter(s => s.academicYearId === defaultAcademicYear.id)
-			
-			setFormData({
-				studentId: students[0].id,
-				partnerId: partners[0].id,
-				academicYearId: defaultAcademicYear.id,
-				semesterId: defaultSemesters.length > 0 ? defaultSemesters[0].id : 0,
-				reportUrl: '',
-				grade: null,
-			})
-		}
-	}, [internship, students, partners, academicYears, semesters])
-
-	const validateForm = (): boolean => {
-		const newErrors: Record<string, string> = {}
-
-		if (formData.studentId <= 0) {
-			newErrors.studentId = 'Vui lòng chọn sinh viên'
-		}
-
-		if (formData.partnerId <= 0) {
-			newErrors.partnerId = 'Vui lòng chọn đối tác'
-		}
-
-		if (formData.academicYearId <= 0) {
-			newErrors.academicYearId = 'Vui lòng chọn năm học'
-		}
-
-		if (formData.semesterId <= 0) {
-			newErrors.semesterId = 'Vui lòng chọn học kỳ'
-		}
-
-		if (formData.grade !== null && formData.grade !== undefined && (formData.grade < 0 || formData.grade > 10)) {
-			newErrors.grade = 'Điểm phải từ 0 đến 10'
-		}
-
-		setErrors(newErrors)
-		return Object.keys(newErrors).length === 0
-	}
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target
-		if (name === 'grade') {
-			setFormData(prev => ({ ...prev, [name]: value ? parseFloat(value) : null }))
-		} else {
-			setFormData(prev => ({ ...prev, [name]: value }))
-		}
-		// Clear error when user starts typing
-		if (errors[name]) {
-			setErrors(prev => ({ ...prev, [name]: '' }))
-		}
-	}
-
-	const handleSelectChange = (name: string, value: string) => {
-		const numValue = parseInt(value)
-		setFormData(prev => ({ ...prev, [name]: numValue }))
-		// Clear error when user selects
-		if (errors[name]) {
-			setErrors(prev => ({ ...prev, [name]: '' }))
-		}
-		
-		// If changing academic year, reset semester to avoid invalid selection
-		if (name === 'academicYearId') {
-			// We don't need to set semesterId here as the useEffect will handle it
-		}
-	}
-
-	const handleFormSave = () => {
-		if (validateForm()) {
-			onSave(formData)
-		}
-	}
-
-	return (
-		<div className="space-y-4 p-4">
-			<div className="space-y-2">
-				<Label htmlFor="studentId">Sinh viên</Label>
-				<Select
-					value={formData.studentId > 0 ? formData.studentId.toString() : ''}
-					onValueChange={(value) => handleSelectChange('studentId', value)}
-				>
-					<SelectTrigger className={`w-full ${errors.studentId ? 'border-red-500' : ''}`}>
-						<SelectValue placeholder="Chọn sinh viên" />
-					</SelectTrigger>
-					<SelectContent>
-						{students.map((student) => (
-							<SelectItem key={student.id} value={student.id.toString()}>
-								{student.name} ({student.email})
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-				{errors.studentId && <p className="text-sm text-red-500">{errors.studentId}</p>}
-			</div>
-			
-			<div className="space-y-2">
-				<Label htmlFor="partnerId">Đối tác</Label>
-				<Select
-					value={formData.partnerId > 0 ? formData.partnerId.toString() : ''}
-					onValueChange={(value) => handleSelectChange('partnerId', value)}
-				>
-					<SelectTrigger className={`w-full ${errors.partnerId ? 'border-red-500' : ''}`}>
-						<SelectValue placeholder="Chọn đối tác" />
-					</SelectTrigger>
-					<SelectContent>
-						{partners.map((partner) => (
-							<SelectItem key={partner.id} value={partner.id.toString()}>
-								{partner.name}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-				{errors.partnerId && <p className="text-sm text-red-500">{errors.partnerId}</p>}
-			</div>
-
-			<div className="space-y-2">
-				<Label htmlFor="academicYearId">Năm học</Label>
-				<Select
-					value={formData.academicYearId > 0 ? formData.academicYearId.toString() : ''}
-					onValueChange={(value) => handleSelectChange('academicYearId', value)}
-				>
-					<SelectTrigger className={`w-full ${errors.academicYearId ? 'border-red-500' : ''}`}>
-						<SelectValue placeholder="Chọn năm học" />
-					</SelectTrigger>
-					<SelectContent>
-						{academicYears.map((year) => (
-							<SelectItem key={year.id} value={year.id.toString()}>
-								{year.name}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-				{errors.academicYearId && <p className="text-sm text-red-500">{errors.academicYearId}</p>}
-			</div>
-
-			<div className="space-y-2">
-				<Label htmlFor="semesterId">Học kỳ</Label>
-				<Select
-					value={formData.semesterId > 0 ? formData.semesterId.toString() : ''}
-					onValueChange={(value) => handleSelectChange('semesterId', value)}
-				>
-					<SelectTrigger className={`w-full ${errors.semesterId ? 'border-red-500' : ''}`}>
-						<SelectValue placeholder="Chọn học kỳ" />
-					</SelectTrigger>
-					<SelectContent>
-						{filteredSemesters.length > 0 ? (
-							filteredSemesters.map((semester) => (
-								<SelectItem key={semester.id} value={semester.id.toString()}>
-									{semester.name}
-								</SelectItem>
-							))
-						) : (
-							<SelectItem value="0" disabled>
-								Không có học kỳ nào cho năm học này
-							</SelectItem>
-						)}
-					</SelectContent>
-				</Select>
-				{errors.semesterId && <p className="text-sm text-red-500">{errors.semesterId}</p>}
-				{filteredSemesters.length === 0 && (
-					<p className="text-sm text-amber-500">Chưa có học kỳ nào cho năm học này. Vui lòng tạo học kỳ trước.</p>
-				)}
-			</div>
-
-			<div className="space-y-2">
-				<Label htmlFor="reportUrl">URL Báo cáo</Label>
-				<Input
-					id="reportUrl"
-					name="reportUrl"
-					value={formData.reportUrl || ''}
-					onChange={handleChange}
-					placeholder="https://example.com/report.pdf"
-					className={errors.reportUrl ? 'border-red-500' : ''}
-				/>
-				{errors.reportUrl && <p className="text-sm text-red-500">{errors.reportUrl}</p>}
-			</div>
-
-			<div className="space-y-2">
-				<Label htmlFor="grade">Điểm số</Label>
-				<Input
-					id="grade"
-					name="grade"
-					type="number"
-					min="0"
-					max="10"
-					step="0.1"
-					value={formData.grade?.toString() || ''}
-					onChange={handleChange}
-					placeholder="8.5"
-					className={errors.grade ? 'border-red-500' : ''}
-				/>
-				{errors.grade && <p className="text-sm text-red-500">{errors.grade}</p>}
-			</div>
-
-			<SheetFooter className="pt-4">
-				<Button variant="outline" onClick={onCancel}>Hủy</Button>
-				<Button onClick={handleFormSave}>Lưu thay đổi</Button>
-			</SheetFooter>
+			{/* Internship Details Dialog */}
+			<Dialog open={isDetailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+				<DialogContent className="sm:max-w-2xl">
+					<DialogHeader>
+						<DialogTitle>Chi tiết thực tập</DialogTitle>
+						<DialogDescription>
+							Thông tin chi tiết về thực tập được chọn
+						</DialogDescription>
+					</DialogHeader>
+					{selectedInternship && (
+						<InternshipDetails internship={selectedInternship} />
+					)}
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 }
-
-const InternshipDetails = ({
-	internship,
-	isOpen,
-	onClose,
-}: {
-	internship: Internship | null
-	isOpen: boolean
-	onClose: () => void
-}) => {
-	if (!internship) return null
-
-	return (
-		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>Chi tiết thực tập</DialogTitle>
-					<DialogDescription>
-						Thông tin chi tiết về đợt thực tập
-					</DialogDescription>
-				</DialogHeader>
-				<div className="space-y-4 py-4">
-					<div className="space-y-2">
-						<Label className="text-sm font-medium text-gray-500">ID</Label>
-						<div className="text-sm">{internship.id}</div>
-					</div>
-					<div className="space-y-2">
-						<Label className="text-sm font-medium text-gray-500">Sinh viên</Label>
-						<div className="text-sm font-medium">{internship.student?.name}</div>
-					</div>
-					<div className="space-y-2">
-						<Label className="text-sm font-medium text-gray-500">Đối tác</Label>
-						<div className="text-sm">{internship.partner?.name}</div>
-					</div>
-					<div className="space-y-2">
-						<Label className="text-sm font-medium text-gray-500">Năm học</Label>
-						<div className="text-sm">{internship.academicYear?.name}</div>
-					</div>
-					<div className="space-y-2">
-						<Label className="text-sm font-medium text-gray-500">Học kỳ</Label>
-						<div className="text-sm">{internship.semester?.name}</div>
-					</div>
-					{internship.reportUrl && (
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-gray-500">Báo cáo</Label>
-							<div className="text-sm">
-								<a 
-									href={internship.reportUrl} 
-									target="_blank" 
-									rel="noopener noreferrer"
-									className="text-blue-600 hover:underline"
-								>
-									Xem báo cáo
-								</a>
-							</div>
-						</div>
-					)}
-					{internship.grade !== null && internship.grade !== undefined && (
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-gray-500">Điểm số</Label>
-							<div className="text-sm font-mono">{internship.grade}</div>
-						</div>
-					)}
-				</div>
-			</DialogContent>
-		</Dialog>
-	)
-}
-
-// Add a data validation function
-const validateInternshipData = (data: CreateInternshipData): Record<string, string> => {
-	const errors: Record<string, string> = {};
-	
-	if (!data.studentId || data.studentId <= 0) {
-		errors.studentId = 'Vui lòng chọn sinh viên';
-	}
-	
-	if (!data.partnerId || data.partnerId <= 0) {
-		errors.partnerId = 'Vui lòng chọn đối tác';
-	}
-	
-	if (!data.academicYearId || data.academicYearId <= 0) {
-		errors.academicYearId = 'Vui lòng chọn năm học';
-	}
-	
-	if (!data.semesterId || data.semesterId <= 0) {
-		errors.semesterId = 'Vui lòng chọn học kỳ';
-	}
-	
-	if (data.grade !== null && data.grade !== undefined && (data.grade < 0 || data.grade > 10)) {
-		errors.grade = 'Điểm phải từ 0 đến 10';
-	}
-	
-	return errors;
-};

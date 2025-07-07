@@ -73,12 +73,38 @@ export interface AcademicYear {
 	endDate: string // Changed from DateTime
 }
 
+// Create and Update types for AcademicYear
+export interface CreateAcademicYearData {
+	name: string
+	startYear: number
+	endYear: number
+	isCurrent?: boolean
+}
+
+export interface UpdateAcademicYearData {
+	name?: string
+	startYear?: number
+	endYear?: number
+	isCurrent?: boolean
+}
+
 // Based on Semester.cs
 export interface Semester {
 	id: number
 	name: string // e.g., "Học kỳ 1"
 	academicYearId: number
 	academicYear: AcademicYear
+}
+
+// Create and Update types for Semester
+export interface CreateSemesterData {
+	name: string
+	academicYearId: number
+}
+
+export interface UpdateSemesterData {
+	name?: string
+	academicYearId?: number
 }
 
 // Based on Department.cs

@@ -47,4 +47,22 @@ export interface User {
 
 	// Keep for backward compatibility if needed
 	roles?: Role[]
-} 
+}
+
+export interface CreateUserData {
+	name: string
+	email: string
+	avatarUrl?: string
+	isActive: boolean
+	keycloakUserId: string
+	roleIds: number[]
+}
+
+export interface UpdateUserData {
+	name: string
+	email: string
+	avatarUrl?: string
+	isActive: boolean
+	keycloakUserId: string
+	roleIds: number[]
+}

@@ -5,4 +5,18 @@ export interface Partner {
 	address: string
 	phoneNumber: string
 	email: string
-} 
+}
+
+export interface CreatePartnerData {
+	name: string
+	address: string
+	phoneNumber: string
+	email: string
+}
+
+export interface UpdatePartnerData {
+	name: string
+	address: string
+	phoneNumber: string
+	email: string
+}
