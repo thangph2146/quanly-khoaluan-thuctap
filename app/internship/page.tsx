@@ -331,8 +331,12 @@ const InternshipForm = ({
 	onCancel: () => void
 }) => {
 	// Filter users to only show students (assuming students have specific role)
+	// Since userRoles might be empty, we'll show all users for now
+	// TODO: Update this logic when proper role filtering is implemented
 	const students = users.filter(user => 
-		user.userRoles && user.userRoles.some(role => role.toLowerCase().includes('student'))
+		// Check if user has student role, or if userRoles is empty/undefined, include all users
+		!user.userRoles || user.userRoles.length === 0 || 
+		user.userRoles.some(role => role.toLowerCase().includes('student'))
 	)
 
 	const [formData, setFormData] = useState<CreateInternshipData>({
@@ -621,7 +625,7 @@ const InternshipDetails = ({
 							</div>
 						</div>
 					)}
-					{internship.grade && (
+					{internship.grade !== null && internship.grade !== undefined && (
 						<div className="space-y-2">
 							<Label className="text-sm font-medium text-gray-500">Điểm số</Label>
 							<div className="text-sm font-mono">{internship.grade}</div>

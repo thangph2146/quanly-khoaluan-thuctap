@@ -17,27 +17,27 @@ type GetColumnsOptions = {
 
 export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): ColumnDef<Internship>[] => [
     {
-		accessorFn: row => row.student.fullName,
+		accessorFn: row => row.student?.name || 'N/A',
 		id: 'studentFullName',
 		header: ({ column }) => renderSortableHeader(column, 'Sinh viên'),
 	},
 	{
-		accessorFn: row => row.student.studentCode,
-		id: 'studentStudentCode',
-		header: ({ column }) => renderSortableHeader(column, 'Mã SV'),
+		accessorFn: row => row.student?.email || 'N/A',
+		id: 'studentEmail',
+		header: ({ column }) => renderSortableHeader(column, 'Email'),
 	},
     {
-		accessorFn: row => row.partner.name,
+		accessorFn: row => row.partner?.name || 'N/A',
 		id: 'partnerName',
 		header: ({ column }) => renderSortableHeader(column, 'Doanh nghiệp'),
 	},
 	{
-		accessorFn: row => row.academicYear.name,
+		accessorFn: row => row.academicYear?.name || 'N/A',
 		id: 'academicYearName',
 		header: ({ column }) => renderSortableHeader(column, 'Niên khóa'),
 	},
 	{
-		accessorFn: row => row.semester.name,
+		accessorFn: row => row.semester?.name || 'N/A',
 		id: 'semesterName',
 		header: ({ column }) => renderSortableHeader(column, 'Học kỳ'),
 	},

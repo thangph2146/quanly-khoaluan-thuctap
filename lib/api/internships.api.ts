@@ -72,24 +72,7 @@ export const createInternship = async (data: CreateInternshipData): Promise<Inte
 		};
 
 		console.log('Sending simplified payload:', payload);
-
-		// Try to fetch student, partner, academic year and semester to verify they exist
-		try {
-			const studentCheck = await httpsAPI.get(`/Internships/debug/student/${data.studentId}`);
-			console.log('Student check result:', studentCheck);
-			
-			const partnerCheck = await httpsAPI.get(`/Internships/debug/partner/${data.partnerId}`);
-			console.log('Partner check result:', partnerCheck);
-			
-			const academicYearCheck = await httpsAPI.get(`/Internships/debug/academic-year/${data.academicYearId}`);
-			console.log('Academic year check result:', academicYearCheck);
-			
-			const semesterCheck = await httpsAPI.get(`/Internships/debug/semester/${data.semesterId}`);
-			console.log('Semester check result:', semesterCheck);
-		} catch (checkError) {
-			console.error('Entity validation error:', checkError);
-		}
-
+		
 		const response = (await httpsAPI.post('/Internships', payload)) as Internship;
 		return response;
 	} catch (error: any) {
