@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -156,26 +156,26 @@ export default function PartnersPage() {
     const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
 	const { toast } = useToast()
 
-	const fetchPartners = async () => {
+	const fetchPartners = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const partnersData = await getPartners()
 			setPartners(partnersData)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to fetch partners:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể tải dữ liệu đối tác.',
+				description: error instanceof Error ? error.message : 'Không thể tải dữ liệu đối tác.',
 				variant: 'destructive',
 			})
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
 
 	useEffect(() => {
 		fetchPartners()
-	}, [])
+	}, [fetchPartners])
 
 	const handleCreate = async (data: CreatePartnerData) => {
 		try {
@@ -186,11 +186,11 @@ export default function PartnersPage() {
 			})
 			fetchPartners()
 			setSheetOpen(false)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to create partner:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể tạo đối tác.',
+				description: error instanceof Error ? error.message : 'Không thể tạo đối tác.',
 				variant: 'destructive',
 			})
 		}
@@ -207,11 +207,11 @@ export default function PartnersPage() {
 			fetchPartners()
 			setSheetOpen(false)
 			setSelectedPartner(null)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to update partner:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể cập nhật đối tác.',
+				description: error instanceof Error ? error.message : 'Không thể cập nhật đối tác.',
 				variant: 'destructive',
 			})
 		}
@@ -228,11 +228,11 @@ export default function PartnersPage() {
 			fetchPartners()
 			setDeleteDialogOpen(false)
 			setSelectedPartner(null)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to delete partner:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể xóa đối tác.',
+				description: error instanceof Error ? error.message : 'Không thể xóa đối tác.',
 				variant: 'destructive',
 			})
 		}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -65,7 +65,6 @@ export default function InternshipsPage() {
 	const [partners, setPartners] = useState<Partner[]>([])
 	const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
 	const [semesters, setSemesters] = useState<Semester[]>([])
-	const [filteredSemesters, setFilteredSemesters] = useState<Semester[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [isSheetOpen, setSheetOpen] = useState(false)
 	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -75,11 +74,7 @@ export default function InternshipsPage() {
 	const { toast } = useToast()
 
 	// Fetch data from API
-	useEffect(() => {
-		fetchData()
-	}, [])
-
-	const fetchData = async () => {
+	const fetchData = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const [internshipsData, usersData, partnersData, academicYearsData, semestersData] = await Promise.all([
@@ -94,25 +89,21 @@ export default function InternshipsPage() {
 			setPartners(partnersData)
 			setAcademicYears(academicYearsData)
 			setSemesters(semestersData)
-			
-			// If there are academic years, filter semesters for the first one
-			if (academicYearsData.length > 0) {
-				const firstYearSemesters = semestersData.filter(s => 
-					s.academicYearId === academicYearsData[0].id
-				)
-				setFilteredSemesters(firstYearSemesters)
-			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to fetch data:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể tải dữ liệu.',
+				description: error instanceof Error ? error.message : 'Không thể tải dữ liệu.',
 				variant: 'destructive',
 			})
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
+
+	useEffect(() => {
+		fetchData()
+	}, [fetchData])
 
 	const handleCreate = async (data: CreateInternshipData) => {
 		try {
@@ -139,11 +130,11 @@ export default function InternshipsPage() {
 			
 			fetchData();
 			setSheetOpen(false);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to create internship:', error);
 			
 			// Show appropriate error messages based on the error
-			if (error.message.includes('Lỗi khi tạo mới đợt thực tập')) {
+			if (error instanceof Error && error.message.includes('Lỗi khi tạo mới đợt thực tập')) {
 				toast({
 					title: 'Lỗi hệ thống',
 					description: 'Không thể tạo thực tập. Vui lòng liên hệ quản trị viên.',
@@ -152,13 +143,13 @@ export default function InternshipsPage() {
 			} else {
 				toast({
 					title: 'Lỗi',
-					description: error.message || 'Không thể tạo thực tập.',
+					description: error instanceof Error ? error.message : 'Không thể tạo thực tập.',
 					variant: 'destructive',
 				});
 			}
 			
 			// Try to provide more helpful information if possible
-			if (error.message.includes('Inner exception')) {
+			if (error instanceof Error && error.message.includes('Inner exception')) {
 				toast({
 					title: 'Chi tiết kỹ thuật',
 					description: 'Có lỗi với cơ sở dữ liệu. Vui lòng thử lại sau.',
@@ -181,11 +172,11 @@ export default function InternshipsPage() {
 			fetchData()
 			setSheetOpen(false)
 			setSelectedInternship(null)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to update internship:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể cập nhật thực tập.',
+				description: error instanceof Error ? error.message : 'Không thể cập nhật thực tập.',
 				variant: 'destructive',
 			})
 		}
@@ -202,11 +193,11 @@ export default function InternshipsPage() {
 			fetchData()
 			setDeleteDialogOpen(false)
 			setSelectedInternship(null)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to delete internship:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể xóa thực tập.',
+				description: error instanceof Error ? error.message : 'Không thể xóa thực tập.',
 				variant: 'destructive',
 			})
 		}
@@ -378,7 +369,7 @@ const InternshipForm = ({
 				}))
 			}
 		}
-	}, [formData.academicYearId, semesters])
+	}, [formData.academicYearId, formData.semesterId, semesters])
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {}

@@ -24,3 +24,6 @@ export interface Internship {
 	reportUrl?: string | null
 	grade?: number | null
 }
+
+// Internship Status enum
+export type InternshipStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'PENDING_EVALUATION' | 'APPROVED' | 'CANCELLED'

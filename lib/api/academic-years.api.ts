@@ -29,8 +29,8 @@ export const createAcademicYear = async (data: Omit<AcademicYear, 'id'>): Promis
 	try {
 		const response = (await httpsAPI.post('/AcademicYears', data)) as AcademicYear
 		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -48,8 +48,8 @@ export const updateAcademicYear = async (
 	try {
 		const response = (await httpsAPI.put(`/AcademicYears/${id}`, data)) as AcademicYear
 		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -62,8 +62,8 @@ export const updateAcademicYear = async (
 export const deleteAcademicYear = async (id: number): Promise<void> => {
 	try {
 		await httpsAPI.delete(`/AcademicYears/${id}`)
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }

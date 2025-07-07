@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -182,11 +182,7 @@ export default function SemestersPage() {
 	const { toast } = useToast()
 
 	// Fetch data from API
-	useEffect(() => {
-		loadData()
-	}, [])
-
-	const loadData = async () => {
+	const loadData = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const [semestersData, academicYearsData] = await Promise.all([
@@ -204,7 +200,11 @@ export default function SemestersPage() {
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
+
+	useEffect(() => {
+		loadData()
+	}, [loadData])
 
 	const handleCreate = async (data: CreateSemesterData) => {
 		try {

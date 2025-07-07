@@ -29,8 +29,8 @@ export const getInternships = async (): Promise<Internship[]> => {
 	try {
 		const response = (await httpsAPI.get('/Internships')) as Internship[]
 		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -44,8 +44,8 @@ export const getInternshipById = async (id: number): Promise<Internship> => {
 	try {
 		const response = (await httpsAPI.get(`/Internships/${id}`)) as Internship
 		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -75,32 +75,10 @@ export const createInternship = async (data: CreateInternshipData): Promise<Inte
 		
 		const response = (await httpsAPI.post('/Internships', payload)) as Internship;
 		return response;
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error('Failed to create internship:', error);
-		
-		// Extract the most detailed error information possible
-		let errorMessage = 'Không thể tạo thực tập mới';
-		
-		// Check for detailed error information in the response
-		if (error.response?.data) {
-			if (error.response.data.details) {
-				console.error('Server error details:', error.response.data.details);
-				errorMessage = `Lỗi hệ thống: ${error.response.data.details}`;
-			} else if (error.response.data.message) {
-				errorMessage = error.response.data.message;
-			}
-		} else if (error.message) {
-			errorMessage = error.message;
-		}
-		
-		// Log additional debugging information
-		if (error.response) {
-			console.error('Response status:', error.response.status);
-			console.error('Response headers:', error.response.headers);
-			console.error('Response data:', error.response.data);
-		}
-		
-		throw new Error(errorMessage);
+		const message = error instanceof Error ? error.message : 'Không thể tạo thực tập mới';
+		throw new Error(message);
 	}
 }
 
@@ -116,9 +94,8 @@ export const updateInternship = async (
 ): Promise<void> => {
 	try {
 		await httpsAPI.put(`/Internships/${id}`, { id, ...data })
-	} catch (error: any) {
-		// Extract the error message from the API response
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -131,9 +108,8 @@ export const updateInternship = async (
 export const deleteInternship = async (id: number): Promise<void> => {
 	try {
 		await httpsAPI.delete(`/Internships/${id}`)
-	} catch (error: any) {
-		// Extract the error message from the API response
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }

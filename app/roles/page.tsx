@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -104,7 +104,7 @@ export default function RolesPage() {
 	const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
 	const { toast } = useToast()
 
-	const fetchRoles = async () => {
+	const fetchRoles = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const rolesData = await getRoles()
@@ -119,11 +119,11 @@ export default function RolesPage() {
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
 
 	useEffect(() => {
 		fetchRoles()
-	}, [])
+	}, [fetchRoles])
 
 	const handleCreate = async (data: CreateRoleRequest) => {
 		try {

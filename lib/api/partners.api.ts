@@ -25,8 +25,8 @@ export const getPartners = async (): Promise<Partner[]> => {
 	try {
 		const response = (await httpsAPI.get('/Partners')) as Partner[]
 		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -40,8 +40,8 @@ export const getPartnerById = async (id: number): Promise<Partner> => {
 	try {
 		const response = (await httpsAPI.get(`/Partners/${id}`)) as Partner
 		return response
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -55,9 +55,8 @@ export const createPartner = async (data: CreatePartnerData): Promise<Partner> =
 	try {
 		const response = (await httpsAPI.post('/Partners', data)) as Partner
 		return response
-	} catch (error: any) {
-		// Extract the error message from the API response
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -74,9 +73,8 @@ export const updatePartner = async (
 ): Promise<void> => {
 	try {
 		await httpsAPI.put(`/Partners/${id}`, { id, ...data })
-	} catch (error: any) {
-		// Extract the error message from the API response
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }
@@ -89,9 +87,8 @@ export const updatePartner = async (
 export const deletePartner = async (id: number): Promise<void> => {
 	try {
 		await httpsAPI.delete(`/Partners/${id}`)
-	} catch (error: any) {
-		// Extract the error message from the API response
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }

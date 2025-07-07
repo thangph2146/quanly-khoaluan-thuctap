@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -33,7 +33,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
-import { DatePicker } from '@/components/ui/date-picker'
 
 import { DataTable } from '@/components/common/data-table'
 import { columns } from './columns'
@@ -221,11 +220,7 @@ export default function StudentsPage() {
 	const { toast } = useToast()
 
 	// Fetch data from API
-	useEffect(() => {
-		loadStudents()
-	}, [])
-
-	const loadStudents = async () => {
+	const loadStudents = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const data = await StudentsApi.getAll()
@@ -239,7 +234,11 @@ export default function StudentsPage() {
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
+
+	useEffect(() => {
+		loadStudents()
+	}, [loadStudents])
 
 	const handleCreate = async (data: Partial<Student>) => {
 		try {

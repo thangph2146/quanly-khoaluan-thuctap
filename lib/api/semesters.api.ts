@@ -53,15 +53,9 @@ export const createSemester = async (data: CreateSemesterData): Promise<Semester
 
 		const response = (await httpsAPI.post('/Semesters', payload)) as Semester
 		return response
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error('Error creating semester:', error)
-		const message =
-			error.response?.data?.message ||
-			(error.response?.data?.errors
-				? JSON.stringify(error.response.data.errors)
-				: null) ||
-			error.message ||
-			'Không thể tạo học kỳ mới'
+		const message = error instanceof Error ? error.message : 'Không thể tạo học kỳ mới'
 		throw new Error(message)
 	}
 }
@@ -89,8 +83,8 @@ export const updateSemester = async (
 export const deleteSemester = async (id: number): Promise<void> => {
 	try {
 		await httpsAPI.delete(`/Semesters/${id}`)
-	} catch (error: any) {
-		const message = error.response?.data?.message || error.message || 'Đã xảy ra lỗi không xác định'
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
 		throw new Error(message)
 	}
 }

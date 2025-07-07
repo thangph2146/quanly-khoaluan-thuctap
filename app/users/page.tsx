@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -171,7 +171,7 @@ export default function UsersPage() {
 	const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
 	const { toast } = useToast()
 
-	const fetchUsersAndRoles = async () => {
+	const fetchUsersAndRoles = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const [usersData, rolesData] = await Promise.all([getUsers(), getRoles()])
@@ -187,11 +187,11 @@ export default function UsersPage() {
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
 
 	useEffect(() => {
 		fetchUsersAndRoles()
-	}, [])
+	}, [fetchUsersAndRoles])
 
 	const handleCreate = async (
 		data: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'userRoles'>,
@@ -205,11 +205,11 @@ export default function UsersPage() {
 			})
 			fetchUsersAndRoles()
 			setSheetOpen(false)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to create user:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể tạo người dùng.',
+				description: error instanceof Error ? error.message : 'Không thể tạo người dùng.',
 				variant: 'destructive',
 			})
 		}
@@ -229,11 +229,11 @@ export default function UsersPage() {
 			fetchUsersAndRoles()
 			setSheetOpen(false)
 			setSelectedUser(null)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to update user:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể cập nhật người dùng.',
+				description: error instanceof Error ? error.message : 'Không thể cập nhật người dùng.',
 				variant: 'destructive',
 			})
 		}
@@ -250,11 +250,11 @@ export default function UsersPage() {
 			fetchUsersAndRoles()
 			setDeleteDialogOpen(false)
 			setSelectedUser(null)
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Failed to delete user:', error)
 			toast({
 				title: 'Lỗi',
-				description: error.message || 'Không thể xóa người dùng.',
+				description: error instanceof Error ? error.message : 'Không thể xóa người dùng.',
 				variant: 'destructive',
 			})
 		}

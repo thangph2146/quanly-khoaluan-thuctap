@@ -84,7 +84,7 @@ export const internshipsData: Internship[] = [
 	{
 		id: 1,
 		studentId: 20210001,
-		student: students[0],
+		student: students[0] as any, // Mock data - will be replaced with real API data
 		partnerId: 1,
 		partner: partners[0],
 		academicYearId: 2,
@@ -97,7 +97,7 @@ export const internshipsData: Internship[] = [
 	{
 		id: 2,
 		studentId: 20210002,
-		student: students[1],
+		student: students[1] as any, // Mock data - will be replaced with real API data
 		partnerId: 2,
 		partner: partners[1],
 		academicYearId: 1,
@@ -110,7 +110,7 @@ export const internshipsData: Internship[] = [
 	{
 		id: 3,
 		studentId: 20210003,
-		student: students[2],
+		student: students[2] as any, // Mock data - will be replaced with real API data
 		partnerId: 3,
 		partner: partners[2],
 		academicYearId: 1,

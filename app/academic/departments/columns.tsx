@@ -35,7 +35,7 @@ export const columns: ColumnDef<Department>[] = [
   {
     id: "actions",
     header: "Thao tác",
-    cell: ({ row }) => {
+    cell: () => {
       // This will be replaced with actual action buttons in the main component
       return <div className="text-center">Actions</div>
     },

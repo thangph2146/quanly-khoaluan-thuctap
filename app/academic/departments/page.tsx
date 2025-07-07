@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -199,11 +199,7 @@ export default function DepartmentsPage() {
 	const { toast } = useToast()
 
 	// Fetch data from API
-	useEffect(() => {
-		loadDepartments()
-	}, [])
-
-	const loadDepartments = async () => {
+	const loadDepartments = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			const data = await DepartmentsApi.getAll()
@@ -217,7 +213,11 @@ export default function DepartmentsPage() {
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [toast])
+
+	useEffect(() => {
+		loadDepartments()
+	}, [loadDepartments])
 
 	const handleCreate = async (data: Partial<Department>) => {
 		try {

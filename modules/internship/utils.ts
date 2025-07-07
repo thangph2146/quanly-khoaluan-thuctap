@@ -2,6 +2,8 @@ import { InternshipStatus } from "./types"
 
 export const getStatusColor = (status: InternshipStatus) => {
 	switch (status) {
+		case 'PENDING':
+			return 'bg-gray-500 hover:bg-gray-600'
 		case 'COMPLETED':
 			return 'bg-green-500 hover:bg-green-600'
 		case 'IN_PROGRESS':
@@ -19,6 +21,8 @@ export const getStatusColor = (status: InternshipStatus) => {
 
 export const getStatusText = (status: InternshipStatus) => {
     switch (status) {
+        case 'PENDING':
+            return 'Chờ xử lý'
         case 'APPROVED':
             return 'Đã duyệt'
         case 'IN_PROGRESS':

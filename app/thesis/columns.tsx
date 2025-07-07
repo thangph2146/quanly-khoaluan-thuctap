@@ -8,7 +8,13 @@ import {
 import { Thesis } from '@/modules/thesis/types'
 import { Edit, Trash2, Eye } from 'lucide-react'
 
-export const columns: ColumnDef<Thesis>[] = [
+type GetColumnsOptions = {
+	onEdit: (thesis: Thesis) => void
+	onDelete: (thesis: Thesis) => void
+	onView: (thesis: Thesis) => void
+}
+
+export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): ColumnDef<Thesis>[] => [
 	{
 		accessorKey: 'title',
 		header: ({ column }) => renderSortableHeader(column, 'Tên đề tài'),
@@ -17,22 +23,22 @@ export const columns: ColumnDef<Thesis>[] = [
         }
 	},
     {
-		accessorFn: row => row.student.fullName,
+		accessorFn: row => row.student?.fullName || 'N/A',
 		id: 'studentFullName',
 		header: ({ column }) => renderSortableHeader(column, 'Sinh viên'),
 	},
 	{
-		accessorFn: row => row.student.studentCode,
-		id: 'studentStudentCode',
+		accessorFn: row => row.student?.studentCode || 'N/A',
+		id: 'studentCode',
 		header: ({ column }) => renderSortableHeader(column, 'Mã SV'),
 	},
 	{
-		accessorFn: row => row.academicYear.name,
+		accessorFn: row => row.academicYear?.name || 'N/A',
 		id: 'academicYearName',
 		header: ({ column }) => renderSortableHeader(column, 'Niên khóa'),
 	},
 	{
-		accessorFn: row => row.semester.name,
+		accessorFn: row => row.semester?.name || 'N/A',
 		id: 'semesterName',
 		header: ({ column }) => renderSortableHeader(column, 'Học kỳ'),
 	},
@@ -50,17 +56,17 @@ export const columns: ColumnDef<Thesis>[] = [
                 {
 					label: 'Xem chi tiết',
 					icon: Eye,
-					onClick: (rowData) => console.log('View:', rowData),
+					onClick: onView,
 				},
 				{
 					label: 'Chỉnh sửa',
 					icon: Edit,
-					onClick: (rowData) => console.log('Edit:', rowData),
+					onClick: onEdit,
 				},
 				{
 					label: 'Xóa',
 					icon: Trash2,
-					onClick: (rowData) => console.log('Delete:', rowData),
+					onClick: onDelete,
 					variant: 'destructive',
 				},
 			]),

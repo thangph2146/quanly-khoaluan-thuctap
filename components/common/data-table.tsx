@@ -58,7 +58,7 @@ function flattenTreeStructure<TData>(
 	const flatten = (items: TData[], level: number = 0) => {
 		items.forEach(item => {
 			// Add a temporary level property for rendering
-			;(item as any)._level = level
+			;(item as TData & { _level: number })._level = level
 			result.push(item)
 			
 			// Add children recursively
@@ -82,7 +82,6 @@ export function DataTable<TData, TValue>({
 	onRowClick,
 	isTreeTable = false,
 	getChildren,
-	getParentId,
 	getId,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = React.useState<SortingState>([])
@@ -146,7 +145,7 @@ export function DataTable<TData, TValue>({
 		if (!isTreeTable) return 0
 		
 		// Use the temporary _level property added during flattening
-		return (row as any)._level || 0
+		return (row as TData & { _level?: number })._level || 0
 	}
 
 	const shouldShowRow = (row: TData): boolean => {
