@@ -12,18 +12,40 @@ import {
 import { appConfig } from "@/modules/config/data"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { File } from "lucide-react"
+import { File, Menu, AlertTriangle } from "lucide-react"
+import { useMenus } from "@/hooks/useMenus"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { menus, isLoading, error } = useMenus()
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <Button variant="ghost" size="icon">
-          <File />
+          <Menu />
         </Button>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={appConfig.navMain} user={appConfig.user} />
+        {isLoading ? (
+          <div className="space-y-2 p-2">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : error ? (
+          <Alert variant="destructive" className="m-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Không thể tải menu: {error}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <NavMain user={appConfig.user} />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <Separator className="my-2" />
