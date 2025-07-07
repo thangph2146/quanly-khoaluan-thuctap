@@ -39,6 +39,24 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 		setExpandedMenus(newExpanded)
 	}
 
+	const expandAll = () => {
+		const allMenuIds = new Set<number>()
+		const collectMenuIds = (menus: Menu[]) => {
+			menus.forEach(menu => {
+				if (menu.childMenus && menu.childMenus.length > 0) {
+					allMenuIds.add(menu.id)
+					collectMenuIds(menu.childMenus)
+				}
+			})
+		}
+		collectMenuIds(menus)
+		setExpandedMenus(allMenuIds)
+	}
+
+	const collapseAll = () => {
+		setExpandedMenus(new Set())
+	}
+
 	// Filter menus based on search term
 	const filteredMenus = useMemo(() => {
 		if (!searchTerm.trim()) return menus
@@ -78,8 +96,9 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 		// Main menu row
 		rows.push(
 			<TableRow key={menu.id} className={cn(
-				"hover:bg-gray-50",
-				level > 0 && "bg-gray-25"
+				"hover:bg-gray-50 transition-colors",
+				level > 0 && "bg-gray-25/50",
+				level > 1 && "bg-gray-25/80"
 			)}>
 				<TableCell className="py-3">
 					<div className="flex items-center gap-2" style={{ paddingLeft: `${indent}px` }}>
@@ -87,17 +106,19 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-6 w-6 p-0"
+								className="h-6 w-6 p-0 hover:bg-blue-100 transition-colors"
 								onClick={() => toggleExpand(menu.id)}
 							>
 								{isExpanded ? (
-									<ChevronDown className="h-4 w-4" />
+									<ChevronDown className="h-4 w-4 text-blue-600" />
 								) : (
-									<ChevronRight className="h-4 w-4" />
+									<ChevronRight className="h-4 w-4 text-blue-600" />
 								)}
 							</Button>
 						) : (
-							<div className="h-6 w-6" />
+							<div className="h-6 w-6 flex items-center justify-center">
+								<div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+							</div>
 						)}
 						
 						{hasChildren ? (
@@ -106,18 +127,25 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 							<Link className="h-4 w-4 text-gray-500" />
 						)}
 						
-						<span className="font-medium">{menu.name}</span>
+						<span className={cn(
+							"font-medium",
+							level === 0 && "text-gray-900",
+							level > 0 && "text-gray-700"
+						)}>{menu.name}</span>
 						
 						{hasChildren && (
-							<Badge variant="secondary" className="text-xs">
-								{menu.childMenus?.length} items
+							<Badge variant="secondary" className="text-xs ml-2">
+								{menu.childMenus?.length}
 							</Badge>
 						)}
 					</div>
 				</TableCell>
 				
 				<TableCell>
-					<code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
+					<code className={cn(
+						"bg-gray-100 px-2 py-1 rounded text-sm font-mono",
+						level > 0 && "bg-gray-50 text-gray-600"
+					)}>
 						{menu.path}
 					</code>
 				</TableCell>
@@ -126,7 +154,7 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 					{menu.icon ? (
 						<div className="flex items-center gap-2">
 							<DynamicIcon name={menu.icon} size={16} />
-							<span className="text-sm">{menu.icon}</span>
+							<span className="text-sm text-gray-600">{menu.icon}</span>
 						</div>
 					) : (
 						<span className="text-gray-400 text-sm">Không có</span>
@@ -140,14 +168,19 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 				</TableCell>
 				
 				<TableCell>
-					<Badge variant={level === 0 ? 'default' : 'secondary'}>
-						{level === 0 ? 'Menu chính' : 'Submenu'}
+					<Badge variant={level === 0 ? 'default' : 'secondary'} className={cn(
+						level === 0 && "bg-blue-100 text-blue-800",
+						level > 0 && "bg-green-100 text-green-800"
+					)}>
+						{level === 0 ? 'Menu chính' : `Submenu (L${level})`}
 					</Badge>
 				</TableCell>
 				
 				<TableCell>
 					{hasChildren ? (
-						<Badge variant="outline">{menu.childMenus?.length} menu con</Badge>
+						<Badge variant="outline" className="text-blue-600 border-blue-200">
+							{menu.childMenus?.length} menu con
+						</Badge>
 					) : (
 						<span className="text-gray-400 text-sm">-</span>
 					)}
@@ -159,7 +192,7 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 							variant="ghost"
 							size="sm"
 							onClick={() => onView(menu)}
-							className="h-8 w-8 p-0"
+							className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
 						>
 							<Eye className="h-4 w-4" />
 							<span className="sr-only">Xem chi tiết</span>
@@ -168,7 +201,7 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 							variant="ghost"
 							size="sm"
 							onClick={() => onEdit(menu)}
-							className="h-8 w-8 p-0"
+							className="h-8 w-8 p-0 hover:bg-orange-50 hover:text-orange-600"
 						>
 							<Edit className="h-4 w-4" />
 							<span className="sr-only">Chỉnh sửa</span>
@@ -177,7 +210,7 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 							variant="ghost"
 							size="sm"
 							onClick={() => onDelete(menu)}
-							className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
+							className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
 						>
 							<Trash2 className="h-4 w-4" />
 							<span className="sr-only">Xóa</span>
@@ -212,15 +245,38 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 
 	return (
 		<div className="space-y-4">
-			{/* Search input */}
-			<div className="relative">
-				<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-				<Input
-					placeholder="Tìm kiếm menu theo tên, đường dẫn hoặc icon..."
-					value={searchTerm}
-					onChange={(e) => setSearchTerm(e.target.value)}
-					className="pl-10"
-				/>
+			{/* Search and Controls */}
+			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+				<div className="relative flex-1 max-w-md">
+					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+					<Input
+						placeholder="Tìm kiếm menu theo tên, đường dẫn hoặc icon..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						className="pl-10"
+					/>
+				</div>
+				
+				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={expandAll}
+						className="text-blue-600 hover:bg-blue-50"
+					>
+						<ChevronDown className="h-4 w-4 mr-1" />
+						Mở rộng tất cả
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={collapseAll}
+						className="text-orange-600 hover:bg-orange-50"
+					>
+						<ChevronRight className="h-4 w-4 mr-1" />
+						Thu gọn tất cả
+					</Button>
+				</div>
 			</div>
 
 			{/* Table */}
@@ -249,6 +305,17 @@ export function MenuTable({ menus, onEdit, onDelete, onView, isLoading }: MenuTa
 						)}
 					</TableBody>
 				</Table>
+			</div>
+
+			{/* Statistics */}
+			<div className="flex items-center justify-between text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-lg">
+				<span>
+					Hiển thị {sortedMenus.length} menu{sortedMenus.length > 1 ? 's' : ''}
+					{searchTerm && ` (lọc từ ${menus.length} menu)`}
+				</span>
+				<span>
+					{expandedMenus.size} menu đang mở rộng
+				</span>
 			</div>
 		</div>
 	)

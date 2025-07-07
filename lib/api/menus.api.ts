@@ -88,7 +88,17 @@ export const createMenu = async (data: CreateMenuData): Promise<Menu> => {
  */
 export const updateMenu = async (id: number, data: UpdateMenuData): Promise<Menu> => {
 	try {
-		const response = await httpsAPI.put(`/Menus/${id}`, data)
+		// First get the existing menu to preserve all properties
+		const existingMenu = await getMenuById(id)
+		
+		// Create a complete Menu object with updated data
+		const menuToUpdate: Menu = {
+			...existingMenu,
+			...data,
+			id: id // Ensure the ID is set correctly
+		}
+		
+		const response = await httpsAPI.put(`/Menus/${id}`, menuToUpdate)
 		return response.data
 	} catch (error: unknown) {
 		console.error('Error updating menu:', error)
