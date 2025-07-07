@@ -40,8 +40,8 @@ httpsAPI.interceptors.request.use(
 httpsAPI.interceptors.response.use(
 	(response: AxiosResponse) => {
 		// Bất kỳ status code nào trong khoảng 2xx sẽ đi vào đây
-		// Trả về chỉ data từ response
-		return response.data
+		// Trả về response object để có thể truy cập vào response.data
+		return response
 	},
 	error => {
 		// Bất kỳ status code nào ngoài khoảng 2xx sẽ đi vào đây

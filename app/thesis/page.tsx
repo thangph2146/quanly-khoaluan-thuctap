@@ -50,8 +50,8 @@ import {
 	updateThesis,
 	type CreateThesisData,
 } from '@/lib/api/theses.api'
-import { getUsers } from '@/lib/api/users.api'
-import { User } from '@/modules/users/types'
+import { StudentsApi } from '@/lib/api/students.api'
+import { Student } from '@/modules/academic/types'
 import { AcademicYear, Semester } from '@/modules/config/types'
 import { AcademicYearsApi } from '@/lib/api/academic-years.api'
 import { SemestersApi } from '@/lib/api/semesters.api'
@@ -59,7 +59,7 @@ import { SemestersApi } from '@/lib/api/semesters.api'
 // Main Page Component
 export default function ThesesPage() {
 	const [theses, setTheses] = useState<Thesis[]>([])
-	const [users, setUsers] = useState<User[]>([])
+	const [students, setStudents] = useState<Student[]>([])
 	const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
 	const [semesters, setSemesters] = useState<Semester[]>([])
 	const [isLoading, setIsLoading] = useState(true)
@@ -74,18 +74,30 @@ export default function ThesesPage() {
 	const fetchData = useCallback(async () => {
 		try {
 			setIsLoading(true)
-			const [thesesData, usersData, academicYearsData, semestersData] = await Promise.all([
+			const [thesesData, studentsData, academicYearsData, semestersData] = await Promise.all([
 				getTheses(),
-				getUsers(),
+				StudentsApi.getAll(),
 				AcademicYearsApi.getAll(),
 				SemestersApi.getAll(),
 			])
-			setTheses(thesesData)
-			setUsers(usersData)
-			setAcademicYears(academicYearsData)
-			setSemesters(semestersData)
+			
+			// Debug logging
+			console.log('Fetched theses data:', thesesData)
+			console.log('Fetched students data:', studentsData)
+			console.log('Fetched academic years data:', academicYearsData)
+			console.log('Fetched semesters data:', semestersData)
+			
+			setTheses(Array.isArray(thesesData) ? thesesData : [])
+			setStudents(Array.isArray(studentsData) ? studentsData : [])
+			setAcademicYears(Array.isArray(academicYearsData) ? academicYearsData : [])
+			setSemesters(Array.isArray(semestersData) ? semestersData : [])
 		} catch (error: unknown) {
 			console.error('Failed to fetch data:', error)
+			// Ensure states remain as empty arrays on error
+			setTheses([])
+			setStudents([])
+			setAcademicYears([])
+			setSemesters([])
 			toast({
 				title: 'Lỗi',
 				description: error instanceof Error ? error.message : 'Không thể tải dữ liệu.',
@@ -224,7 +236,7 @@ export default function ThesesPage() {
 					</SheetHeader>
 					<ThesisForm
 						thesis={sheetMode === 'edit' ? selectedThesis : null}
-						users={users}
+						students={students}
 						academicYears={academicYears}
 						semesters={semesters}
 						onSave={sheetMode === 'create' ? handleCreate : handleUpdate}
@@ -265,25 +277,19 @@ export default function ThesesPage() {
 // Form Component
 const ThesisForm = ({
 	thesis,
-	users,
+	students,
 	academicYears,
 	semesters,
 	onSave,
 	onCancel,
 }: {
 	thesis?: Thesis | null
-	users: User[]
+	students: Student[]
 	academicYears: AcademicYear[]
 	semesters: Semester[]
 	onSave: (data: CreateThesisData) => void
 	onCancel: () => void
 }) => {
-	// Filter users to only show students
-	const students = users.filter(user => 
-		!user.userRoles || user.userRoles.length === 0 || 
-		user.userRoles.some(role => role.toLowerCase().includes('student'))
-	)
-
 	const [formData, setFormData] = useState<CreateThesisData>({
 		title: thesis?.title || '',
 		studentId: thesis?.studentId || 0,
@@ -397,7 +403,7 @@ const ThesisForm = ({
 					<SelectContent>
 						{students.map((student) => (
 							<SelectItem key={student.id} value={student.id.toString()}>
-								{student.name} ({student.email})
+								{student.fullName} ({student.email})
 							</SelectItem>
 						))}
 					</SelectContent>

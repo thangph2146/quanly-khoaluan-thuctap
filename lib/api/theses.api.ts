@@ -22,7 +22,7 @@ export interface UpdateThesisData {
 // Get all theses
 export const getTheses = async (): Promise<Thesis[]> => {
 	try {
-		const response = await httpsAPI.get<Thesis[]>('/api/Theses')
+		const response = await httpsAPI.get<Thesis[]>('/Theses')
 		return response.data
 	} catch (error) {
 		console.error('Error fetching theses:', error)
@@ -33,7 +33,7 @@ export const getTheses = async (): Promise<Thesis[]> => {
 // Get a single thesis by ID
 export const getThesis = async (id: number): Promise<Thesis> => {
 	try {
-		const response = await httpsAPI.get<Thesis>(`/api/Theses/${id}`)
+		const response = await httpsAPI.get<Thesis>(`/Theses/${id}`)
 		return response.data
 	} catch (error) {
 		console.error('Error fetching thesis:', error)
@@ -44,7 +44,7 @@ export const getThesis = async (id: number): Promise<Thesis> => {
 // Create a new thesis
 export const createThesis = async (data: CreateThesisData): Promise<Thesis> => {
 	try {
-		const response = await httpsAPI.post<Thesis>('/api/Theses', data)
+		const response = await httpsAPI.post<Thesis>('/Theses', data)
 		return response.data
 	} catch (error) {
 		console.error('Error creating thesis:', error)
@@ -55,7 +55,7 @@ export const createThesis = async (data: CreateThesisData): Promise<Thesis> => {
 // Update an existing thesis
 export const updateThesis = async (id: number, data: UpdateThesisData): Promise<Thesis> => {
 	try {
-		const response = await httpsAPI.put<Thesis>(`/api/Theses/${id}`, data)
+		const response = await httpsAPI.put<Thesis>(`/Theses/${id}`, data)
 		return response.data
 	} catch (error) {
 		console.error('Error updating thesis:', error)
@@ -66,7 +66,7 @@ export const updateThesis = async (id: number, data: UpdateThesisData): Promise<
 // Delete a thesis
 export const deleteThesis = async (id: number): Promise<void> => {
 	try {
-		await httpsAPI.delete(`/api/Theses/${id}`)
+		await httpsAPI.delete(`/Theses/${id}`)
 	} catch (error) {
 		console.error('Error deleting thesis:', error)
 		throw new Error('Không thể xóa khóa luận')

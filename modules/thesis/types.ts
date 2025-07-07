@@ -1,5 +1,5 @@
 import { AcademicYear, Semester } from '@/modules/config/types'
-import { Student } from '@/modules/users/types'
+import { Student } from '@/modules/academic/types'
 
 // Thesis status type
 export type ThesisStatus = 'COMPLETED' | 'IN_PROGRESS' | 'PENDING_DEFENSE' | 'APPROVED' | 'OVERDUE' | 'CANCELLED'

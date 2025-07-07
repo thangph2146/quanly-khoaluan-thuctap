@@ -14,7 +14,10 @@ type GetColumnsOptions = {
 	onView: (thesis: Thesis) => void
 }
 
-export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): ColumnDef<Thesis>[] => [
+export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): ColumnDef<Thesis>[] => {
+	console.log('getColumns called with options:', { onEdit, onDelete, onView })
+	
+	return [
 	{
 		accessorKey: 'title',
 		header: ({ column }) => renderSortableHeader(column, 'Tên đề tài'),
@@ -23,7 +26,10 @@ export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): Col
         }
 	},
     {
-		accessorFn: row => row.student?.fullName || 'N/A',
+		accessorFn: row => {
+			console.log('Student accessor - row:', row)
+			return row.student?.fullName || 'N/A'
+		},
 		id: 'studentFullName',
 		header: ({ column }) => renderSortableHeader(column, 'Sinh viên'),
 	},
@@ -46,7 +52,16 @@ export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): Col
 		accessorKey: 'submissionDate',
 		header: ({ column }) => renderSortableHeader(column, 'Hạn nộp'),
 		cell: ({ row }) => {
-			return new Date(row.original.submissionDate).toLocaleDateString('vi-VN')
+			const date = new Date(row.original.submissionDate)
+			// Check if date is valid
+			if (isNaN(date.getTime())) {
+				return 'Không hợp lệ'
+			}
+			return date.toLocaleDateString('vi-VN', {
+				day: '2-digit',
+				month: '2-digit',
+				year: 'numeric'
+			})
 		},
 	},
 	{
@@ -69,6 +84,7 @@ export const getColumns = ({ onEdit, onDelete, onView }: GetColumnsOptions): Col
 					onClick: onDelete,
 					variant: 'destructive',
 				},
-			]),
+			]		),
 	},
 ] 
+}
