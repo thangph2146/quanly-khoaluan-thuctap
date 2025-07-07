@@ -2,7 +2,7 @@
 export * from './types'
 
 // Export services
-export * from './services'
+export { UserService } from './services'
 
 // Export hooks
 export * from './hooks'

@@ -32,7 +32,7 @@ export class StudentService {
       email: data.email,
       phoneNumber: data.phoneNumber,
     }
-    return StudentsApi.update(id, fullData as any)
+    await StudentsApi.update(id, fullData as any)
   }
 
   static async delete(id: number): Promise<void> {
