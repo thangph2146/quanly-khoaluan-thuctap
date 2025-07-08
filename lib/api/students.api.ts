@@ -1,4 +1,4 @@
-import { Student } from '@/modules/academic/types'
+import { Student } from '@/modules/students/types'
 import httpsAPI from './client'
 import { AxiosError } from 'axios'
 

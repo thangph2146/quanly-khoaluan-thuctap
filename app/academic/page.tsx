@@ -9,32 +9,32 @@ import { GraduationCap, Calendar, Users, Building2 } from 'lucide-react'
 export default function AcademicPage() {
 	const academicModules = [
 		{
-			title: 'Quản lý Khoa',
-			description: 'Quản lý thông tin các khoa, đơn vị trong trường',
-			href: '/academic/departments',
-			icon: Building2,
+			title: 'Quản lý Năm học',
+			description: 'Tạo và quản lý thông tin các năm học',
+			href: '/academic/academic-years',
+			icon: Calendar,
 			color: 'bg-blue-50 hover:bg-blue-100',
 			iconColor: 'text-blue-600',
 		},
 		{
-			title: 'Năm học',
-			description: 'Quản lý các năm học trong hệ thống',
-			href: '/academic/years',
-			icon: Calendar,
+			title: 'Quản lý Học kỳ',
+			description: 'Tạo và quản lý thông tin các học kỳ',
+			href: '/academic/semesters',
+			icon: GraduationCap,
 			color: 'bg-green-50 hover:bg-green-100',
 			iconColor: 'text-green-600',
 		},
 		{
-			title: 'Học kỳ',
-			description: 'Quản lý các học kỳ trong từng năm học',
-			href: '/academic/semesters',
-			icon: GraduationCap,
+			title: 'Quản lý Đơn vị',
+			description: 'Tạo và quản lý thông tin khoa/viện',
+			href: '/academic/departments',
+			icon: Building2,
 			color: 'bg-purple-50 hover:bg-purple-100',
 			iconColor: 'text-purple-600',
 		},
 		{
-			title: 'Sinh viên',
-			description: 'Quản lý thông tin sinh viên trong hệ thống',
+			title: 'Quản lý Sinh viên',
+			description: 'Tạo và quản lý thông tin sinh viên',
 			href: '/academic/students',
 			icon: Users,
 			color: 'bg-orange-50 hover:bg-orange-100',
@@ -43,7 +43,7 @@ export default function AcademicPage() {
 	]
 
 	return (
-		<div className="container mx-auto py-6 space-y-6">
+		<div className="container mx-auto py-6 space-y-6 p-4">
 			{/* Page Header */}
 			<PageHeader
 				title="Quản lý Học vụ"

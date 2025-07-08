@@ -9,7 +9,7 @@ import {
   Sparkles,
 } from "lucide-react"
 
-import { User } from "@/modules/users/types"
+// import type { User } from "@/modules/users/types"
 import {
   Avatar,
   AvatarFallback,
@@ -31,8 +31,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavUser({ user }: { user: User }) {
+export function NavUser() {
   const { isMobile } = useSidebar()
+  
+  // Mock user data - replace with actual user data from context/props
+  const user = {
+    name: "Admin User",
+    email: "admin@example.com", 
+    avatarUrl: undefined
+  }
 
   return (
     <SidebarMenu>

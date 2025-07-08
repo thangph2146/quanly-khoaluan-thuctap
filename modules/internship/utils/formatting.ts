@@ -1,4 +1,4 @@
-import { InternshipStatus } from "./types"
+import { InternshipStatus } from "../types"
 
 export const getStatusColor = (status: InternshipStatus) => {
 	switch (status) {

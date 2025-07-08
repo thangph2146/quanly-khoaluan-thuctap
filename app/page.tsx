@@ -288,6 +288,102 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Academic Modules Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Quản lý Học vụ
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Các module quản lý học vụ cơ bản đã được tích hợp vào hệ thống
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle className="text-lg">Năm học</CardTitle>
+                <CardDescription>
+                  Quản lý thông tin năm học
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link href="/academic/academic-years">
+                  <Button variant="outline" className="w-full">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle className="text-lg">Học kỳ</CardTitle>
+                <CardDescription>
+                  Quản lý thông tin học kỳ
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link href="/academic/semesters">
+                  <Button variant="outline" className="w-full">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="h-6 w-6 text-purple-600" />
+                </div>
+                <CardTitle className="text-lg">Đơn vị</CardTitle>
+                <CardDescription>
+                  Quản lý thông tin khoa/viện
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link href="/academic/departments">
+                  <Button variant="outline" className="w-full">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-6 w-6 text-orange-600" />
+                </div>
+                <CardTitle className="text-lg">Sinh viên</CardTitle>
+                <CardDescription>
+                  Quản lý thông tin sinh viên
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link href="/academic/students">
+                  <Button variant="outline" className="w-full">
+                    Xem chi tiết
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">

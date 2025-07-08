@@ -1,4 +1,5 @@
-import { RoleMenu, RolePermission } from '@/modules/auth/types'
+import { RoleMenu } from '@/modules/menu/types'
+import { RolePermission } from '@/modules/permission/types'
 
 export type RoleName = 'ADMIN' | 'LECTURER' | 'STUDENT' | 'BUSINESS_REP'
 

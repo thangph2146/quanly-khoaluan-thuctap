@@ -106,7 +106,7 @@ export default function UsersPage() {
 	const isFormLoading = isCreating || isUpdating
 
 	return (
-		<div className="container mx-auto py-6 space-y-6">
+		<div className="container mx-auto py-6 space-y-6 p-4">
 			{/* Page Header */}
 			<PageHeader
 				title="Quản lý Người dùng"

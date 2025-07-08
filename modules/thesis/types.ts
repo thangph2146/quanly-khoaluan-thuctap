@@ -1,5 +1,6 @@
-import { AcademicYear, Semester } from "@/modules/config/types";
-import { Student } from "@/modules/academic/types";
+import { AcademicYear } from "@/modules/academic-years/types";
+import { Semester } from "@/modules/semesters/types";
+import { Student } from "@/modules/students/types";
 
 // Thesis status type
 export type ThesisStatus =
@@ -21,6 +22,13 @@ export interface Thesis {
   semesterId: number;
   semester: Semester;
   submissionDate: string;
+  status?: ThesisStatus; // Optional since not always returned from API
+  supervisorId?: number; // Optional supervisor
+  supervisor?: {
+    id: number;
+    fullName: string;
+    email?: string;
+  };
 }
 
 // Additional types for thesis defense
@@ -77,4 +85,47 @@ export interface UpdateThesisData {
   academicYearId?: number;
   semesterId?: number;
   status?: string;
+}
+
+// CRUD types for thesis operations
+export interface CreateThesisData {
+  title: string;
+  studentId: number;
+  academicYearId: number;
+  semesterId: number;
+  supervisorId?: number;
+}
+
+export interface UpdateThesisData {
+  title?: string;
+  studentId?: number;
+  academicYearId?: number;
+  semesterId?: number;
+  supervisorId?: number;
+  status?: string;
+}
+
+// Props for thesis components
+export interface ThesisListProps {
+  theses: Thesis[];
+  isLoading: boolean;
+  onCreate: () => void;
+  onEdit: (thesis: Thesis) => void;
+  onDelete: (thesis: Thesis) => void;
+  onView?: (thesis: Thesis) => void;
+}
+
+export interface ThesisFormProps {
+  thesis?: Thesis | null;
+  students: Student[];
+  academicYears: AcademicYear[];
+  semesters: Semester[];
+  onSubmit: (data: CreateThesisData | UpdateThesisData) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+  mode: "create" | "edit";
+}
+
+export interface ThesisDetailsProps {
+  thesis: Thesis;
 }

@@ -1,5 +1,0 @@
-export { AcademicYearList } from './AcademicYearList'
-export { AcademicYearForm } from './AcademicYearForm'
-export { SemesterList } from './SemesterList'
-export { SemesterForm } from './SemesterForm'
-export { SemesterDetails } from './SemesterDetails'

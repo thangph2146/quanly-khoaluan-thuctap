@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import type { Student, CreateStudentData, UpdateStudentData, StudentFormProps } from '../types'
 
 export function StudentForm({
@@ -98,79 +99,83 @@ export function StudentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="studentCode">Mã sinh viên *</Label>
-        <Input
-          id="studentCode"
-          value={formData.studentCode}
-          onChange={(e) => handleChange('studentCode', e.target.value)}
-          placeholder="Ví dụ: 2021001"
-          required
-          disabled={isLoading}
-          className={errors.studentCode ? 'border-red-500' : ''}
-        />
-        {errors.studentCode && <p className="text-sm text-red-500">{errors.studentCode}</p>}
-      </div>
+    <div className="flex flex-col h-full">
+      <ScrollArea className="flex-1 p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="studentCode">Mã sinh viên *</Label>
+            <Input
+              id="studentCode"
+              value={formData.studentCode}
+              onChange={(e) => handleChange('studentCode', e.target.value)}
+              placeholder="Ví dụ: 2021001"
+              required
+              disabled={isLoading}
+              className={errors.studentCode ? 'border-red-500' : ''}
+            />
+            {errors.studentCode && <p className="text-sm text-red-500">{errors.studentCode}</p>}
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="fullName">Họ và tên *</Label>
-        <Input
-          id="fullName"
-          value={formData.fullName}
-          onChange={(e) => handleChange('fullName', e.target.value)}
-          placeholder="Nhập họ và tên"
-          required
-          disabled={isLoading}
-          className={errors.fullName ? 'border-red-500' : ''}
-        />
-        {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Họ và tên *</Label>
+            <Input
+              id="fullName"
+              value={formData.fullName}
+              onChange={(e) => handleChange('fullName', e.target.value)}
+              placeholder="Nhập họ và tên"
+              required
+              disabled={isLoading}
+              className={errors.fullName ? 'border-red-500' : ''}
+            />
+            {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="dateOfBirth">Ngày sinh *</Label>
-        <Input
-          id="dateOfBirth"
-          type="date"
-          value={formData.dateOfBirth}
-          onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-          required
-          disabled={isLoading}
-          className={errors.dateOfBirth ? 'border-red-500' : ''}
-        />
-        {errors.dateOfBirth && <p className="text-sm text-red-500">{errors.dateOfBirth}</p>}
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="dateOfBirth">Ngày sinh *</Label>
+            <Input
+              id="dateOfBirth"
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+              required
+              disabled={isLoading}
+              className={errors.dateOfBirth ? 'border-red-500' : ''}
+            />
+            {errors.dateOfBirth && <p className="text-sm text-red-500">{errors.dateOfBirth}</p>}
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => handleChange('email', e.target.value)}
-          placeholder="Nhập địa chỉ email"
-          required
-          disabled={isLoading}
-          className={errors.email ? 'border-red-500' : ''}
-        />
-        {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              placeholder="Nhập địa chỉ email"
+              required
+              disabled={isLoading}
+              className={errors.email ? 'border-red-500' : ''}
+            />
+            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phoneNumber">Số điện thoại *</Label>
-        <Input
-          id="phoneNumber"
-          value={formData.phoneNumber}
-          onChange={(e) => handleChange('phoneNumber', e.target.value)}
-          placeholder="Nhập số điện thoại"
-          required
-          disabled={isLoading}
-          className={errors.phoneNumber ? 'border-red-500' : ''}
-        />
-        {errors.phoneNumber && <p className="text-sm text-red-500">{errors.phoneNumber}</p>}
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Số điện thoại *</Label>
+            <Input
+              id="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={(e) => handleChange('phoneNumber', e.target.value)}
+              placeholder="Nhập số điện thoại"
+              required
+              disabled={isLoading}
+              className={errors.phoneNumber ? 'border-red-500' : ''}
+            />
+            {errors.phoneNumber && <p className="text-sm text-red-500">{errors.phoneNumber}</p>}
+          </div>
+        </form>
+      </ScrollArea>
 
-      <div className="flex justify-end space-x-2 pt-4">
+      <div className="flex justify-end space-x-2 p-4 border-t bg-background">
         <Button
           type="button"
           variant="outline"
@@ -179,10 +184,17 @@ export function StudentForm({
         >
           Hủy
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            handleSubmit(e as any)
+          }}
+          disabled={isLoading}
+        >
           {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
         </Button>
       </div>
-    </form>
+    </div>
   )
 }

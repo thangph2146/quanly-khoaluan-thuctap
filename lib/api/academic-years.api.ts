@@ -1,5 +1,5 @@
 import httpsAPI from './client'
-import type { AcademicYear } from '@/modules/config/types'
+import type { AcademicYear } from '@/modules/academic-years/types'
 
 /**
  * Fetches all academic years from the API.

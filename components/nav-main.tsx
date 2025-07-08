@@ -14,11 +14,9 @@ import {
 } from '@/components/ui/sidebar'
 import { Menu } from '@/modules/menu/types'
 import { DynamicIcon } from '@/lib/utils/icons'
-import { hasPermission } from '@/modules/auth/utils'
-import { User } from '@/modules/users/types'
 import { useMenus } from '@/hooks/useMenus'
 
-export function NavMain({ user }: { user: User }) {
+export function NavMain() {
 	const { menus, isLoading } = useMenus()
 	const pathname = usePathname()
 
@@ -41,7 +39,7 @@ export function NavMain({ user }: { user: User }) {
 	// Filter menus based on permissions and build navigation
 	const buildNavigation = (menuItems: Menu[]): React.ReactNode[] => {
 		return menuItems
-			.filter((menu) => {
+			.filter(() => {
 				// Check if user has permission for this menu
 				// For now, we'll assume all menus are accessible
 				// You can implement permission checking here based on your requirements
@@ -70,7 +68,7 @@ export function NavMain({ user }: { user: User }) {
 								</SidebarMenuButton>
 								<SidebarMenuSub>
 									{sortedChildren
-										.filter((child) => true) // Add permission check here if needed
+										.filter(() => true) // Add permission check here if needed
 										.map((child) => (
 											<SidebarMenuSubItem key={child.id}>
 												<SidebarMenuSubButton

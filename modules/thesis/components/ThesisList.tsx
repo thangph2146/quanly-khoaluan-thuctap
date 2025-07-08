@@ -28,32 +28,55 @@ export function ThesisList({ theses, isLoading, onCreate, onEdit, onDelete, onVi
       ),
     },
     {
-      accessorKey: 'studentName',
+      accessorKey: 'student',
       header: 'Sinh viên',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('studentName')}</div>
-      ),
-    },
-    {
-      accessorKey: 'supervisor',
-      header: 'Giảng viên hướng dẫn',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('supervisor')}</div>
-      ),
+      cell: ({ row }: { row: any }) => {
+        const student = row.getValue('student')
+        return (
+          <div className="text-sm">
+            {student?.fullName || 'N/A'}
+            {student?.studentCode && (
+              <div className="text-xs text-gray-500">{student.studentCode}</div>
+            )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: 'academicYear',
       header: 'Năm học',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('academicYear')}</div>
-      ),
+      cell: ({ row }: { row: any }) => {
+        const academicYear = row.getValue('academicYear')
+        return (
+          <div className="text-sm">
+            {academicYear?.name || 'N/A'}
+          </div>
+        )
+      },
     },
     {
       accessorKey: 'semester',
       header: 'Học kỳ',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('semester')}</div>
-      ),
+      cell: ({ row }: { row: any }) => {
+        const semester = row.getValue('semester')
+        return (
+          <div className="text-sm">
+            {semester?.name || 'N/A'}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'submissionDate',
+      header: 'Ngày nộp',
+      cell: ({ row }: { row: any }) => {
+        const submissionDate = row.getValue('submissionDate')
+        return (
+          <div className="text-sm">
+            {submissionDate ? new Date(submissionDate).toLocaleDateString('vi-VN') : 'N/A'}
+          </div>
+        )
+      },
     },
     {
       accessorKey: 'status',
@@ -81,7 +104,7 @@ export function ThesisList({ theses, isLoading, onCreate, onEdit, onDelete, onVi
             case 'rejected':
               return 'Từ chối'
             default:
-              return status
+              return 'Chưa xác định'
           }
         }
         return (
@@ -144,7 +167,7 @@ export function ThesisList({ theses, isLoading, onCreate, onEdit, onDelete, onVi
         data={theses}
         isLoading={isLoading}
         searchableColumn="title"
-        searchPlaceholder="Tìm theo tiêu đề..."
+        searchPlaceholder="Tìm theo tiêu đề khóa luận..."
       />
     </div>
   )

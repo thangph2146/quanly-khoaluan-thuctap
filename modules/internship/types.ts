@@ -1,4 +1,5 @@
-import { AcademicYear, Semester } from "@/modules/config/types";
+import { AcademicYear } from "@/modules/academic-years/types";
+import { Semester } from "@/modules/semesters/types";
 import { User } from "@/modules/users/types";
 
 // Based on Partner.cs

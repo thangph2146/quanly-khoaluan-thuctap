@@ -39,19 +39,19 @@ export function UserDetails({ user }: UserDetailsProps) {
             <div>
               <h4 className="font-medium mb-2">Thông tin cơ bản</h4>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-start gap-2">
                   <span className="text-muted-foreground">ID:</span>
                   <span>{user.id}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Email:</span>
+                <div className="flex justify-start gap-2">
+                  <span className="text-muted-foreground">Email:</span> 
                   <span>{user.email}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-start gap-2">
                   <span className="text-muted-foreground">Keycloak ID:</span>
                   <span className="font-mono text-xs">{user.keycloakUserId}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-start gap-2">
                   <span className="text-muted-foreground">Trạng thái:</span>
                   <Badge variant={user.isActive ? 'default' : 'secondary'}>
                     {user.isActive ? 'Kích hoạt' : 'Vô hiệu hóa'}
@@ -63,11 +63,11 @@ export function UserDetails({ user }: UserDetailsProps) {
             <div>
               <h4 className="font-medium mb-2">Thời gian</h4>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-start gap-2">
                   <span className="text-muted-foreground">Tạo lúc:</span>
                   <span>{new Date(user.createdAt).toLocaleString('vi-VN')}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-start gap-2">
                   <span className="text-muted-foreground">Cập nhật:</span>
                   <span>{new Date(user.updatedAt).toLocaleString('vi-VN')}</span>
                 </div>

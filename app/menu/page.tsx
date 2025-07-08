@@ -103,8 +103,43 @@ export default function MenuPage() {
 
 	const isFormLoading = isCreating || isUpdating
 
+	// Flatten menus for parent selection và lọc ra menu đang edit
+	const flattenMenus = (menuList: Menu[]): Menu[] => {
+		let result: Menu[] = []
+		menuList.forEach(menu => {
+			result.push(menu)
+			if (menu.childMenus && menu.childMenus.length > 0) {
+				result = result.concat(flattenMenus(menu.childMenus))
+			}
+		})
+		return result
+	}
+
+	const allMenus = flattenMenus(menus || [])
+	// Khi edit, không cho phép chọn chính menu đó hoặc menu con của nó làm parent
+	const getParentMenuOptions = (): Menu[] => {
+		if (sheetMode === 'edit' && selectedMenu) {
+			// Lấy danh sách ID của menu con (recursively)
+			const getChildMenuIds = (menu: Menu): number[] => {
+				let ids = [menu.id]
+				if (menu.childMenus && menu.childMenus.length > 0) {
+					menu.childMenus.forEach(child => {
+						ids = ids.concat(getChildMenuIds(child))
+					})
+				}
+				return ids
+			}
+			
+			const excludeIds = getChildMenuIds(selectedMenu)
+			return allMenus.filter(menu => !excludeIds.includes(menu.id))
+		}
+		return allMenus
+	}
+
+	const parentMenuOptions = getParentMenuOptions()
+
 	return (
-		<div className="container mx-auto py-6 space-y-6">
+		<div className="container mx-auto py-6 space-y-6 p-4">
 			{/* Page Header */}
 			<PageHeader
 				title="Quản lý Menu"
@@ -144,6 +179,7 @@ export default function MenuPage() {
 					<div className="mt-6">
 						<MenuForm
 							menu={selectedMenu}
+							parentMenus={parentMenuOptions}
 							onSubmit={handleFormSubmit}
 							onCancel={() => setSheetOpen(false)}
 							isLoading={isFormLoading}
@@ -186,7 +222,7 @@ export default function MenuPage() {
 						</DialogDescription>
 					</DialogHeader>
 					{selectedMenu && (
-						<MenuDetails menu={selectedMenu} />
+						<MenuDetails menu={selectedMenu} allMenus={menus || []} />
 					)}
 				</DialogContent>
 			</Dialog>

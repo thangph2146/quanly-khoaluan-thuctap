@@ -65,7 +65,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
                 <div className="flex flex-wrap gap-2">
                   {role.rolePermissions.map((rp) => (
                     <Badge key={rp.permissionId} variant="secondary">
-                      {rp.permission.name}
+                      {rp.permission?.name || `Permission ${rp.permissionId}`}
                     </Badge>
                   ))}
                 </div>

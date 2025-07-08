@@ -4,3 +4,4 @@
 export { StudentList } from './StudentList'
 export { StudentForm } from './StudentForm'
 export { StudentDetails } from './StudentDetails'
+export { StudentsContainer } from './StudentsContainer'

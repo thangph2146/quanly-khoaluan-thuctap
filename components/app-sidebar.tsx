@@ -2,23 +2,21 @@
 
 import * as React from "react"
 import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar"
-import { appConfig } from "@/modules/config/data"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { File, Menu, AlertTriangle } from "lucide-react"
+import { Menu, AlertTriangle } from "lucide-react"
 import { useMenus } from "@/hooks/useMenus"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { menus, isLoading, error } = useMenus()
+  const { isLoading, error } = useMenus()
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -44,12 +42,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </AlertDescription>
           </Alert>
         ) : (
-          <NavMain user={appConfig.user} />
+          <NavMain />
         )}
       </SidebarContent>
       <SidebarFooter>
         <Separator className="my-2" />
-        <NavUser user={appConfig.user} />
       </SidebarFooter>
     </Sidebar>
   )

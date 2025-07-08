@@ -1,5 +1,5 @@
 import httpsAPI from './client'
-import type { Semester } from '@/modules/config/types'
+import type { Semester } from '@/modules/semesters/types'
 
 // Define the structure for creating a semester - match backend Semester model
 export interface CreateSemesterData {

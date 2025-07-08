@@ -41,8 +41,13 @@ import {
 
 // Import from other modules for form data
 import { useUsers } from '@/modules/users/hooks'
+import { type User } from '@/modules/users/types'
 import { usePartners } from '@/modules/partners/hooks'
-import { useAcademicYears, useSemesters } from '@/modules/config/hooks'
+import { type Partner } from '@/modules/partners/types'
+import { useAcademicYears } from '@/modules/academic-years/hooks'
+import { type AcademicYear } from '@/modules/academic-years/types'
+import { useSemesters } from '@/modules/semesters/hooks'
+import { type Semester } from '@/modules/semesters/types'
 
 export default function InternshipPage() {
 	// States for UI components
@@ -115,29 +120,29 @@ export default function InternshipPage() {
 	const isFormLoading = isCreating || isUpdating
 
 	// Transform data for form
-	const formStudents = users?.map((user: any) => ({
+	const formStudents = users?.map((user: User) => ({
 		id: user.id?.toString() || '',
 		name: user.name || '',
 		studentId: user.email || '',
 	})) || []
 
-	const formPartners = partners?.map((partner: any) => ({
+	const formPartners = partners?.map((partner: Partner) => ({
 		id: partner.id?.toString() || '',
 		name: partner.name || '',
 	})) || []
 
-	const formAcademicYears = academicYears?.map((year: any) => ({
+	const formAcademicYears = academicYears?.map((year: AcademicYear) => ({
 		id: year.id?.toString() || '',
 		name: year.name || '',
 	})) || []
 
-	const formSemesters = semesters?.map((semester: any) => ({
+	const formSemesters = semesters?.map((semester: Semester) => ({
 		id: semester.id?.toString() || '',
 		name: semester.name || '',
 	})) || []
 
 	return (
-		<div className="container mx-auto py-6 space-y-6">
+		<div className="container mx-auto py-6 space-y-6 p-4">
 			{/* Page Header */}
 			<PageHeader
 				title="Quản lý Thực tập"

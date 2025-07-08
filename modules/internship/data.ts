@@ -1,6 +1,7 @@
 import { Internship, Partner } from './types'
 import { Student } from '@/modules/users/types'
-import { AcademicYear, Semester } from '@/modules/config/types'
+import { AcademicYear } from '@/modules/academic-years/types'
+import { Semester } from '@/modules/semesters/types'
 
 // Mock Data
 export const students: Student[] = [
