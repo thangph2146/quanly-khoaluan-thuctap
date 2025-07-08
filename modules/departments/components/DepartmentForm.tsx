@@ -1,7 +1,7 @@
 /**
  * Department Form Component
  */
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useForm, FormProvider } from "react-hook-form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import type {
   CreateDepartmentData,
   UpdateDepartmentData,
@@ -27,159 +36,152 @@ export function DepartmentForm({
   isLoading,
   mode,
 }: DepartmentFormProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    parentDepartmentId: null as number | null,
+  const methods = useForm<CreateDepartmentData | UpdateDepartmentData>({
+    defaultValues: {
+      name: "",
+      code: "",
+      parentDepartmentId: null,
+    },
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (department && mode === "edit") {
-      setFormData({
+      methods.reset({
         name: department.name || "",
         code: department.code || "",
-        parentDepartmentId: department.parentDepartmentId || null,
+        parentDepartmentId: department.parentDepartmentId ?? null,
       });
     } else {
-      setFormData({
+      methods.reset({
         name: "",
         code: "",
         parentDepartmentId: null,
       });
     }
-    setErrors({});
   }, [department, mode]);
 
-  const handleChange = (field: string, value: string | number | null) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Tên đơn vị không được để trống";
-    }
-
-    if (!formData.code.trim()) {
-      newErrors.code = "Mã đơn vị không được để trống";
-    }
-
-    // Check for duplicate code (excluding current department if editing)
-    const existingDept = allDepartments.find(
-      (d) =>
-        d.code.toLowerCase() === formData.code.toLowerCase() &&
-        d.id !== department?.id
-    );
-    if (existingDept) {
-      newErrors.code = "Mã đơn vị đã tồn tại";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      const submissionData: CreateDepartmentData | UpdateDepartmentData = {
-        name: formData.name,
-        code: formData.code,
-        parentDepartmentId: formData.parentDepartmentId,
+  const handleFormSubmit = methods.handleSubmit(
+    (data: CreateDepartmentData | UpdateDepartmentData) => {
+      // Prevent self-parenting
+      const submissionData = {
+        ...data,
+        parentDepartmentId:
+          data.parentDepartmentId && String(data.parentDepartmentId) !== "none"
+            ? Number(data.parentDepartmentId)
+            : null,
       };
       onSubmit(submissionData);
     }
-  };
+  );
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 px-1">
-        <form onSubmit={handleSubmit} className="space-y-4 p-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Tên đơn vị *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              placeholder="Ví dụ: Khoa Công nghệ thông tin"
-              required
-              disabled={isLoading}
-              className={errors.name ? "border-red-500" : ""}
+    <FormProvider {...methods}>
+      <div className="flex flex-col h-full">
+        <ScrollArea className="flex-1 px-1">
+          <form onSubmit={handleFormSubmit} className="space-y-4 p-4">
+            <FormField
+              name="name"
+              control={methods.control}
+              rules={{ required: "Tên đơn vị không được để trống" }}
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>Tên đơn vị *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ví dụ: Khoa Công nghệ thông tin"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="code">Mã đơn vị *</Label>
-            <Input
-              id="code"
-              value={formData.code}
-              onChange={(e) => handleChange("code", e.target.value)}
-              placeholder="Ví dụ: CNTT"
-              required
-              disabled={isLoading}
-              className={errors.code ? "border-red-500" : ""}
+            <FormField
+              name="code"
+              control={methods.control}
+              rules={{
+                required: "Mã đơn vị không được để trống",
+                validate: (value: string) => {
+                  const exists = allDepartments.find(
+                    (d) =>
+                      d.code.toLowerCase() === value.toLowerCase() &&
+                      d.id !== department?.id
+                  );
+                  return exists ? "Mã đơn vị đã tồn tại" : true;
+                },
+              }}
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>Mã đơn vị *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ví dụ: CNTT"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.code && (
-              <p className="text-sm text-red-500">{errors.code}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="parentDepartmentId">Đơn vị cha</Label>
-            <Select
-              value={formData.parentDepartmentId?.toString() || "none"}
-              onValueChange={(value) =>
-                handleChange(
-                  "parentDepartmentId",
-                  value === "none" ? null : parseInt(value)
-                )
-              }
-              disabled={isLoading}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn đơn vị cha (nếu có)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Không có</SelectItem>
-                {allDepartments
-                  .filter((d) => d.id !== department?.id) // Prevent self-parenting
-                  .map((d) => (
-                    <SelectItem key={d.id} value={d.id.toString()}>
-                      {d.name} ({d.code})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </form>
-      </ScrollArea>
-
-      {/* Form Actions - Fixed at bottom */}
-      <div className="flex justify-end space-x-2 p-4 border-t bg-background">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Hủy
-        </Button>
-        <Button type="submit" disabled={isLoading} onClick={handleSubmit}>
-          {isLoading
-            ? "Đang xử lý..."
-            : mode === "create"
-            ? "Tạo mới"
-            : "Cập nhật"}
-        </Button>
+            <FormField
+              name="parentDepartmentId"
+              control={methods.control}
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>Đơn vị cha</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value !== null ? String(field.value) : "none"}
+                      onValueChange={field.onChange}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn đơn vị cha (nếu có)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Không có</SelectItem>
+                        {allDepartments
+                          .filter((d) => d.id !== department?.id)
+                          .map((d) => (
+                            <SelectItem key={d.id} value={d.id.toString()}>
+                              {d.name} ({d.code})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </ScrollArea>
+        <div className="flex justify-end space-x-2 p-4 border-t bg-background">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            onClick={handleFormSubmit}
+          >
+            {isLoading
+              ? "Đang xử lý..."
+              : mode === "create"
+              ? "Tạo mới"
+              : "Cập nhật"}
+          </Button>
+        </div>
       </div>
-    </div>
+    </FormProvider>
   );
 }

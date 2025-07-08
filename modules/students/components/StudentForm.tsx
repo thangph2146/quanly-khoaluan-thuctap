@@ -1,11 +1,20 @@
 /**
  * Student Form Component
  */
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useForm, FormProvider } from 'react-hook-form'
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form'
 import type { Student, CreateStudentData, UpdateStudentData, StudentFormProps } from '../types'
 
 export function StudentForm({
@@ -15,18 +24,19 @@ export function StudentForm({
   isLoading,
   mode,
 }: StudentFormProps) {
-  const [formData, setFormData] = useState({
-    studentCode: '',
-    fullName: '',
-    dateOfBirth: '',
-    email: '',
-    phoneNumber: '',
+  const methods = useForm<CreateStudentData | UpdateStudentData>({
+    defaultValues: {
+      studentCode: '',
+      fullName: '',
+      dateOfBirth: '',
+      email: '',
+      phoneNumber: '',
+    },
   })
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (student && mode === 'edit') {
-      setFormData({
+      methods.reset({
         studentCode: student.studentCode || '',
         fullName: student.fullName || '',
         dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
@@ -34,7 +44,7 @@ export function StudentForm({
         phoneNumber: student.phoneNumber || '',
       })
     } else {
-      setFormData({
+      methods.reset({
         studentCode: '',
         fullName: '',
         dateOfBirth: '',
@@ -42,159 +52,145 @@ export function StudentForm({
         phoneNumber: '',
       })
     }
-    setErrors({})
   }, [student, mode])
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
-    }
-  }
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.studentCode.trim()) {
-      newErrors.studentCode = 'Mã sinh viên không được để trống'
-    }
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Họ và tên không được để trống'
-    }
-
-    if (!formData.dateOfBirth) {
-      newErrors.dateOfBirth = 'Ngày sinh không được để trống'
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email không được để trống'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email không hợp lệ'
-    }
-
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Số điện thoại không được để trống'
-    } else if (!/^[0-9]{10,11}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Số điện thoại không hợp lệ'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validateForm()) {
-      const submissionData: CreateStudentData | UpdateStudentData = {
-        studentCode: formData.studentCode,
-        fullName: formData.fullName,
-        dateOfBirth: formData.dateOfBirth,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-      }
-      onSubmit(submissionData)
-    }
-  }
+  const handleFormSubmit = methods.handleSubmit((data: CreateStudentData | UpdateStudentData) => {
+    onSubmit(data)
+  })
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 p-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="studentCode">Mã sinh viên *</Label>
-            <Input
-              id="studentCode"
-              value={formData.studentCode}
-              onChange={(e) => handleChange('studentCode', e.target.value)}
-              placeholder="Ví dụ: 2021001"
-              required
-              disabled={isLoading}
-              className={errors.studentCode ? 'border-red-500' : ''}
+    <FormProvider {...methods}>
+      <div className="flex flex-col h-full">
+        <ScrollArea className="flex-1 p-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <FormField
+              name="studentCode"
+              control={methods.control}
+              rules={{ required: 'Mã sinh viên không được để trống' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mã sinh viên *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ví dụ: 2021001"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.studentCode && <p className="text-sm text-red-500">{errors.studentCode}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Họ và tên *</Label>
-            <Input
-              id="fullName"
-              value={formData.fullName}
-              onChange={(e) => handleChange('fullName', e.target.value)}
-              placeholder="Nhập họ và tên"
-              required
-              disabled={isLoading}
-              className={errors.fullName ? 'border-red-500' : ''}
+            <FormField
+              name="fullName"
+              control={methods.control}
+              rules={{ required: 'Họ và tên không được để trống' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Họ và tên *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Nhập họ và tên"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dateOfBirth">Ngày sinh *</Label>
-            <Input
-              id="dateOfBirth"
-              type="date"
-              value={formData.dateOfBirth}
-              onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-              required
-              disabled={isLoading}
-              className={errors.dateOfBirth ? 'border-red-500' : ''}
+            <FormField
+              name="dateOfBirth"
+              control={methods.control}
+              rules={{ required: 'Ngày sinh không được để trống' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ngày sinh *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.dateOfBirth && <p className="text-sm text-red-500">{errors.dateOfBirth}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              placeholder="Nhập địa chỉ email"
-              required
-              disabled={isLoading}
-              className={errors.email ? 'border-red-500' : ''}
+            <FormField
+              name="email"
+              control={methods.control}
+              rules={{
+                required: 'Email không được để trống',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Email không hợp lệ',
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="Nhập địa chỉ email"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Số điện thoại *</Label>
-            <Input
-              id="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={(e) => handleChange('phoneNumber', e.target.value)}
-              placeholder="Nhập số điện thoại"
-              required
-              disabled={isLoading}
-              className={errors.phoneNumber ? 'border-red-500' : ''}
+            <FormField
+              name="phoneNumber"
+              control={methods.control}
+              rules={{
+                required: 'Số điện thoại không được để trống',
+                pattern: {
+                  value: /^[0-9]{10,11}$/,
+                  message: 'Số điện thoại không hợp lệ',
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Nhập số điện thoại"
+                      required
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.phoneNumber && <p className="text-sm text-red-500">{errors.phoneNumber}</p>}
-          </div>
-        </form>
-      </ScrollArea>
-
-      <div className="flex justify-end space-x-2 p-4 border-t bg-background">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Hủy
-        </Button>
-        <Button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault()
-            handleSubmit(e as any)
-          }}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
-        </Button>
+          </form>
+        </ScrollArea>
+        <div className="flex justify-end space-x-2 p-4 border-t bg-background">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            onClick={handleFormSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
+          </Button>
+        </div>
       </div>
-    </div>
+    </FormProvider>
   )
 }

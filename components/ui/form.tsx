@@ -105,10 +105,15 @@ function FormLabel({
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
-  const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
+  const { error, formItemId, formDescriptionId, formMessageId, name } = useFormField()
+  // Get the current value of the field to use as a key
+  const { watch } = useFormContext();
+  const fieldValue = watch(name);
 
   return (
     <Slot
+      // Add a key based on the field value to force re-mount on value change (e.g., reset)
+      key={String(fieldValue)}
       data-slot="form-control"
       id={formItemId}
       aria-describedby={
@@ -154,6 +159,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     </p>
   )
 }
+
 
 export {
   useFormField,

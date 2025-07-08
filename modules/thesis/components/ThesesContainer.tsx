@@ -4,7 +4,7 @@
  */
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { ThesisList } from './ThesisList'
 import { ThesisForm } from './ThesisForm'
 import { ThesisDetails } from './ThesisDetails'
@@ -12,6 +12,7 @@ import { useTheses, useThesisActions } from '../hooks'
 import { useStudents } from '@/modules/students/hooks'
 import { useAcademicYears } from '@/modules/academic-years/hooks'
 import { useSemesters } from '@/modules/semesters/hooks'
+import { useLecturers } from '@/modules/lecturers/hooks'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -26,6 +27,8 @@ export function ThesesContainer() {
   const { students } = useStudents()
   const { academicYears } = useAcademicYears()
   const { semesters } = useSemesters()
+  const lecturerParams = useMemo(() => ({ isActive: true }), [])
+  const { lecturers } = useLecturers(lecturerParams)
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -119,7 +122,7 @@ export function ThesesContainer() {
         setIsEditDialogOpen(false)
         if (!open) setSelectedThesis(null)
       }}>
-        <SheetContent className="sm:max-w-2xl">
+        <SheetContent className="sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>{isCreateDialogOpen ? 'Tạo khóa luận mới' : 'Chỉnh sửa khóa luận'}</SheetTitle>
           </SheetHeader>
@@ -128,6 +131,7 @@ export function ThesesContainer() {
             students={formStudents}
             academicYears={formAcademicYears}
             semesters={formSemesters}
+            lecturers={lecturers?.map(l => ({ id: l.id.toString(), name: l.name, email: l.email })) || []}
             onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
             onCancel={() => {
               setIsCreateDialogOpen(false)

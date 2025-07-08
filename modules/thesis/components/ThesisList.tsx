@@ -28,43 +28,44 @@ export function ThesisList({ theses, isLoading, onCreate, onEdit, onDelete, onVi
       ),
     },
     {
-      accessorKey: 'student',
+      accessorKey: 'studentName',
       header: 'Sinh viên',
-      cell: ({ row }: { row: any }) => {
-        const student = row.getValue('student')
-        return (
-          <div className="text-sm">
-            {student?.fullName || 'N/A'}
-            {student?.studentCode && (
-              <div className="text-xs text-gray-500">{student.studentCode}</div>
-            )}
-          </div>
-        )
-      },
+      cell: ({ row }: { row: any }) => (
+        <div className="text-sm">
+          {row.getValue('studentName') || 'N/A'}
+          {row.original.studentCode && (
+            <div className="text-xs text-gray-500">{row.original.studentCode}</div>
+          )}
+        </div>
+      ),
     },
     {
-      accessorKey: 'academicYear',
+      accessorKey: 'supervisorName',
+      header: 'GV Hướng dẫn',
+      cell: ({ row }: { row: any }) => (
+        <div className="text-sm">{row.getValue('supervisorName') || 'N/A'}</div>
+      ),
+    },
+    {
+      accessorKey: 'examinerName',
+      header: 'GV Phản biện',
+      cell: ({ row }: { row: any }) => (
+        <div className="text-sm">{row.getValue('examinerName') || 'N/A'}</div>
+      ),
+    },
+    {
+      accessorKey: 'academicYearName',
       header: 'Năm học',
-      cell: ({ row }: { row: any }) => {
-        const academicYear = row.getValue('academicYear')
-        return (
-          <div className="text-sm">
-            {academicYear?.name || 'N/A'}
-          </div>
-        )
-      },
+      cell: ({ row }: { row: any }) => (
+        <div className="text-sm">{row.getValue('academicYearName') || 'N/A'}</div>
+      ),
     },
     {
-      accessorKey: 'semester',
+      accessorKey: 'semesterName',
       header: 'Học kỳ',
-      cell: ({ row }: { row: any }) => {
-        const semester = row.getValue('semester')
-        return (
-          <div className="text-sm">
-            {semester?.name || 'N/A'}
-          </div>
-        )
-      },
+      cell: ({ row }: { row: any }) => (
+        <div className="text-sm">{row.getValue('semesterName') || 'N/A'}</div>
+      ),
     },
     {
       accessorKey: 'submissionDate',

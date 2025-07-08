@@ -2,7 +2,7 @@
  * Lecturer Form Component
  * Form for creating and editing lecturers
  */
-import React, { useState } from 'react'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,15 @@ import { ACADEMIC_RANKS, DEGREES } from '../constants'
 import { useDepartments } from '../hooks'
 import type { Lecturer } from '../types'
 import type { CreateLecturerData, UpdateLecturerData } from '../services'
+import { useForm, FormProvider, Controller } from 'react-hook-form'
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form'
 
 interface LecturerFormProps {
   lecturer?: Lecturer | null
@@ -25,190 +34,191 @@ interface LecturerFormProps {
 
 export function LecturerForm({ lecturer, onSubmit, onCancel, isLoading, mode }: LecturerFormProps) {
   const { departments, isLoading: isLoadingDepartments } = useDepartments()
-  
-  const [formData, setFormData] = useState({
-    name: lecturer?.name || '',
-    email: lecturer?.email || '',
-    phoneNumber: lecturer?.phoneNumber || '',
-    departmentId: lecturer?.departmentId || undefined,
-    academicRank: lecturer?.academicRank || '',
-    degree: lecturer?.degree || '',
-    specialization: lecturer?.specialization || '',
-    avatarUrl: lecturer?.avatarUrl || '',
-    isActive: lecturer?.isActive ?? true,
+
+  const methods = useForm<CreateLecturerData | UpdateLecturerData>({
+    defaultValues: {
+      name: '',
+      email: '',
+      phoneNumber: '',
+      departmentId: undefined,
+      academicRank: '',
+      degree: '',
+      specialization: '',
+      avatarUrl: '',
+      isActive: true,
+    },
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, isActive: checked }))
-  }
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'departmentId') {
-      setFormData(prev => ({ ...prev, [name]: value === 'none' ? undefined : parseInt(value) }))
-    } else if (name === 'academicRank' || name === 'degree') {
-      setFormData(prev => ({ ...prev, [name]: value === 'none' ? '' : value }))
+  React.useEffect(() => {
+    if (lecturer && mode === 'edit') {
+      methods.reset({
+        name: lecturer.name || '',
+        email: lecturer.email || '',
+        phoneNumber: lecturer.phoneNumber || '',
+        departmentId: lecturer.departmentId,
+        academicRank: lecturer.academicRank || '',
+        degree: lecturer.degree || '',
+        specialization: lecturer.specialization || '',
+        avatarUrl: lecturer.avatarUrl || '',
+        isActive: lecturer.isActive ?? true,
+      })
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }))
+      methods.reset({
+        name: '',
+        email: '',
+        phoneNumber: '',
+        departmentId: undefined,
+        academicRank: '',
+        degree: '',
+        specialization: '',
+        avatarUrl: '',
+        isActive: true,
+      })
     }
-  }
+  }, [lecturer, mode])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
+  const handleFormSubmit = methods.handleSubmit((data: CreateLecturerData | UpdateLecturerData) => {
+    // Convert departmentId to number or undefined
+    const submissionData = {
+      ...data,
+      departmentId: data.departmentId && String(data.departmentId) !== 'none' ? Number(data.departmentId) : undefined,
+      academicRank: data.academicRank === 'none' ? '' : data.academicRank,
+      degree: data.degree === 'none' ? '' : data.degree,
+    }
+    onSubmit(submissionData)
+  })
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 px-1">
-        <form onSubmit={handleSubmit} className="space-y-4 p-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Họ và tên</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Nhập họ và tên"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Nhập email"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phoneNumber">Số điện thoại</Label>
-            <Input
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Nhập số điện thoại"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="departmentId">Khoa/Đơn vị</Label>
-            <Select
-              value={formData.departmentId?.toString() || 'none'}
-              onValueChange={(value) => handleSelectChange('departmentId', value)}
-              disabled={isLoadingDepartments}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={isLoadingDepartments ? "Đang tải..." : "Chọn khoa/đơn vị"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Không chọn</SelectItem>
-                {departments.map(dept => (
-                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                    {dept.name} ({dept.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="academicRank">Học hàm</Label>
-            <Select
-              value={formData.academicRank || 'none'}
-              onValueChange={(value) => handleSelectChange('academicRank', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn học hàm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Không chọn</SelectItem>
-                {ACADEMIC_RANKS.map(rank => (
-                  <SelectItem key={rank} value={rank}>
-                    {rank}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="degree">Học vị</Label>
-            <Select
-              value={formData.degree || 'none'}
-              onValueChange={(value) => handleSelectChange('degree', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn học vị" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Không chọn</SelectItem>
-                {DEGREES.map(degree => (
-                  <SelectItem key={degree} value={degree}>
-                    {degree}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="specialization">Chuyên ngành</Label>
-            <Input
-              id="specialization"
-              name="specialization"
-              value={formData.specialization}
-              onChange={handleChange}
-              placeholder="Nhập chuyên ngành"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="avatarUrl">URL Ảnh đại diện</Label>
-            <Input
-              id="avatarUrl"
-              name="avatarUrl"
-              value={formData.avatarUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/avatar.jpg"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={handleSwitchChange}
-            />
-            <Label htmlFor="isActive">Hoạt động</Label>
-          </div>
-        </form>
-      </ScrollArea>
-
-      {/* Form Actions - Fixed at bottom */}
-      <SheetFooter className="p-4 border-t bg-background">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Hủy
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={isLoading}
-          onClick={handleSubmit}
-        >
-          {isLoading ? 'Đang lưu...' : mode === 'create' ? 'Tạo giảng viên' : 'Cập nhật'}
-        </Button>
-      </SheetFooter>
-    </div>
+    <FormProvider {...methods}>
+      <div className="flex flex-col h-full">
+        <ScrollArea className="flex-1 px-1">
+          <form onSubmit={handleFormSubmit} className="space-y-4 p-4">
+            <FormField name="name" control={methods.control} rules={{ required: 'Họ và tên không được để trống' }} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Họ và tên</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Nhập họ và tên" required />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="email" control={methods.control} rules={{ required: 'Email không được để trống', pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email không hợp lệ' } }} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input {...field} type="email" placeholder="Nhập email" required />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="phoneNumber" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số điện thoại</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Nhập số điện thoại" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="departmentId" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Khoa/Đơn vị</FormLabel>
+                <FormControl>
+                  <Select value={field.value ? String(field.value) : 'none'} onValueChange={field.onChange} disabled={isLoadingDepartments}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={isLoadingDepartments ? 'Đang tải...' : 'Chọn khoa/đơn vị'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Không chọn</SelectItem>
+                      {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                          {dept.name} ({dept.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="academicRank" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Học hàm</FormLabel>
+                <FormControl>
+                  <Select value={field.value || 'none'} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn học hàm" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Không chọn</SelectItem>
+                      {ACADEMIC_RANKS.map(rank => (
+                        <SelectItem key={rank} value={rank}>{rank}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="degree" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Học vị</FormLabel>
+                <FormControl>
+                  <Select value={field.value || 'none'} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn học vị" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Không chọn</SelectItem>
+                      {DEGREES.map(degree => (
+                        <SelectItem key={degree} value={degree}>{degree}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="specialization" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Chuyên ngành</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Nhập chuyên ngành" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="avatarUrl" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL Ảnh đại diện</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="https://example.com/avatar.jpg" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="isActive" control={methods.control} render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center space-x-2">
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} id="isActive" />
+                  </FormControl>
+                  <FormLabel htmlFor="isActive">Hoạt động</FormLabel>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </form>
+        </ScrollArea>
+        <SheetFooter className="p-4 border-t bg-background">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            Hủy
+          </Button>
+          <Button type="submit" disabled={isLoading} onClick={handleFormSubmit}>
+            {isLoading ? 'Đang lưu...' : mode === 'create' ? 'Tạo giảng viên' : 'Cập nhật'}
+          </Button>
+        </SheetFooter>
+      </div>
+    </FormProvider>
   )
 }

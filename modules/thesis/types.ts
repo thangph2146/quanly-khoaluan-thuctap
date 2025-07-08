@@ -1,34 +1,43 @@
-import { AcademicYear } from "@/modules/academic-years/types";
-import { Semester } from "@/modules/semesters/types";
-import { Student } from "@/modules/students/types";
-
 // Thesis status type
 export type ThesisStatus =
-  | "COMPLETED"
+  | "Draft"
+  | "Submitted"
+  | "Approved"
+  | "Rejected"
   | "IN_PROGRESS"
-  | "PENDING_DEFENSE"
-  | "APPROVED"
-  | "OVERDUE"
-  | "CANCELLED";
+  | "COMPLETED";
 
-// Based on Thesis.cs - simplified to match backend exactly
+// Lecturer type for thesis
+export interface Lecturer {
+  id: number;
+  name: string;
+  email?: string;
+  specialization?: string;
+  department?: string;
+}
+
+// Based on ThesisDto.cs from backend
 export interface Thesis {
   id: number;
   title: string;
+  description?: string;
   studentId: number;
-  student: Student;
+  studentName?: string;
+  studentCode?: string;
+  supervisorId: number;
+  supervisorName?: string;
+  supervisorEmail?: string;
+  examinerId?: number;
+  examinerName?: string;
+  examinerEmail?: string;
   academicYearId: number;
-  academicYear: AcademicYear;
+  academicYearName?: string;
   semesterId: number;
-  semester: Semester;
+  semesterName?: string;
   submissionDate: string;
-  status?: ThesisStatus; // Optional since not always returned from API
-  supervisorId?: number; // Optional supervisor
-  supervisor?: {
-    id: number;
-    fullName: string;
-    email?: string;
-  };
+  status?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Additional types for thesis defense
@@ -65,43 +74,28 @@ export interface DefenseSchedule {
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 }
 
-// Create and Update types for thesis
+// Create and Update types for thesis - aligned with CreateThesisDto
 export interface CreateThesisData {
   title: string;
   description?: string;
   studentId: number;
-  supervisor: string;
+  supervisorId: number;
+  examinerId?: number;
   academicYearId: number;
   semesterId: number;
-  status?: string;
   submissionDate: string;
+  status?: string;
 }
 
 export interface UpdateThesisData {
   title?: string;
   description?: string;
   studentId?: number;
-  supervisor?: string;
+  supervisorId?: number;
+  examinerId?: number;
   academicYearId?: number;
   semesterId?: number;
-  status?: string;
-}
-
-// CRUD types for thesis operations
-export interface CreateThesisData {
-  title: string;
-  studentId: number;
-  academicYearId: number;
-  semesterId: number;
-  supervisorId?: number;
-}
-
-export interface UpdateThesisData {
-  title?: string;
-  studentId?: number;
-  academicYearId?: number;
-  semesterId?: number;
-  supervisorId?: number;
+  submissionDate?: string;
   status?: string;
 }
 
@@ -117,9 +111,10 @@ export interface ThesisListProps {
 
 export interface ThesisFormProps {
   thesis?: Thesis | null;
-  students: Student[];
-  academicYears: AcademicYear[];
-  semesters: Semester[];
+  students: Array<{ id: string; name: string; studentId: string }>;
+  academicYears: Array<{ id: string; name: string }>;
+  semesters: Array<{ id: string; name: string }>;
+  lecturers: Array<{ id: string; name: string; email?: string }>;
   onSubmit: (data: CreateThesisData | UpdateThesisData) => void;
   onCancel: () => void;
   isLoading: boolean;
