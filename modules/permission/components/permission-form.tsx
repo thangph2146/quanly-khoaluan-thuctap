@@ -121,7 +121,7 @@ export const PermissionForm: React.FC<PermissionFormProps> = ({
 							<FormLabel>Module</FormLabel>
 							<Select onValueChange={field.onChange} defaultValue={field.value}>
 								<FormControl>
-									<SelectTrigger>
+									<SelectTrigger className='w-full'>
 										<SelectValue placeholder="Chọn module" />
 									</SelectTrigger>
 								</FormControl>

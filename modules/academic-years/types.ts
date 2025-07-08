@@ -1,24 +1,22 @@
 // Academic Year types
 
-// Based on AcademicYear.cs
+// Based on AcademicYear.cs and API response structure
 export interface AcademicYear {
 	id: number
-	name: string // e.g., "2023-2024"
-	startDate: string // Changed from DateTime
-	endDate: string // Changed from DateTime
+	name: string // e.g., "2024-2025"
+	startDate: string // ISO date string format
+	endDate: string // ISO date string format
 }
 
 // Create and Update types for AcademicYear
 export interface CreateAcademicYearData {
 	name: string
-	startYear: number
-	endYear: number
-	isCurrent?: boolean
+	startDate: string // ISO date string format
+	endDate: string // ISO date string format
 }
 
 export interface UpdateAcademicYearData {
 	name?: string
-	startYear?: number
-	endYear?: number
-	isCurrent?: boolean
+	startDate?: string // ISO date string format
+	endDate?: string // ISO date string format
 }

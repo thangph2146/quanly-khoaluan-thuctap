@@ -7,28 +7,45 @@
 import React, { useState } from 'react'
 import { AcademicYearList } from './AcademicYearList'
 import { AcademicYearForm } from './AcademicYearForm'
+import { AcademicYearDetail } from './AcademicYearDetail'
 import { useAcademicYears, useAcademicYearActions } from '../hooks'
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from '@/components/ui/sheet'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import type { AcademicYear } from '../types'
+import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData } from '../types'
 
 export function AcademicYearsContainer() {
   const { academicYears, isLoading, refetch } = useAcademicYears()
   const { createAcademicYear, updateAcademicYear, deleteAcademicYear, isCreating, isUpdating, isDeleting } = useAcademicYearActions(refetch)
   
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isSheetOpen, setSheetOpen] = useState(false)
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<AcademicYear | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [academicYearToDelete, setAcademicYearToDelete] = useState<AcademicYear | null>(null)
+  const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
 
   const handleCreate = () => {
-    setIsCreateDialogOpen(true)
+    setSheetMode('create')
+    setSelectedAcademicYear(null)
+    setSheetOpen(true)
   }
 
   const handleEdit = (academicYear: AcademicYear) => {
+    setSheetMode('edit')
     setSelectedAcademicYear(academicYear)
-    setIsEditDialogOpen(true)
+    setSheetOpen(true)
+  }
+
+  const handleView = (academicYear: AcademicYear) => {
+    setSelectedAcademicYear(academicYear)
+    setIsDetailDialogOpen(true)
   }
 
   const handleDelete = (academicYear: AcademicYear) => {
@@ -36,24 +53,18 @@ export function AcademicYearsContainer() {
     setIsDeleteDialogOpen(true)
   }
 
-  const handleCreateSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: CreateAcademicYearData | UpdateAcademicYearData) => {
     try {
-      await createAcademicYear(data)
-      setIsCreateDialogOpen(false)
-    } catch (error) {
-      // Error is handled in the hook
-    }
-  }
-
-  const handleEditSubmit = async (data: any) => {
-    if (!selectedAcademicYear) return
-    
-    try {
-      await updateAcademicYear(selectedAcademicYear.id, data)
-      setIsEditDialogOpen(false)
+      if (sheetMode === 'create') {
+        await createAcademicYear(data as CreateAcademicYearData)
+      } else if (selectedAcademicYear) {
+        await updateAcademicYear(selectedAcademicYear.id, data as UpdateAcademicYearData)
+      }
+      setSheetOpen(false)
       setSelectedAcademicYear(null)
     } catch (error) {
       // Error is handled in the hook
+      console.error('Form submission error:', error)
     }
   }
 
@@ -67,6 +78,8 @@ export function AcademicYearsContainer() {
     }
   }
 
+  const isFormLoading = isCreating || isUpdating
+
   return (
     <>
       <AcademicYearList
@@ -74,40 +87,47 @@ export function AcademicYearsContainer() {
         isLoading={isLoading}
         onCreate={handleCreate}
         onEdit={handleEdit}
+        onView={handleView}
         onDelete={handleDelete}
       />
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Tạo năm học mới</DialogTitle>
-          </DialogHeader>
-          <AcademicYearForm
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setIsCreateDialogOpen(false)}
-            isLoading={isCreating}
-            mode="create"
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Create/Edit Sheet */}
+      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>
+              {sheetMode === 'create' ? 'Tạo năm học mới' : 'Chỉnh sửa năm học'}
+            </SheetTitle>
+            <SheetDescription>
+              {sheetMode === 'create' 
+                ? 'Điền thông tin để tạo năm học mới cho hệ thống'
+                : 'Cập nhật thông tin năm học'
+              }
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <AcademicYearForm
+              academicYear={selectedAcademicYear}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setSheetOpen(false)}
+              isLoading={isFormLoading}
+              mode={sheetMode}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa năm học</DialogTitle>
+            <DialogTitle>Chi tiết năm học: {selectedAcademicYear?.name}</DialogTitle>
           </DialogHeader>
-          <AcademicYearForm
-            academicYear={selectedAcademicYear}
-            onSubmit={handleEditSubmit}
-            onCancel={() => {
-              setIsEditDialogOpen(false)
-              setSelectedAcademicYear(null)
-            }}
-            isLoading={isUpdating}
-            mode="edit"
-          />
+          {selectedAcademicYear && (
+            <div className="overflow-y-auto">
+              <AcademicYearDetail academicYear={selectedAcademicYear} />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

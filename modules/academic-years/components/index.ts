@@ -1,3 +1,4 @@
 export * from './AcademicYearForm'
 export * from './AcademicYearList'
+export * from './AcademicYearDetail'
 export * from './AcademicYearsContainer'

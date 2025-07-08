@@ -26,6 +26,21 @@ export function AcademicYearList({
   onDelete, 
   onView 
 }: AcademicYearListProps) {
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleDateString('vi-VN')
+  }
+
+  // Helper function to check if academic year is current
+  const isCurrentAcademicYear = (startDate: string, endDate: string) => {
+    const now = new Date()
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    return now >= start && now <= end
+  }
+
   const columns = [
     {
       accessorKey: 'name',
@@ -35,27 +50,28 @@ export function AcademicYearList({
       ),
     },
     {
-      accessorKey: 'startYear',
-      header: 'Năm bắt đầu',
+      accessorKey: 'startDate',
+      header: 'Ngày bắt đầu',
       cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('startYear')}</div>
+        <div className="text-sm">{formatDate(row.getValue('startDate'))}</div>
       ),
     },
     {
-      accessorKey: 'endYear',
-      header: 'Năm kết thúc',
+      accessorKey: 'endDate',
+      header: 'Ngày kết thúc',
       cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('endYear')}</div>
+        <div className="text-sm">{formatDate(row.getValue('endDate'))}</div>
       ),
     },
     {
-      accessorKey: 'isCurrent',
-      header: 'Năm hiện tại',
+      accessorKey: 'status',
+      header: 'Trạng thái',
       cell: ({ row }: { row: any }) => {
-        const isCurrent = row.getValue('isCurrent')
+        const academicYear = row.original
+        const isCurrent = isCurrentAcademicYear(academicYear.startDate, academicYear.endDate)
         return (
           <Badge variant={isCurrent ? 'default' : 'secondary'}>
-            {isCurrent ? 'Hiện tại' : 'Không'}
+            {isCurrent ? 'Hiện tại' : 'Không hoạt động'}
           </Badge>
         )
       },

@@ -40,7 +40,18 @@ export const updateRole = async (
 	data: UpdateRoleRequest,
 ): Promise<Role> => {
 	try {
-		const response = await httpsAPI.put(`/Roles/${id}`, data)
+		// First get the current role to merge with update data
+		const currentRole = await getRoleById(id)
+		
+		// The backend expects a full Role object with Id
+		const roleData = {
+			id: id,
+			name: data.name || currentRole.name,
+			description: data.description !== undefined ? data.description : currentRole.description,
+			// Note: Backend Role model doesn't include permissionIds/menuIds directly
+			// These would need to be handled separately through RolePermissions/RoleMenus
+		}
+		const response = await httpsAPI.put(`/Roles/${id}`, roleData)
 		return response.data
 	} catch (error) {
 		console.error(`Failed to update role ${id}:`, error)
