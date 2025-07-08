@@ -49,7 +49,7 @@ export default function PermissionsPage() {
 
 	// Use custom hooks from permission module
 	const { permissions, modules, isLoading, refetch } = usePermissions()
-	const { createPermission, updatePermission, deletePermission, isCreating, isUpdating, isDeleting } = 
+	const { createPermission, updatePermission, deletePermission, isCreating, isUpdating, isDeleting } =
 		usePermissionActions(refetch)
 
 	// Event handlers
@@ -136,22 +136,20 @@ export default function PermissionsPage() {
 							{sheetMode === 'create' ? 'Tạo Permission mới' : 'Chỉnh sửa Permission'}
 						</SheetTitle>
 						<SheetDescription>
-							{sheetMode === 'create' 
+							{sheetMode === 'create'
 								? 'Điền thông tin để tạo permission mới cho hệ thống'
 								: 'Cập nhật thông tin permission'
 							}
 						</SheetDescription>
 					</SheetHeader>
-					<div className="mt-6">
-						<PermissionForm
-							permission={selectedPermission}
-							modules={modules}
-							onSubmit={handleFormSubmit}
-							onCancel={() => setSheetOpen(false)}
-							isLoading={isFormLoading}
-							mode={sheetMode}
-						/>
-					</div>
+					<PermissionForm
+						permission={selectedPermission}
+						modules={modules}
+						onSubmit={handleFormSubmit}
+						onCancel={() => setSheetOpen(false)}
+						isLoading={isFormLoading}
+						mode={sheetMode}
+					/>
 				</SheetContent>
 			</Sheet>
 

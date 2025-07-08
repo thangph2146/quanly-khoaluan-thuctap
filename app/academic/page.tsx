@@ -1,12 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { FC } from 'react'
 import Link from 'next/link'
 import { PageHeader } from '@/components/common'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GraduationCap, Calendar, Users, Building2 } from 'lucide-react'
 
-export default function AcademicPage() {
+const AcademicPage: FC = () => {
 	const academicModules = [
 		{
 			title: 'Quản lý Năm học',
@@ -135,3 +135,5 @@ export default function AcademicPage() {
 		</div>
 	)
 }
+
+export default AcademicPage

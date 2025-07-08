@@ -11,6 +11,7 @@ import { useSemesters, useSemesterActions } from '../hooks'
 import { useAcademicYears } from '@/modules/academic-years/hooks'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import type { Semester } from '../types'
 
 export function SemestersContainer() {
@@ -79,41 +80,30 @@ export function SemestersContainer() {
         onDelete={handleDelete}
       />
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Tạo học kỳ mới</DialogTitle>
-          </DialogHeader>
+      {/* Create/Edit Sheet */}
+      <Sheet open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={open => {
+        setIsCreateDialogOpen(false)
+        setIsEditDialogOpen(false)
+        if (!open) setSelectedSemester(null)
+      }}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>{isCreateDialogOpen ? 'Tạo học kỳ mới' : 'Chỉnh sửa học kỳ'}</SheetTitle>
+          </SheetHeader>
           <SemesterForm
+            semester={isEditDialogOpen ? selectedSemester : undefined}
             academicYears={academicYears}
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setIsCreateDialogOpen(false)}
-            isLoading={isCreating}
-            mode="create"
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa học kỳ</DialogTitle>
-          </DialogHeader>
-          <SemesterForm
-            semester={selectedSemester}
-            academicYears={academicYears}
-            onSubmit={handleEditSubmit}
+            onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
             onCancel={() => {
+              setIsCreateDialogOpen(false)
               setIsEditDialogOpen(false)
               setSelectedSemester(null)
             }}
-            isLoading={isUpdating}
-            mode="edit"
+            isLoading={isCreateDialogOpen ? isCreating : isUpdating}
+            mode={isCreateDialogOpen ? 'create' : 'edit'}
           />
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

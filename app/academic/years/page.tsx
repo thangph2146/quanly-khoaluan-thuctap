@@ -1,19 +1,25 @@
 'use client'
 
-import { AcademicYearsContainer } from '@/modules/academic-years/components'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/common'
+import { AcademicYearsContainer } from '@/modules/academic-years'
+import type { FC } from 'react'
 
-export default function AcademicYearsPage() {
+const AcademicYearsPage: FC = () => {
 	return (
-		<div className="container mx-auto p-6">
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-2xl font-bold">Quản lý năm học</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<AcademicYearsContainer />
-				</CardContent>
-			</Card>
+		<div className="container mx-auto py-6 space-y-6 p-4">
+			<PageHeader
+				title="Quản lý Năm học"
+				description="Quản lý các năm học trong hệ thống"
+				breadcrumbs={[
+					{ label: 'Trang chủ', href: '/' },
+					{ label: 'Năm học', href: '/academic/years' },
+				]}
+			>
+				<div></div>
+			</PageHeader>
+			<AcademicYearsContainer />
 		</div>
 	)
 }
+
+export default AcademicYearsPage

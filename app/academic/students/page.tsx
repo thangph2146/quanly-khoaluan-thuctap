@@ -1,19 +1,25 @@
 'use client'
 
-import { StudentsContainer } from '@/modules/students/components'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/common'
+import { StudentsContainer } from '@/modules/students'
+import type { FC } from 'react'
 
-export default function StudentsPage() {
+const StudentsPage: FC = () => {
 	return (
-		<div className="container mx-auto p-6">
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-2xl font-bold">Quản lý sinh viên</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<StudentsContainer />
-				</CardContent>
-			</Card>
+		<div className="container mx-auto py-6 space-y-6 p-4">
+			<PageHeader
+				title="Quản lý Sinh viên"
+				description="Quản lý các sinh viên trong hệ thống"
+				breadcrumbs={[
+					{ label: 'Trang chủ', href: '/' },
+					{ label: 'Sinh viên', href: '/academic/students' },
+				]}
+			>
+				<div></div>
+			</PageHeader>
+			<StudentsContainer />
 		</div>
 	)
 }
+
+export default StudentsPage

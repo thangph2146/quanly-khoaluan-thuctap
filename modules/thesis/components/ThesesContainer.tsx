@@ -113,45 +113,32 @@ export function ThesesContainer() {
         onView={handleView}
       />
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Tạo khóa luận mới</DialogTitle>
-          </DialogHeader>
+      {/* Create/Edit Sheet */}
+      <Sheet open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={open => {
+        setIsCreateDialogOpen(false)
+        setIsEditDialogOpen(false)
+        if (!open) setSelectedThesis(null)
+      }}>
+        <SheetContent className="sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>{isCreateDialogOpen ? 'Tạo khóa luận mới' : 'Chỉnh sửa khóa luận'}</SheetTitle>
+          </SheetHeader>
           <ThesisForm
+            thesis={isEditDialogOpen ? selectedThesis : undefined}
             students={formStudents}
             academicYears={formAcademicYears}
             semesters={formSemesters}
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setIsCreateDialogOpen(false)}
-            isLoading={isCreating}
-            mode="create"
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa khóa luận</DialogTitle>
-          </DialogHeader>
-          <ThesisForm
-            thesis={selectedThesis}
-            students={formStudents}
-            academicYears={formAcademicYears}
-            semesters={formSemesters}
-            onSubmit={handleEditSubmit}
+            onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
             onCancel={() => {
+              setIsCreateDialogOpen(false)
               setIsEditDialogOpen(false)
               setSelectedThesis(null)
             }}
-            isLoading={isUpdating}
-            mode="edit"
+            isLoading={isCreateDialogOpen ? isCreating : isUpdating}
+            mode={isCreateDialogOpen ? 'create' : 'edit'}
           />
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Details Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>

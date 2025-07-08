@@ -1,3 +1,4 @@
+"use client";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,9 +7,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Fragment, ReactNode } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BreadcrumbItem {
   label: string;
@@ -30,20 +32,25 @@ export function PageHeader({
   actions,
   children,
 }: PageHeaderProps) {
+  const isMobile = useIsMobile();
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   return (
     <div className="w-full flex flex-col gap-4 p-4">
-      <div className="flex items-center gap-2">
+      <div className="sticky top-0 z-40 flex items-center gap-2">
+        {/* SidebarTrigger chỉ render nếu có SidebarProvider (không phải mobile) */}
         <SidebarTrigger className="-ml-1" />
         <Separator
           orientation="vertical"
           className="mr-2 data-[orientation=vertical]:h-4"
         />
-        {/* Breadcrumbs */}
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
               <Fragment key={item.label}>
-                <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbItem className="block">
                   {item.href ? (
                     <BreadcrumbLink href={item.href}>
                       {item.label}
@@ -53,7 +60,7 @@ export function PageHeader({
                   )}
                 </BreadcrumbItem>
                 {index < breadcrumbs.length - 1 && (
-                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbSeparator className="block" />
                 )}
               </Fragment>
             ))}

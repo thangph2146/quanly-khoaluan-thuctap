@@ -10,11 +10,11 @@ import { AcademicYearForm } from './AcademicYearForm'
 import { AcademicYearDetail } from './AcademicYearDetail'
 import { useAcademicYears, useAcademicYearActions } from '../hooks'
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
 } from '@/components/ui/sheet'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -23,7 +23,7 @@ import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData } fro
 export function AcademicYearsContainer() {
   const { academicYears, isLoading, refetch } = useAcademicYears()
   const { createAcademicYear, updateAcademicYear, deleteAcademicYear, isCreating, isUpdating, isDeleting } = useAcademicYearActions(refetch)
-  
+
   const [isSheetOpen, setSheetOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<AcademicYear | null>(null)
@@ -70,7 +70,7 @@ export function AcademicYearsContainer() {
 
   const handleConfirmDelete = async () => {
     if (!academicYearToDelete) return
-    
+
     const success = await deleteAcademicYear(academicYearToDelete.id)
     if (success) {
       setIsDeleteDialogOpen(false)
@@ -99,21 +99,19 @@ export function AcademicYearsContainer() {
               {sheetMode === 'create' ? 'Tạo năm học mới' : 'Chỉnh sửa năm học'}
             </SheetTitle>
             <SheetDescription>
-              {sheetMode === 'create' 
+              {sheetMode === 'create'
                 ? 'Điền thông tin để tạo năm học mới cho hệ thống'
                 : 'Cập nhật thông tin năm học'
               }
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-6">
-            <AcademicYearForm
-              academicYear={selectedAcademicYear}
-              onSubmit={handleFormSubmit}
-              onCancel={() => setSheetOpen(false)}
-              isLoading={isFormLoading}
-              mode={sheetMode}
-            />
-          </div>
+          <AcademicYearForm
+            academicYear={selectedAcademicYear}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setSheetOpen(false)}
+            isLoading={isFormLoading}
+            mode={sheetMode}
+          />
         </SheetContent>
       </Sheet>
 
@@ -137,7 +135,7 @@ export function AcademicYearsContainer() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa năm học "{academicYearToDelete?.name}"? 
+              Bạn có chắc chắn muốn xóa năm học "{academicYearToDelete?.name}"?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -1,19 +1,25 @@
 'use client'
 
-import { DepartmentsContainer } from '@/modules/departments/components'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/common'
+import { DepartmentsContainer } from '@/modules/departments'
+import type { FC } from 'react'
 
-export default function DepartmentsPage() {
+const DepartmentsPage: FC = () => {
 	return (
-		<div className="container mx-auto p-6">
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-2xl font-bold">Quản lý đơn vị</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<DepartmentsContainer />
-				</CardContent>
-			</Card>
+		<div className="container mx-auto py-6 space-y-6 p-4">
+			<PageHeader
+				title="Quản lý Đơn vị"
+				description="Quản lý các đơn vị trong hệ thống"
+				breadcrumbs={[
+					{ label: 'Trang chủ', href: '/' },
+					{ label: 'Đơn vị', href: '/academic/departments' },
+				]}
+			>
+				<div></div>
+			</PageHeader>
+			<DepartmentsContainer />
 		</div>
 	)
 }
+
+export default DepartmentsPage

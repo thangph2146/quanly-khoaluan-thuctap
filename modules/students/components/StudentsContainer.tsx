@@ -88,39 +88,29 @@ export function StudentsContainer() {
         onView={handleView}
       />
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Tạo sinh viên mới</DialogTitle>
-          </DialogHeader>
+      {/* Create/Edit Sheet */}
+      <Sheet open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={open => {
+        setIsCreateDialogOpen(false)
+        setIsEditDialogOpen(false)
+        if (!open) setSelectedStudent(null)
+      }}>
+        <SheetContent className="sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>{isCreateDialogOpen ? 'Tạo sinh viên mới' : 'Chỉnh sửa sinh viên'}</SheetTitle>
+          </SheetHeader>
           <StudentForm
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setIsCreateDialogOpen(false)}
-            isLoading={isCreating}
-            mode="create"
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa sinh viên</DialogTitle>
-          </DialogHeader>
-          <StudentForm
-            student={selectedStudent}
-            onSubmit={handleEditSubmit}
+            student={isEditDialogOpen ? selectedStudent : undefined}
+            onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
             onCancel={() => {
+              setIsCreateDialogOpen(false)
               setIsEditDialogOpen(false)
               setSelectedStudent(null)
             }}
-            isLoading={isUpdating}
-            mode="edit"
+            isLoading={isCreateDialogOpen ? isCreating : isUpdating}
+            mode={isCreateDialogOpen ? 'create' : 'edit'}
           />
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Details Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>

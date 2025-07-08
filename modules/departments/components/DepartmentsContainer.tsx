@@ -88,41 +88,30 @@ export function DepartmentsContainer() {
         onView={handleView}
       />
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Tạo đơn vị mới</DialogTitle>
-          </DialogHeader>
+      {/* Create/Edit Sheet */}
+      <Sheet open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={open => {
+        setIsCreateDialogOpen(false)
+        setIsEditDialogOpen(false)
+        if (!open) setSelectedDepartment(null)
+      }}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>{isCreateDialogOpen ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}</SheetTitle>
+          </SheetHeader>
           <DepartmentForm
+            department={isEditDialogOpen ? selectedDepartment : undefined}
             allDepartments={departments}
-            onSubmit={handleCreateSubmit}
-            onCancel={() => setIsCreateDialogOpen(false)}
-            isLoading={isCreating}
-            mode="create"
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa đơn vị</DialogTitle>
-          </DialogHeader>
-          <DepartmentForm
-            department={selectedDepartment}
-            allDepartments={departments}
-            onSubmit={handleEditSubmit}
+            onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
             onCancel={() => {
+              setIsCreateDialogOpen(false)
               setIsEditDialogOpen(false)
               setSelectedDepartment(null)
             }}
-            isLoading={isUpdating}
-            mode="edit"
+            isLoading={isCreateDialogOpen ? isCreating : isUpdating}
+            mode={isCreateDialogOpen ? 'create' : 'edit'}
           />
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Details Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
