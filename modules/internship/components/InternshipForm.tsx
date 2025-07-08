@@ -116,7 +116,7 @@ export function InternshipForm({
           <div className="space-y-2">
             <Label htmlFor="student">Sinh viên *</Label>
             <Select value={formData.studentId} onValueChange={(value) => handleChange('studentId', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn sinh viên" />
               </SelectTrigger>
               <SelectContent>
@@ -132,7 +132,7 @@ export function InternshipForm({
           <div className="space-y-2">
             <Label htmlFor="partner">Đối tác *</Label>
             <Select value={formData.partnerId} onValueChange={(value) => handleChange('partnerId', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn đối tác" />
               </SelectTrigger>
               <SelectContent>
@@ -148,7 +148,7 @@ export function InternshipForm({
           <div className="space-y-2">
             <Label htmlFor="academicYear">Năm học *</Label>
             <Select value={formData.academicYearId} onValueChange={(value) => handleChange('academicYearId', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn năm học" />
               </SelectTrigger>
               <SelectContent>
@@ -164,7 +164,7 @@ export function InternshipForm({
           <div className="space-y-2">
             <Label htmlFor="semester">Học kỳ *</Label>
             <Select value={formData.semesterId} onValueChange={(value) => handleChange('semesterId', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn học kỳ" />
               </SelectTrigger>
               <SelectContent>
@@ -201,7 +201,7 @@ export function InternshipForm({
           <div className="space-y-2">
             <Label htmlFor="status">Trạng thái</Label>
             <Select value={formData.status} onValueChange={(value) => handleChange('status', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
               <SelectContent>

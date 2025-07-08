@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { User } from '../types'
@@ -91,23 +91,6 @@ export function UserDetails({ user }: UserDetailsProps) {
             </>
           )}
 
-          {user.avatarUrl && (
-            <>
-              <Separator className="my-4" />
-              <div>
-                <h4 className="font-medium mb-2">Ảnh đại diện</h4>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-sm text-muted-foreground">
-                    <p>URL: {user.avatarUrl}</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </CardContent>
       </Card>
     </div>
