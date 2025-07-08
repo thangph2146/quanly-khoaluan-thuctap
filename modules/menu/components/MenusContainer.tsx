@@ -99,6 +99,7 @@ export function MenusContainer() {
           </SheetHeader>
           <MenuForm
             menu={selectedMenu}
+            parentMenus={menus || []}
             onSubmit={handleFormSubmit}
             onCancel={() => setSheetOpen(false)}
             isLoading={isFormLoading}

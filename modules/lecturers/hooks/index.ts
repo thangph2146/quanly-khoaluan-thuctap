@@ -1,0 +1,6 @@
+export * from './use-lecturer'
+export * from './use-create-lecturer'
+export * from './use-update-lecturer'
+export * from './use-delete-lecturer'
+export * from './use-lecturer-actions'
+export * from './use-departments'

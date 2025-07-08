@@ -1,37 +1,37 @@
 /**
  * Department Service
  */
-import { DepartmentsApi } from '@/lib/api/departments.api'
-import type { Department, CreateDepartmentData, UpdateDepartmentData } from '../types'
+import { getDepartments, getDepartmentById, createDepartment, updateDepartment, deleteDepartment, type Department } from '@/lib/api/departments.api'
+import type { CreateDepartmentData, UpdateDepartmentData } from '../types'
 
 export class DepartmentService {
   static async getAll(): Promise<Department[]> {
-    return DepartmentsApi.getAll() as Promise<Department[]>
+    return getDepartments()
   }
 
   static async getById(id: number): Promise<Department> {
-    return DepartmentsApi.getById(id) as Promise<Department>
+    return getDepartmentById(id)
   }
 
   static async create(data: CreateDepartmentData): Promise<Department> {
-    return DepartmentsApi.create({
+    return createDepartment({
       name: data.name,
       code: data.code,
-      parentDepartmentId: data.parentDepartmentId,
-    }) as Promise<Department>
+      parentDepartmentId: data.parentDepartmentId || undefined,
+    })
   }
 
-  static async update(id: number, data: UpdateDepartmentData): Promise<void> {
-    const fullData = {
+  static async update(id: number, data: UpdateDepartmentData): Promise<Department> {
+    const fullData: Department = {
       id,
       name: data.name,
       code: data.code,
-      parentDepartmentId: data.parentDepartmentId,
+      parentDepartmentId: data.parentDepartmentId || undefined,
     }
-    return DepartmentsApi.update(id, fullData as any)
+    return updateDepartment(id, fullData)
   }
 
   static async delete(id: number): Promise<void> {
-    return DepartmentsApi.delete(id)
+    return deleteDepartment(id)
   }
 }

@@ -1,70 +1,91 @@
-import { Department } from '@/modules/departments/types'
-import httpsAPI from './client'
-import { AxiosError } from 'axios'
+/**
+ * Departments API
+ * API functions for department management
+ */
+import apiClient from './client'
 
-export class DepartmentsApi {
-  // Lấy danh sách tất cả departments
-  static async getAll(): Promise<Department[]> {
-    try {
-      const response = await httpsAPI.get('/Departments')
-      return response.data as Department[]
-    } catch (error) {
-      console.error('Lỗi khi lấy danh sách đơn vị:', error)
-      throw new Error('Không thể lấy danh sách đơn vị. Vui lòng thử lại sau.')
-    }
+export interface Department {
+  id: number
+  name: string
+  code: string
+  parentDepartmentId?: number
+  parentDepartment?: Department
+  childDepartments?: Department[]
+}
+
+/**
+ * Get all departments (hierarchical)
+ */
+export const getDepartments = async (): Promise<Department[]> => {
+  try {
+    const response = await apiClient.get('/departments')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching departments:', error)
+    throw error
   }
+}
 
-  // Lấy department theo ID
-  static async getById(id: number): Promise<Department> {
-    try {
-      const response = await httpsAPI.get(`/Departments/${id}`)
-      return response.data as Department
-    } catch (error) {
-      console.error('Lỗi khi lấy thông tin đơn vị:', error)
-      if (error instanceof AxiosError && error.response?.status === 404) {
-        throw new Error('Không tìm thấy đơn vị')
-      }
-      throw error
-    }
+/**
+ * Get all departments (flat list for dropdown)
+ */
+export const getAllDepartments = async (): Promise<Department[]> => {
+  try {
+    const response = await apiClient.get('/departments/all')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching all departments:', error)
+    throw error
   }
+}
 
-  // Tạo department mới
-  static async create(department: Omit<Department, 'id'>): Promise<Department> {
-    try {
-      const response = await httpsAPI.post('/Departments', department)
-      return response.data as Department
-    } catch (error) {
-      console.error('Lỗi khi tạo đơn vị:', error)
-      throw error
-    }
+/**
+ * Get department by ID
+ */
+export const getDepartmentById = async (id: number): Promise<Department> => {
+  try {
+    const response = await apiClient.get(`/departments/${id}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching department:', error)
+    throw error
   }
+}
 
-  // Cập nhật department
-  static async update(id: number, department: Department): Promise<void> {
-    try {
-      await httpsAPI.put(`/Departments/${id}`, department)
-    } catch (error) {
-      console.error('Lỗi khi cập nhật đơn vị:', error)
-      if (error instanceof AxiosError && error.response?.status === 404) {
-        throw new Error('Không tìm thấy đơn vị')
-      }
-      throw error
-    }
+/**
+ * Create new department
+ */
+export const createDepartment = async (data: Omit<Department, 'id'>): Promise<Department> => {
+  try {
+    const response = await apiClient.post('/departments', data)
+    return response.data
+  } catch (error) {
+    console.error('Error creating department:', error)
+    throw error
   }
+}
 
-  // Xóa department
-  static async delete(id: number): Promise<void> {
-    try {
-      await httpsAPI.delete(`/Departments/${id}`)
-    } catch (error) {
-      console.error('Lỗi khi xóa đơn vị:', error)
-      if (error instanceof AxiosError && error.response?.status === 404) {
-        throw new Error('Không tìm thấy đơn vị')
-      }
-      if (error instanceof AxiosError && error.response?.status === 400) {
-        throw new Error('Không thể xóa đơn vị này vì có các đơn vị con.')
-      }
-      throw error
-    }
+/**
+ * Update department
+ */
+export const updateDepartment = async (id: number, data: Department): Promise<Department> => {
+  try {
+    const response = await apiClient.put(`/departments/${id}`, data)
+    return response.data
+  } catch (error) {
+    console.error('Error updating department:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete department
+ */
+export const deleteDepartment = async (id: number): Promise<void> => {
+  try {
+    await apiClient.delete(`/departments/${id}`)
+  } catch (error) {
+    console.error('Error deleting department:', error)
+    throw error
   }
 }
