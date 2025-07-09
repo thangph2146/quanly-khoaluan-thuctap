@@ -18,8 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/common";
 import type {
   Department,
-  CreateDepartmentData,
-  UpdateDepartmentData,
+  DepartmentMutationData,
   DepartmentFormProps,
 } from "../types";
 import { cn } from "@/lib/utils";
@@ -78,30 +77,29 @@ export const DepartmentForm = React.memo(function DepartmentForm({
   });
 
   useEffect(() => {
-    if (department && mode === "edit") {
+    if (department && mode === 'edit') {
       form.reset({
-        name: department.name || "",
-        code: department.code || "",
+        name: department.name || '',
+        code: department.code || '',
         parentDepartmentId: department.parentDepartmentId ?? null,
       });
     } else {
       form.reset({
-        name: "",
-        code: "",
+        name: '',
+        code: '',
         parentDepartmentId: null,
       });
     }
-  }, [department, mode, form]);
+  }, [department, mode, form.reset]);
 
   function handleFormSubmit(data: z.infer<typeof departmentSchema>) {
+    const parentId = data.parentDepartmentId;
     const submissionData = {
       ...data,
       parentDepartmentId:
-        data.parentDepartmentId && String(data.parentDepartmentId) !== "none"
-          ? Number(data.parentDepartmentId)
-          : null,
+        parentId && parentId !== 'none' ? Number(parentId) : null,
     };
-    onSubmit(submissionData as CreateDepartmentData | UpdateDepartmentData);
+    onSubmit(submissionData as DepartmentMutationData);
   }
 
   return (

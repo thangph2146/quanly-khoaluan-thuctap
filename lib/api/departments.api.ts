@@ -13,12 +13,24 @@ export interface Department {
   childDepartments?: Department[]
 }
 
+export interface DepartmentFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface PaginatedDepartments {
+  data: Department[];
+  total: number;
+}
+
+
 /**
  * Get all departments (hierarchical)
  */
-export const getDepartments = async (): Promise<Department[]> => {
+export const getDepartments = async (filters: DepartmentFilters = {}): Promise<PaginatedDepartments> => {
   try {
-    const response = await apiClient.get('/departments')
+    const response = await apiClient.get('/departments', { params: filters })
     return response.data
   } catch (error) {
     console.error('Error fetching departments:', error)
@@ -93,9 +105,9 @@ export const bulkRestoreDepartments = async (ids: number[]): Promise<void> => {
 /**
  * Get all deleted departments (for recycle bin)
  */
-export const getDeletedDepartments = async (): Promise<Department[]> => {
+export const getDeletedDepartments = async (filters: DepartmentFilters = {}): Promise<PaginatedDepartments> => {
   try {
-    const response = await apiClient.get('/departments/deleted')
+    const response = await apiClient.get('/departments/deleted', { params: filters })
     return response.data
   } catch (error) {
     console.error('Error fetching deleted departments:', error)

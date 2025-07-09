@@ -4,15 +4,16 @@
 import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { DepartmentService } from '../services/department.service'
-import type { CreateDepartmentData, UpdateDepartmentData } from '../types'
+import type { DepartmentMutationData } from '../types'
 
 export function useDepartmentActions(onSuccess?: () => void) {
   const [isCreating, setIsCreating] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
   const { toast } = useToast()
 
-  const createDepartment = async (data: CreateDepartmentData) => {
+  const createDepartment = async (data: DepartmentMutationData) => {
     try {
       setIsCreating(true)
       await DepartmentService.create(data)
@@ -33,7 +34,7 @@ export function useDepartmentActions(onSuccess?: () => void) {
     }
   }
 
-  const updateDepartment = async (id: number, data: UpdateDepartmentData) => {
+  const updateDepartment = async (id: number, data: DepartmentMutationData) => {
     try {
       setIsUpdating(true)
       await DepartmentService.update(id, data)
@@ -76,12 +77,82 @@ export function useDepartmentActions(onSuccess?: () => void) {
     }
   }
 
+  const softDeleteDepartments = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsDeleting(true)
+      await DepartmentService.bulkSoftDelete(ids);
+      toast({
+        title: 'Thành công',
+        description: 'Xóa tạm thời các đơn vị thành công.',
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa tạm thời các đơn vị',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const restoreDepartments = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsRestoring(true)
+      await DepartmentService.bulkRestore(ids)
+      toast({
+        title: 'Thành công',
+        description: 'Khôi phục đơn vị thành công',
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể khôi phục đơn vị',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsRestoring(false)
+    }
+  }
+
+  const permanentDeleteDepartments = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsDeleting(true)
+      await DepartmentService.bulkPermanentDelete(ids)
+      toast({
+        title: 'Thành công',
+        description: 'Xóa vĩnh viễn đơn vị thành công',
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa vĩnh viễn đơn vị',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return {
     createDepartment,
     updateDepartment,
     deleteDepartment,
+    softDeleteDepartments,
+    restoreDepartments,
+    permanentDeleteDepartments,
     isCreating,
     isUpdating,
     isDeleting,
+    isRestoring,
   }
 }

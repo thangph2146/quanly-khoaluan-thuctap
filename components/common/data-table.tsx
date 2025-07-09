@@ -6,6 +6,7 @@ import {
 	getCoreRowModel,
 	useReactTable,
 	type ColumnDef,
+  type Row,
 } from "@tanstack/react-table";
 import {
 	Table,
@@ -35,8 +36,6 @@ import {
 import { ChevronRight } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { logger } from "@/lib/utils/logger";
 
 export interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -70,6 +69,7 @@ export interface DataTableProps<TData, TValue> {
 	getChildren?: (row: TData) => TData[];
 	onDeleteMany?: (ids: (string | number)[]) => void;
 	onRestoreMany?: (ids: (string | number)[]) => void;
+  deleteButtonText?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -88,50 +88,31 @@ export function DataTable<TData, TValue>({
 	getChildren,
 	onDeleteMany,
 	onRestoreMany,
+  deleteButtonText = 'Xóa nhiều',
 }: DataTableProps<TData, TValue>) {
-	const table = useReactTable({
-		data,
-		columns,
-		getCoreRowModel: getCoreRowModel(),
-	});
-
-	const pageSizeOptions = [5, 10, 20, 50, 100];
-
-	// State for expanded rows (tree table)
 	const [expandedRowIds, setExpandedRowIds] = React.useState<Set<string | number>>(new Set());
-	const handleToggleRow = (rowId: string | number) => {
-		setExpandedRowIds((prev) => {
-			const next = new Set(prev);
-			if (next.has(rowId)) {
-				next.delete(rowId);
-			} else {
-				next.add(rowId);
-			}
-			return next;
-		});
-	};
-
-	// State for selected rows
 	const [selectedRowIds, setSelectedRowIds] = React.useState<Set<string | number>>(new Set());
-	const allRowIds = React.useMemo(() => data.map((row) => (getId ? getId(row) : (row as any).id)), [data, getId]);
-	const isAllSelected = allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds.has(id));
-	const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
-	const handleSelectAll = () => {
-		if (isAllSelected) {
-			setSelectedRowIds(new Set());
-		} else {
-			setSelectedRowIds(new Set(allRowIds));
-		}
-	};
 
-	// Recursive helper to get all descendant ids for a row (tree table)
+	const allRowIds = React.useMemo(() => data.map((row) => (getId ? getId(row) : (row as TData & { id: string | number }).id)), [data, getId]);
+	const isAllSelected = allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds.has(id));
+
+	const handleSelectAll = React.useCallback(() => {
+		setSelectedRowIds(() => {
+			if (isAllSelected) {
+				return new Set();
+			} else {
+				return new Set(allRowIds);
+			}
+		});
+	}, [isAllSelected, allRowIds]);
+
 	const getAllDescendantIds = React.useCallback(
 		(row: TData): (string | number)[] => {
 			if (!getChildren) return [];
 			const children = getChildren(row) || [];
 			let ids: (string | number)[] = [];
 			for (const child of children) {
-				const childId = getId ? getId(child) : (child as any).id;
+				const childId = getId ? getId(child) : (child as TData & { id: string | number }).id;
 				ids.push(childId);
 				ids = ids.concat(getAllDescendantIds(child));
 			}
@@ -140,20 +121,17 @@ export function DataTable<TData, TValue>({
 		[getChildren, getId]
 	);
 
-	const handleSelectRow = (rowId: string | number) => {
+	const handleSelectRow = React.useCallback((rowId: string | number) => {
 		setSelectedRowIds((prev) => {
 			const next = new Set(prev);
-			// Find the row object by id
-			const rowObj = data.find((row) => (getId ? getId(row) : (row as any).id) === rowId);
+			const rowObj = data.find((row) => (getId ? getId(row) : (row as TData & { id: string | number }).id) === rowId);
+
 			if (isTreeTable && getChildren && rowObj) {
-				// Get all descendant ids
 				const descendantIds = getAllDescendantIds(rowObj);
 				if (next.has(rowId)) {
-					// Deselect parent and all descendants
 					next.delete(rowId);
 					descendantIds.forEach((id) => next.delete(id));
 				} else {
-					// Select parent and all descendants
 					next.add(rowId);
 					descendantIds.forEach((id) => next.add(id));
 				}
@@ -166,56 +144,114 @@ export function DataTable<TData, TValue>({
 			}
 			return next;
 		});
+	}, [data, getId, isTreeTable, getChildren, getAllDescendantIds]);
+	
+	const handleToggleRow = (rowId: string | number) => {
+		setExpandedRowIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(rowId)) {
+				next.delete(rowId);
+			} else {
+				next.add(rowId);
+			}
+			return next;
+		});
 	};
 
-	// Tree rendering helpers
-	function renderTreeRows(rows: any[], level = 0): React.ReactNode[] {
-		return rows.flatMap((row) => {
-			if (!row) return [];
-			const rowId = getId ? getId(row.original) : row.id;
-			const childrenData = getChildren ? getChildren(row.original) : [];
-			// Map children data to row objects
-			const childrenRows = childrenData
-				.map((child: any) => table.getRowModel().rows.find((r) => getId && getId(r.original) === getId(child)))
-				.filter(Boolean);
-			const hasChildren = childrenRows.length > 0;
-			const isOpen = expandedRowIds.has(rowId);
-			// Collapsible row
-			const rowCells = [
-				<TableCell key={`checkbox-${rowId}`} style={level > 0 ? { paddingLeft: `${level * 1.5}rem` } : {}}>
+	const columnsWithSelect: ColumnDef<TData, TValue>[] = React.useMemo(() => [
+		{
+			id: 'select',
+			header: () => (
+				<Checkbox
+					checked={isAllSelected}
+					onCheckedChange={handleSelectAll}
+					aria-label="Chọn tất cả"
+				/>
+			),
+			cell: ({ row }) => {
+				const rowId = getId ? getId(row.original) : (row.original as { id: string | number }).id;
+				return (
 					<Checkbox
 						checked={selectedRowIds.has(rowId)}
 						onCheckedChange={() => handleSelectRow(rowId)}
 						aria-label="Chọn dòng"
 					/>
-				</TableCell>,
-				...row.getVisibleCells().map((cell: any, idx: number) => (
-					<TableCell
-						key={cell.id}
-						className="whitespace-nowrap"
-					>
-						{idx === 0 && hasChildren ? (
-							<div className="flex items-center gap-1">
-								<button
-									type="button"
-									className="p-0 mr-1 align-middle"
-									onClick={() => handleToggleRow(rowId)}
-									aria-label={isOpen ? 'Thu gọn' : 'Mở rộng'}
-								>
-									<ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-								</button>
-								{flexRender(cell.column.columnDef.cell, cell.getContext())}
-							</div>
-						) : (
-							flexRender(cell.column.columnDef.cell, cell.getContext())
-						)}
-					</TableCell>
-				)),
-			];
+				);
+			},
+		},
+		...columns,
+	], [columns, isAllSelected, handleSelectAll, selectedRowIds, handleSelectRow, getId]);
+
+	const tableData = React.useMemo(() => {
+		if (!isTreeTable || !getChildren) return data;
+	
+		const flat: TData[] = [];
+		const recurse = (items: TData[]) => {
+			for (const item of items) {
+				flat.push(item);
+				const children = getChildren(item);
+				if (children?.length) {
+					recurse(children);
+				}
+			}
+		};
+		recurse(data);
+		return flat;
+	}, [data, isTreeTable, getChildren]);
+
+	const table = useReactTable({
+		data: tableData,
+		columns: columnsWithSelect,
+		getCoreRowModel: getCoreRowModel(),
+	});
+
+	const pageSizeOptions = [5, 10, 20, 50, 100];
+
+	// Recursive rendering function for tree table
+	function renderTreeRows(rows: Row<TData>[], level = 0): React.ReactNode[] {
+		return rows.flatMap((row) => {
+			if (!row) return [];
+			const rowId = getId ? getId(row.original) : (row.original as TData & { id: string | number }).id;
+			const childrenData = getChildren ? getChildren(row.original) : [];
+			const childrenRows = childrenData
+				.map((child: TData) => table.getRowModel().rows.find((r) => getId && getId(r.original) === (getId ? getId(child) : (child as TData & { id: string | number }).id)))
+				.filter((r): r is Row<TData> => !!r);
+			const hasChildren = childrenRows.length > 0;
+			const isOpen = expandedRowIds.has(rowId);
+
+			const visibleCells = row.getVisibleCells();
+
+			const renderedCells = visibleCells.map((cell, idx) => {
+                const isFirstDataCell = idx === 1; // 0 is select, 1 is the first data column
+                return (
+                    <TableCell key={cell.id} className="whitespace-nowrap">
+                        {isFirstDataCell ? (
+                            <div className="flex items-center gap-1" style={{ paddingLeft: `${level * 1.5}rem` }}>
+                                {hasChildren ? (
+                                    <button
+                                        type="button"
+                                        className="p-0 mr-1 align-middle"
+                                        onClick={() => handleToggleRow(rowId)}
+                                        aria-label={isOpen ? 'Thu gọn' : 'Mở rộng'}
+                                    >
+                                        <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                                    </button>
+                                ) : (
+									<span className="w-4 h-4 mr-1 p-0 inline-block" />
+								)}
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </div>
+                        ) : (
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                        )}
+                    </TableCell>
+                );
+            });
+			
 			return [
 				<React.Fragment key={rowId}>
-					<TableRow>
-						{rowCells}
+					<TableRow data-state={selectedRowIds.has(rowId) ? "selected" : undefined}>
+						{renderedCells}
 					</TableRow>
 					{hasChildren && isOpen && (
 						<>{renderTreeRows(childrenRows, level + 1)}</>
@@ -225,60 +261,17 @@ export function DataTable<TData, TValue>({
 		});
 	}
 
-	// Add select column to columns
-	const columnsWithSelect = React.useMemo(() => [
-		{
-			id: 'select',
-			header: () => (
-				<Checkbox
-					checked={isAllSelected}
-					indeterminate={isIndeterminate}
-					onCheckedChange={handleSelectAll}
-					aria-label="Chọn tất cả"
-				/>
-			),
-			cell: ({ row }: { row: any }) => {
-				const rowId = getId ? getId(row.original) : row.id;
-				return (
-					<Checkbox
-						checked={selectedRowIds.has(rowId)}
-						onCheckedChange={() => handleSelectRow(rowId)}
-						aria-label="Chọn dòng"
-					/>
-				);
-			},
-			size: 32,
-		},
-		...columns,
-	], [columns, isAllSelected, isIndeterminate, selectedRowIds, getId]);
-
 	// Bulk action bar
 	const selectedIds = Array.from(selectedRowIds);
 	const showBulkActions = selectedIds.length > 0 && (onDeleteMany || onRestoreMany);
-	const [isDeleteManyDialogOpen, setIsDeleteManyDialogOpen] = React.useState(false);
-	const [isRestoreManyDialogOpen, setIsRestoreManyDialogOpen] = React.useState(false);
-
-	const handleDeleteManyConfirm = () => {
+	
+	const handleDeleteManyTrigger = () => {
 		if (onDeleteMany) onDeleteMany(selectedIds);
-		setIsDeleteManyDialogOpen(false);
-		setSelectedRowIds(new Set());
 	};
 
-	const handleRestoreManyConfirm = () => {
+	const handleRestoreManyTrigger = () => {
 		if (onRestoreMany) onRestoreMany(selectedIds);
-		setIsRestoreManyDialogOpen(false);
-		setSelectedRowIds(new Set());
 	};
-
-	React.useEffect(() => {
-		logger.debug("DataTable props", {
-			onDeleteMany,
-			onRestoreMany,
-			data,
-			selectedIds,
-			showBulkActions,
-		}, "DataTable");
-	}, [onDeleteMany, onRestoreMany, data, selectedIds, showBulkActions]);
 
 	return (
 		<div className="space-y-2">
@@ -295,15 +288,15 @@ export function DataTable<TData, TValue>({
 					{onDeleteMany && (
 						<Button
 							className="px-3 py-1 rounded bg-destructive text-white hover:bg-destructive/80"
-							onClick={() => setIsDeleteManyDialogOpen(true)}
+							onClick={handleDeleteManyTrigger}
 						>
-							Xóa nhiều
+							{deleteButtonText}
 						</Button>
 					)}
 					{onRestoreMany && (
 						<Button
 							className="px-3 py-1 rounded bg-primary text-white hover:bg-primary/80"
-							onClick={() => setIsRestoreManyDialogOpen(true)}
+							onClick={handleRestoreManyTrigger}
 						>
 							Khôi phục nhiều
 						</Button>
@@ -315,10 +308,14 @@ export function DataTable<TData, TValue>({
 				<Table>
 					<TableHeader>
 						<TableRow>
-							{columnsWithSelect.map((col, idx) => (
-								<TableHead key={col.id || idx} className="whitespace-nowrap">
-									{typeof col.header === 'function' ? col.header({} as any) : col.header}
-								</TableHead>
+							{table.getHeaderGroups().map(headerGroup => (
+								<React.Fragment key={headerGroup.id}>
+									{headerGroup.headers.map(header => (
+										<TableHead key={header.id} className="whitespace-nowrap">
+											{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+										</TableHead>
+									))}
+								</React.Fragment>
 							))}
 						</TableRow>
 					</TableHeader>
@@ -339,28 +336,15 @@ export function DataTable<TData, TValue>({
 									)
 								)
 								: table.getRowModel().rows.map((row) => (
-									<TableRow key={row.id}>
-										{columnsWithSelect.map((col, idx) => {
-											if (col.id === 'select') {
-												const rowId = getId ? getId(row.original) : row.id;
-												return (
-													<TableCell key={col.id}>
-														<Checkbox
-															checked={selectedRowIds.has(rowId)}
-															onCheckedChange={() => handleSelectRow(rowId)}
-															aria-label="Chọn dòng"
-														/>
-													</TableCell>
-												);
-											}
-											// Render normal cell
-											const cell = row.getVisibleCells()[idx - 1];
-											return (
-												<TableCell key={col.id || idx} className="whitespace-nowrap">
-													{cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null}
-												</TableCell>
-											);
-										})}
+									<TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
+										{row.getVisibleCells().map((cell) => (
+											<TableCell key={cell.id}>
+												{flexRender(
+													cell.column.columnDef.cell,
+													cell.getContext()
+												)}
+											</TableCell>
+                    ))}
 									</TableRow>
 								))
 						) : (
@@ -438,50 +422,6 @@ export function DataTable<TData, TValue>({
 							</PaginationContent>
 						</Pagination>
 					)}
-				{/* Bulk delete confirmation dialog */}
-				<AlertDialog open={isDeleteManyDialogOpen} onOpenChange={setIsDeleteManyDialogOpen}>
-					<AlertDialogContent>
-						<AlertDialogHeader>
-							<AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-							<AlertDialogDescription>
-								Bạn có chắc chắn muốn xóa {selectedIds.length} mục đã chọn? Hành động này không thể hoàn tác.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel onClick={() => setIsDeleteManyDialogOpen(false)}>
-								Hủy
-							</AlertDialogCancel>
-							<AlertDialogAction
-								onClick={handleDeleteManyConfirm}
-								className="bg-red-600 hover:bg-red-700"
-							>
-								Xóa
-							</AlertDialogAction>
-						</AlertDialogFooter>
-					</AlertDialogContent>
-				</AlertDialog>
-				{/* Bulk restore confirmation dialog */}
-				<AlertDialog open={isRestoreManyDialogOpen} onOpenChange={setIsRestoreManyDialogOpen}>
-					<AlertDialogContent>
-						<AlertDialogHeader>
-							<AlertDialogTitle>Xác nhận khôi phục</AlertDialogTitle>
-							<AlertDialogDescription>
-								Bạn có chắc chắn muốn khôi phục {selectedIds.length} mục đã chọn?
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel onClick={() => setIsRestoreManyDialogOpen(false)}>
-								Hủy
-							</AlertDialogCancel>
-							<AlertDialogAction
-								onClick={handleRestoreManyConfirm}
-								className="bg-primary hover:bg-primary/80"
-							>
-								Khôi phục
-							</AlertDialogAction>
-						</AlertDialogFooter>
-					</AlertDialogContent>
-				</AlertDialog>
 			</div>
 		</div>
 	);

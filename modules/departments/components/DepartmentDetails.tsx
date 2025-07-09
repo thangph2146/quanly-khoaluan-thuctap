@@ -6,6 +6,25 @@ import type { DepartmentDetailsProps } from '../types'
 import { Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
 
+// Sub-component for a single piece of information
+const InfoBlock: React.FC<{
+  iconColor: string
+  label: string
+  children: React.ReactNode
+}> = ({ iconColor, label, children }) => (
+  <div
+    className={`bg-${iconColor}-50 rounded-lg p-4 border border-${iconColor}-200`}
+  >
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`w-2 h-2 bg-${iconColor}-500 rounded-full`}></div>
+      <label className={`text-sm font-medium text-${iconColor}-800`}>
+        {label}
+      </label>
+    </div>
+    <div className="space-y-1 text-sm">{children}</div>
+  </div>
+)
+
 export function DepartmentDetails({
   department,
   isOpen,
@@ -45,56 +64,33 @@ export function DepartmentDetails({
 
         {/* Department Information */}
         <div className="space-y-4">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <label className="text-sm font-medium text-blue-800">
-                Thông tin cơ bản
-              </label>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm">
-                <span className="font-medium">Tên đơn vị:</span>{' '}
-                {department.name}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium">Mã đơn vị:</span> {department.code}
-              </p>
-            </div>
-          </div>
+          <InfoBlock iconColor="blue" label="Thông tin cơ bản">
+            <p>
+              <span className="font-medium">Tên đơn vị:</span> {department.name}
+            </p>
+            <p>
+              <span className="font-medium">Mã đơn vị:</span> {department.code}
+            </p>
+          </InfoBlock>
 
           {department.parentDepartment && (
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <label className="text-sm font-medium text-green-800">
-                  Đơn vị cha
-                </label>
-              </div>
-              <p className="text-sm">
+            <InfoBlock iconColor="green" label="Đơn vị cha">
+              <p>
                 {department.parentDepartment.name} (
                 {department.parentDepartment.code})
               </p>
-            </div>
+            </InfoBlock>
           )}
 
           {department.childDepartments &&
             department.childDepartments.length > 0 && (
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <label className="text-sm font-medium text-purple-800">
-                    Đơn vị con
-                  </label>
-                </div>
-                <div className="space-y-1">
-                  {department.childDepartments.map((child) => (
-                    <p key={child.id} className="text-sm">
-                      • {child.name} ({child.code})
-                    </p>
-                  ))}
-                </div>
-              </div>
+              <InfoBlock iconColor="purple" label="Đơn vị con">
+                {department.childDepartments.map((child) => (
+                  <p key={child.id}>
+                    • {child.name} ({child.code})
+                  </p>
+                ))}
+              </InfoBlock>
             )}
         </div>
       </div>

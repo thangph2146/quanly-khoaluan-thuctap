@@ -4,133 +4,178 @@
  */
 'use-client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { DepartmentList } from './DepartmentList'
 import { DepartmentForm } from './DepartmentForm'
 import { DepartmentDetails } from './DepartmentDetails'
 import { DepartmentDeletedList } from './DepartmentDeletedList'
-import { useDepartments, useDepartmentActions } from '../hooks'
+import { useDepartments, useDepartmentActions, useDeletedDepartments } from '../hooks'
 import { Button } from '@/components/ui/button'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PageHeader } from '@/components/common';
-import type { Department, CreateDepartmentData, UpdateDepartmentData } from '../types'
+import { PageHeader, Modal } from '@/components/common';
+import type { Department, DepartmentMutationData, DepartmentFilters } from '../types'
 import { logger } from '@/lib/utils/logger'
+import { flattenDepartments, removeDepartmentFromTree } from '../utils/department-tree.utils'
 
-const flattenDepartmentsForForm = (departments: Department[]): Department[] => {
-  const flatList: Department[] = [];
-  const recurse = (depts: Department[]) => {
-    for (const dept of depts) {
-      flatList.push(dept);
-      if (dept.childDepartments && dept.childDepartments.length > 0) {
-        recurse(dept.childDepartments);
-      }
-    }
-  };
-  recurse(departments);
-  return flatList;
-};
+type ModalState = 
+  | { type: 'create' }
+  | { type: 'edit', department: Department }
+  | { type: 'delete', department: Department }
+  | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
+  | { type: 'restore-many', ids: number[] }
+  | { type: 'view', department: Department }
+  | { type: 'idle' };
+
 
 export function DepartmentsContainer() {
-  const { departments, setDepartments, isLoading, refetch } = useDepartments()
-  const { createDepartment, updateDepartment, deleteDepartment, isCreating, isUpdating, isDeleting } = useDepartmentActions(refetch)
-  
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null)
-  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false)
-  const [departmentToView, setDepartmentToView] = useState<Department | null>(null)
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
+  const [filters, setFilters] = useState<DepartmentFilters>({ page: 1, limit: 10, search: "" });
+  
+  // Active departments state
+  const { 
+    departments: activeDepartments, 
+    setDepartments: setActiveDepartments, 
+    total: activeTotal, 
+    isLoading: isLoadingActive, 
+    refetch: refetchActive,
+  } = useDepartments(filters);
 
-  const allDepartmentsForForm = useMemo(() => flattenDepartmentsForForm(departments), [departments]);
-  const totalPages = Math.ceil((departments?.length || 0) / (limit || 10));
+  // Deleted departments state
+  const { 
+    deletedDepartments, 
+    setDeletedDepartments, 
+    total: deletedTotal, 
+    isLoading: isLoadingDeleted,
+    refetch: refetchDeleted,
+  } = useDeletedDepartments(filters);
+  
+  // Reset page to 1 when switching tabs
+  useEffect(() => {
+    setFilters(f => ({ ...f, page: 1 }));
+  }, [showDeleted]);
+
+
+  // Actions
+  const { 
+    createDepartment, 
+    updateDepartment, 
+    deleteDepartment, 
+    restoreDepartments,
+    permanentDeleteDepartments,
+    softDeleteDepartments,
+    isCreating, 
+    isUpdating, 
+    isDeleting,
+    isRestoring,
+  } = useDepartmentActions(() => {
+    refetchActive();
+    refetchDeleted();
+  })
+  
+  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
+
+  const allDepartmentsForForm = useMemo(() => flattenDepartments(activeDepartments), [activeDepartments]);
+
+  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+
+  // Client-side pagination logic for the flat 'deleted' list
+  const paginatedDeletedDepartments = useMemo(() => {
+    const { page = 1, limit = 10 } = filters;
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    return deletedDepartments.slice(start, end);
+  }, [deletedDepartments, filters]);
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <div className="flex flex-col space-y-2 justify-between">
         <Label htmlFor="search">Tìm kiếm</Label>
         <Input
+          id="search"
           placeholder="Tìm kiếm đơn vị..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1);
-          }}
+          value={filters.search}
+          onChange={(e) => setFilters(f => ({...f, search: e.target.value}))}
         />
       </div>
     </div>
   );
 
-  const handleCreate = () => {
-    setIsCreateDialogOpen(true)
-  }
+  const handleCreate = () => setModalState({ type: 'create' });
+  const handleEdit = (department: Department) => setModalState({ type: 'edit', department });
+  const handleDelete = (department: Department) => setModalState({ type: 'delete', department });
+  const handleView = (department: Department) => setModalState({ type: 'view', department });
+  const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
-  const handleEdit = (department: Department) => {
-    setSelectedDepartment(department)
-    setIsEditDialogOpen(true)
-  }
+  const handleDeleteMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'delete-many', ids });
+  };
+  
+  const handleRestoreMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'restore-many', ids: ids as number[] });
+  };
 
-  const handleDelete = (department: Department) => {
-    setDepartmentToDelete(department)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const handleView = (department: Department) => {
-    setDepartmentToView(department)
-    setIsDetailsSheetOpen(true)
-  }
-
-  const handleCreateSubmit = useCallback(async (data: CreateDepartmentData) => {
+  const handleCreateSubmit = useCallback(async (data: DepartmentMutationData) => {
     try {
       await createDepartment(data)
-      setIsCreateDialogOpen(false)
+      handleCancel()
     } catch (error) {
       logger.error('Failed to create department', error)
     }
-  }, [createDepartment])
+  }, [createDepartment, handleCancel])
 
-  const handleEditSubmit = useCallback(async (data: UpdateDepartmentData) => {
-    if (!selectedDepartment) return
+  const handleEditSubmit = useCallback(async (data: DepartmentMutationData) => {
+    if (modalState.type !== 'edit') return
     
     try {
-      await updateDepartment(selectedDepartment.id, data)
-      setIsEditDialogOpen(false)
-      setSelectedDepartment(null)
+      await updateDepartment(modalState.department.id, data)
+      handleCancel()
     } catch (error) {
       logger.error('Failed to update department', error)
     }
-  }, [selectedDepartment, updateDepartment])
+  }, [modalState, updateDepartment, handleCancel])
 
   const handleConfirmDelete = async () => {
-    if (!departmentToDelete) return
+    if (modalState.type !== 'delete') return
     
-    const success = await deleteDepartment(departmentToDelete.id)
+    const success = await deleteDepartment(modalState.department.id)
     if (success) {
-      const removeRecursively = (depts: Department[], id: number): Department[] => {
-        return depts
-          .filter(dept => dept.id !== id)
-          .map(dept => ({
-            ...dept,
-            childDepartments: dept.childDepartments ? removeRecursively(dept.childDepartments, id) : []
-          }));
-      };
-      setDepartments(prev => removeRecursively(prev, departmentToDelete.id));
-      setIsDeleteDialogOpen(false)
-      setDepartmentToDelete(null)
+      // Optimistic update
+      setActiveDepartments(prev => removeDepartmentFromTree(prev, modalState.department.id));
+      handleCancel()
     }
   }
 
-  const handleCancel = useCallback(() => {
-    setIsCreateDialogOpen(false)
-    setIsEditDialogOpen(false)
-    setSelectedDepartment(null)
-  }, [])
+  const handleConfirmDeleteMany = async () => {
+    if (modalState.type !== 'delete-many') return;
+    const success = await softDeleteDepartments(modalState.ids as number[]);
+    if (success) {
+      // Let the hook handle refetching
+      handleCancel();
+    }
+  }
+
+  const handleConfirmRestoreMany = async () => {
+    if (modalState.type !== 'restore-many') return;
+    const success = await restoreDepartments(modalState.ids);
+    if (success) {
+      handleCancel();
+    }
+  }
+
+  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'delete-many', ids, permanent: true });
+  };
+  
+  const handleConfirmPermanentDeleteMany = async () => {
+    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
+    const success = await permanentDeleteDepartments(modalState.ids as number[]);
+    if (success) {
+      // Optimistic update
+      setDeletedDepartments(prev => prev.filter(d => !modalState.ids.includes(d.id)));
+      handleCancel();
+    }
+  }
 
   return (
     <PageHeader
@@ -151,81 +196,129 @@ export function DepartmentsContainer() {
         </div>
       }
     >
+      {filterBar}
       {showDeleted ? (
         <DepartmentDeletedList
-          isLoading={isLoading}
+          departments={paginatedDeletedDepartments}
+          isLoading={isLoadingDeleted}
+          onRestore={handleRestoreMany}
+          onPermanentDelete={handlePermanentDeleteMany}
+          deleteButtonText="Xóa vĩnh viễn"
           filterBar={filterBar}
-          page={page}
+          page={filters.page}
           totalPages={totalPages}
-          onPageChange={setPage}
-          limit={limit}
-          onLimitChange={setLimit}
+          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+          limit={filters.limit}
+          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
         />
       ) : (
         <DepartmentList
-          departments={departments}
-          isLoading={isLoading}
-          onCreate={handleCreate}
+          departments={activeDepartments}
+          isLoading={isLoadingActive}
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDelete}
-          filterBar={filterBar}
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          limit={limit}
-          onLimitChange={setLimit}
+          onDeleteMany={handleDeleteMany}
         />
       )}
 
       {/* Create/Edit Modal */}
       <DepartmentForm
-        isOpen={isCreateDialogOpen || isEditDialogOpen}
-        title={isCreateDialogOpen ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}
-        department={isEditDialogOpen ? selectedDepartment : undefined}
+        isOpen={modalState.type === 'create' || modalState.type === 'edit'}
+        title={modalState.type === 'create' ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}
+        department={modalState.type === 'edit' ? modalState.department : undefined}
         allDepartments={allDepartmentsForForm}
-        onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
+        onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
-        isLoading={isCreateDialogOpen ? isCreating : isUpdating}
-        mode={isCreateDialogOpen ? 'create' : 'edit'}
+        isLoading={isCreating || isUpdating}
+        mode={modalState.type === 'create' ? 'create' : 'edit'}
       />
 
       {/* Details Modal */}
       <DepartmentDetails
-        isOpen={isDetailsSheetOpen}
-        onClose={() => setIsDetailsSheetOpen(false)}
-        department={departmentToView}
+        isOpen={modalState.type === 'view'}
+        onClose={handleCancel}
+        department={modalState.type === 'view' ? modalState.department : null}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa đơn vị &quot;{departmentToDelete?.name}&quot;? 
-              Hành động này không thể hoàn tác và có thể ảnh hưởng đến các đơn vị con.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false)
-              setDepartmentToDelete(null)
-            }}>
+      <Modal
+        isOpen={modalState.type === 'delete'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title="Xác nhận xóa"
+      >
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Bạn có chắc chắn muốn xóa đơn vị &quot;{modalState.type === 'delete' ? modalState.department.name : ''}&quot;? 
+            Hành động này sẽ chuyển mục này vào thùng rác.
+          </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
               Hủy
-            </AlertDialogCancel>
-            <AlertDialogAction
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleConfirmDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
             >
               {isDeleting ? 'Đang xóa...' : 'Xóa'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Soft/Permanent Delete Confirmation */}
+      <Modal
+        isOpen={modalState.type === 'delete-many'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title={modalState.type === 'delete-many' && modalState.permanent ? "Xác nhận xóa vĩnh viễn" : "Xác nhận xóa nhiều mục"}
+      >
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {modalState.type === 'delete-many' && modalState.permanent
+              ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} mục đã chọn? Hành động này không thể hoàn tác.`
+              : `Bạn có chắc chắn muốn xóa ${modalState.type === 'delete-many' ? modalState.ids.length : 0} mục đã chọn? Hành động này sẽ chuyển các mục vào thùng rác.`}
+          </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={modalState.type === 'delete-many' && modalState.permanent ? handleConfirmPermanentDeleteMany : handleConfirmDeleteMany}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Restore Confirmation */}
+      <Modal
+        isOpen={modalState.type === 'restore-many'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title="Xác nhận khôi phục nhiều mục"
+      >
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' ? modalState.ids.length : 0} mục đã chọn?
+          </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirmRestoreMany}
+              disabled={isRestoring}
+            >
+              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </PageHeader>
   )
 }

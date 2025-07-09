@@ -6,14 +6,11 @@ import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
 import type { Department, DepartmentListProps } from '../types'
-import { bulkSoftDeleteDepartments } from '@/lib/api/departments.api'
-import { logger } from '@/lib/utils/logger'
-import { toast } from '@/components/ui/use-toast'
 
 /**
  * Department List Table
- * - Nhận props filterBar, page, totalPages, onPageChange, limit, onLimitChange
- * - UI, props, callback đồng bộ với ThesisList
+ * - Displays departments in a tree structure.
+ * - Does not handle pagination as it's a tree view.
  */
 export function DepartmentList({
   departments,
@@ -21,37 +18,8 @@ export function DepartmentList({
   onEdit,
   onDelete,
   onView,
-  filterBar,
-  page,
-  totalPages,
-  onPageChange,
-  limit,
-  onLimitChange,
   onDeleteMany,
-}: DepartmentListProps & {
-  filterBar?: React.ReactNode
-  page?: number
-  totalPages?: number
-  onPageChange?: (page: number) => void
-  limit?: number
-  onLimitChange?: (limit: number) => void
-  onDeleteMany?: (ids: (string | number)[]) => void
-}) {
-  // Flatten tree data for DataTable
-  function flattenDepartments(depts: Department[]): Department[] {
-    const result: Department[] = []
-    function recurse(list: Department[]) {
-      for (const dept of list) {
-        result.push(dept)
-        if (dept.childDepartments && dept.childDepartments.length > 0) {
-          recurse(dept.childDepartments)
-        }
-      }
-    }
-    recurse(depts)
-    return result
-  }
-  const flatDepartments = flattenDepartments(departments || [])
+}: DepartmentListProps) {
 
   const columns = [
     {
@@ -125,44 +93,16 @@ export function DepartmentList({
     },
   ]
 
-  // Hàm xóa nhiều (nếu không truyền từ cha thì tự định nghĩa)
-  const handleDeleteMany = onDeleteMany || (async (ids: (string | number)[]) => {
-    if (!ids.length) return
-    logger.info('Bắt đầu xóa nhiều đơn vị', ids, 'DepartmentList')
-    try {
-      await bulkSoftDeleteDepartments(ids as number[])
-      logger.info('Xóa tạm thời nhiều đơn vị thành công', ids, 'DepartmentList')
-      toast({
-        title: 'Xóa thành công',
-        description: `${ids.length} đơn vị đã được xóa tạm thời thành công!`,
-        variant: 'default',
-      })
-    } catch (error) {
-      logger.error('Lỗi khi xóa nhiều đơn vị', error, 'DepartmentList')
-      toast({
-        title: 'Lỗi khi xóa nhiều đơn vị',
-        description: 'Đã xảy ra lỗi khi xóa nhiều đơn vị.',
-        variant: 'destructive',
-      })
-    }
-  })
-
   return (
       <DataTable
         columns={columns}
-        data={flatDepartments}
+        data={departments || []}
         isLoading={isLoading}
-        filterBar={filterBar}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-        limit={limit}
-        onLimitChange={onLimitChange}
         isTreeTable={true}
         getId={(dept: Department) => dept.id}
         getParentId={(dept: Department) => dept.parentDepartmentId || null}
         getChildren={(dept: Department) => dept.childDepartments || []}
-        onDeleteMany={handleDeleteMany}
+        onDeleteMany={onDeleteMany}
       />
   )
 }
