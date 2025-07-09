@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import type { Internship, CreateInternshipData, UpdateInternshipData } from '../types'
 
 interface InternshipFormProps {
@@ -179,21 +180,19 @@ export function InternshipForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Ngày bắt đầu</Label>
-              <Input
-                id="startDate"
-                type="date"
+              <DatePicker
+                label="Ngày bắt đầu"
                 value={formData.startDate}
-                onChange={(e) => handleChange('startDate', e.target.value)}
+                onChange={(date) => handleChange('startDate', date || '')}
+                placeholder="Chọn ngày bắt đầu"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">Ngày kết thúc</Label>
-              <Input
-                id="endDate"
-                type="date"
+              <DatePicker
+                label="Ngày kết thúc"
                 value={formData.endDate}
-                onChange={(e) => handleChange('endDate', e.target.value)}
+                onChange={(date) => handleChange('endDate', date || '')}
+                placeholder="Chọn ngày kết thúc"
               />
             </div>
           </div>

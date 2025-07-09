@@ -1,7 +1,7 @@
 /**
  * Department Service
  */
-import { getDepartments, getDepartmentById, createDepartment, updateDepartment, deleteDepartment, type Department } from '@/lib/api/departments.api'
+import { getDepartments, getDepartmentById, createDepartment, updateDepartment, softDeleteDepartment, type Department } from '@/lib/api/departments.api'
 import type { CreateDepartmentData, UpdateDepartmentData } from '../types'
 
 export class DepartmentService {
@@ -32,6 +32,6 @@ export class DepartmentService {
   }
 
   static async delete(id: number): Promise<void> {
-    return deleteDepartment(id)
+    return softDeleteDepartment(id)
   }
 }

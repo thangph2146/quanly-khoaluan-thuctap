@@ -18,7 +18,14 @@ import {
 } from '@/components/ui/sheet'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import { PageHeader } from '@/components/common/page-header';
+import { Terminal } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData } from '../types'
+import { Button } from '@/components/ui/button'
 
 export function AcademicYearsContainer() {
   const { academicYears, isLoading, refetch } = useAcademicYears()
@@ -30,6 +37,20 @@ export function AcademicYearsContainer() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [academicYearToDelete, setAcademicYearToDelete] = useState<AcademicYear | null>(null)
   const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = useState<string | undefined>(undefined);
+
+  // Build params for API (giả định hook hỗ trợ, nếu chưa có sẽ cần cập nhật hook)
+  const params = React.useMemo(() => {
+    const p: any = { page, limit };
+    if (searchTerm.trim()) p.search = searchTerm.trim();
+    if (startDate) p.startDate = startDate;
+    if (endDate) p.endDate = endDate;
+    return p;
+  }, [page, limit, searchTerm, startDate, endDate]);
 
   const handleCreate = () => {
     setSheetMode('create')
@@ -79,9 +100,68 @@ export function AcademicYearsContainer() {
   }
 
   const isFormLoading = isCreating || isUpdating
+  const totalPages = Math.ceil((academicYears?.length || 0) / (limit || 10));
+
+  const filterBar = (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div className="flex flex-col space-y-2 justify-between">
+        <Label htmlFor="search">Tìm kiếm</Label>
+        <Input
+          placeholder="Tìm kiếm năm học..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1);
+          }}
+        />
+      </div>
+      <div className="flex flex-col space-y-2">
+        <DatePicker
+          label="Ngày bắt đầu"
+          value={startDate}
+          onChange={(date) => {
+            setStartDate(date);
+            setPage(1);
+          }}
+          placeholder="Chọn ngày bắt đầu"
+        />
+      </div>
+      <div className="flex flex-col space-y-2">
+        <DatePicker
+          label="Ngày kết thúc"
+          value={endDate}
+          onChange={(date) => {
+            setEndDate(date);
+            setPage(1);
+          }}
+          placeholder="Chọn ngày kết thúc"
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <>
+    <PageHeader
+      title="Quản lý Năm học"
+      description="Quản lý các năm học trong hệ thống"
+      breadcrumbs={[
+        { label: "Trang chủ", href: "/" },
+        { label: "Năm học", href: "/academic-years" },
+      ]}
+      actions={
+        <Button onClick={handleCreate} disabled={isCreating}>
+          + Thêm năm học
+        </Button>
+      }
+    >
+      {/* filterBar is now injected into AcademicYearList, not rendered here */}
+      {false && (
+        <Alert variant="destructive" className="mb-4">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Lỗi</AlertTitle>
+          <AlertDescription>{/* error */}</AlertDescription>
+        </Alert>
+      )}
       <AcademicYearList
         academicYears={academicYears}
         isLoading={isLoading}
@@ -89,8 +169,13 @@ export function AcademicYearsContainer() {
         onEdit={handleEdit}
         onView={handleView}
         onDelete={handleDelete}
+        filterBar={filterBar}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        limit={limit}
+        onLimitChange={setLimit}
       />
-
       {/* Create/Edit Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="sm:max-w-md">
@@ -156,6 +241,6 @@ export function AcademicYearsContainer() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </PageHeader>
   )
 }

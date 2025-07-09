@@ -16,6 +16,13 @@ interface AcademicYearListProps {
   onEdit: (academicYear: AcademicYear) => void
   onDelete: (academicYear: AcademicYear) => void
   onView?: (academicYear: AcademicYear) => void
+  // Added for standardization with ThesisContainer
+  filterBar?: React.ReactNode
+  page: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  limit: number
+  onLimitChange: (limit: number) => void
 }
 
 export function AcademicYearList({ 
@@ -24,7 +31,14 @@ export function AcademicYearList({
   onCreate, 
   onEdit, 
   onDelete, 
-  onView 
+  onView, 
+  // Added for standardization with ThesisContainer
+  filterBar, 
+  page, 
+  totalPages, 
+  onPageChange, 
+  limit, 
+  onLimitChange 
 }: AcademicYearListProps) {
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -117,19 +131,30 @@ export function AcademicYearList({
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex justify-end items-center">
+      {/* Render filterBar above the table */}
+      {filterBar}
+
+      {/* Original Add button - keep for now, might move to container */}
+      {/* <div className="flex justify-end items-center">
         <Button onClick={onCreate}>
           <Plus className="h-4 w-4 mr-2" />
           Thêm năm học
         </Button>
-      </div>
+      </div> */}
 
       <DataTable
         columns={columns}
         data={academicYears}
         isLoading={isLoading}
-        searchableColumn="name"
-        searchPlaceholder="Tìm theo tên năm học..."
+        // Removed searchableColumn and searchPlaceholder as filtering is handled by filterBar
+        // searchableColumn="name"
+        // searchPlaceholder="Tìm theo tên năm học..."
+        // Added pagination props
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        limit={limit}
+        onLimitChange={onLimitChange}
       />
     </div>
   )

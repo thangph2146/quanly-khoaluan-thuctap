@@ -79,13 +79,87 @@ export const updateDepartment = async (id: number, data: Department): Promise<De
 }
 
 /**
- * Delete department
+ * Bulk restore departments (if supported)
  */
-export const deleteDepartment = async (id: number): Promise<void> => {
+export const bulkRestoreDepartments = async (ids: number[]): Promise<void> => {
   try {
-    await apiClient.delete(`/departments/${id}`)
+    await apiClient.post('/departments/bulk-restore', ids)
   } catch (error) {
-    console.error('Error deleting department:', error)
+    console.error('Error bulk restoring departments:', error)
+    throw error
+  }
+}
+
+/**
+ * Get all deleted departments (for recycle bin)
+ */
+export const getDeletedDepartments = async (): Promise<Department[]> => {
+  try {
+    const response = await apiClient.get('/departments/deleted')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching deleted departments:', error)
+    throw error
+  }
+}
+
+/**
+ * Get all departments (not deleted)
+ */
+export const getDepartmentList = async (): Promise<Department[]> => {
+  try {
+    const response = await apiClient.get('/departments/list')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching department list:', error)
+    throw error
+  }
+}
+
+/**
+ * Soft delete department
+ */
+export const softDeleteDepartment = async (id: number): Promise<void> => {
+  try {
+    await apiClient.post(`/departments/soft-delete/${id}`)
+  } catch (error) {
+    console.error('Error soft deleting department:', error)
+    throw error
+  }
+}
+
+/**
+ * Bulk soft delete departments
+ */
+export const bulkSoftDeleteDepartments = async (ids: number[]): Promise<void> => {
+  try {
+    await apiClient.post('/departments/bulk-soft-delete', ids)
+  } catch (error) {
+    console.error('Error bulk soft deleting departments:', error)
+    throw error
+  }
+}
+
+/**
+ * Permanent delete department
+ */
+export const permanentDeleteDepartment = async (id: number): Promise<void> => {
+  try {
+    await apiClient.delete(`/departments/permanent-delete/${id}`)
+  } catch (error) {
+    console.error('Error permanent deleting department:', error)
+    throw error
+  }
+}
+
+/**
+ * Bulk permanent delete departments
+ */
+export const bulkPermanentDeleteDepartments = async (ids: number[]): Promise<void> => {
+  try {
+    await apiClient.post('/departments/bulk-permanent-delete', ids)
+  } catch (error) {
+    console.error('Error bulk permanent deleting departments:', error)
     throw error
   }
 }

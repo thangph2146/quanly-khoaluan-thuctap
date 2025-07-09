@@ -316,7 +316,7 @@ export function ThesesContainer() {
 
       {/* Details Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px]">
+        <SheetContent className="sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>Chi tiết khóa luận</SheetTitle>
           </SheetHeader>

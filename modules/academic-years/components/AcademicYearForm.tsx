@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import { logger } from '@/lib/utils/logger'
 import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData } from '../types'
 
@@ -221,24 +222,20 @@ export function AcademicYearForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="startDate">Ngày bắt đầu *</Label>
-          <Input
-            id="startDate"
-            type="date"
+          <DatePicker
+            label="Ngày bắt đầu *"
             value={formData.startDate}
-            onChange={(e) => handleStartDateChange(e.target.value)}
-            required
+            onChange={(date) => handleStartDateChange(date || '')}
+            placeholder="Chọn ngày bắt đầu"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="endDate">Ngày kết thúc *</Label>
-          <Input
-            id="endDate"
-            type="date"
+          <DatePicker
+            label="Ngày kết thúc *"
             value={formData.endDate}
-            onChange={(e) => handleChange('endDate', e.target.value)}
-            required
+            onChange={(date) => handleChange('endDate', date || '')}
+            placeholder="Chọn ngày kết thúc"
           />
         </div>
 

@@ -8,11 +8,14 @@ import React, { useState } from 'react'
 import { DepartmentList } from './DepartmentList'
 import { DepartmentForm } from './DepartmentForm'
 import { DepartmentDetails } from './DepartmentDetails'
+import { DepartmentDeletedList } from './DepartmentDeletedList'
 import { useDepartments, useDepartmentActions } from '../hooks'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/common/page-header';
 import type { Department } from '../types'
 
 export function DepartmentsContainer() {
@@ -26,6 +29,35 @@ export function DepartmentsContainer() {
   const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null)
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false)
   const [departmentToView, setDepartmentToView] = useState<Department | null>(null)
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDeleted, setShowDeleted] = useState(false);
+
+  // Build params for API (giả định hook hỗ trợ, nếu chưa có sẽ cần cập nhật hook)
+  const params = React.useMemo(() => {
+    const p: any = { page, limit };
+    if (searchTerm.trim()) p.search = searchTerm.trim();
+    return p;
+  }, [page, limit, searchTerm]);
+
+  const totalPages = Math.ceil((departments?.length || 0) / (limit || 10));
+
+  const filterBar = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="flex flex-col space-y-2 justify-between">
+        <Label htmlFor="search">Tìm kiếm</Label>
+        <Input
+          placeholder="Tìm kiếm đơn vị..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1);
+          }}
+        />
+      </div>
+    </div>
+  );
 
   const handleCreate = () => {
     setIsCreateDialogOpen(true)
@@ -78,15 +110,51 @@ export function DepartmentsContainer() {
   }
 
   return (
-    <>
-      <DepartmentList
-        departments={departments}
-        isLoading={isLoading}
-        onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
-      />
+    <PageHeader
+      title="Quản lý Đơn vị"
+      description="Quản lý các đơn vị trong hệ thống"
+      breadcrumbs={[
+        { label: "Trang chủ", href: "/" },
+        { label: "Đơn vị", href: "/departments" },
+      ]}
+      actions={
+        <div className="flex gap-2">
+          <Button onClick={handleCreate} disabled={isCreating}>
+            + Thêm đơn vị
+          </Button>
+          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
+            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
+          </Button>
+        </div>
+      }
+    >
+      {showDeleted ? (
+        <DepartmentDeletedList
+          isLoading={isLoading}
+          filterBar={filterBar}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          limit={limit}
+          onLimitChange={setLimit}
+          onRestoreMany={() => {}}
+        />
+      ) : (
+        <DepartmentList
+          departments={departments}
+          isLoading={isLoading}
+          onCreate={handleCreate}
+          onEdit={handleEdit}
+          onView={handleView}
+          onDelete={handleDelete}
+          filterBar={filterBar}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          limit={limit}
+          onLimitChange={setLimit}
+        />
+      )}
 
       {/* Create/Edit Sheet */}
       <Sheet open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={open => {
@@ -115,12 +183,12 @@ export function DepartmentsContainer() {
 
       {/* Details Sheet */}
       <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px]">
+        <SheetContent className="sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>Chi tiết đơn vị</SheetTitle>
           </SheetHeader>
           {departmentToView && (
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <DepartmentDetails department={departmentToView} />
               <div className="flex gap-2 pt-4 border-t">
                 <Button
@@ -174,6 +242,6 @@ export function DepartmentsContainer() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </PageHeader>
   )
 }
