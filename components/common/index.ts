@@ -13,9 +13,7 @@ export {
 // Table Components
 export { 
   DataTable, 
-  type DataTableProps,
-  renderSortableHeader,
-  renderActionsCell
+  type DataTableProps
 } from './data-table'
 
 // Form Components
@@ -28,4 +26,5 @@ export {
 } from './form-fields'
 
 // Layout Components
-export { PageHeader } from './page-header' 
+export { PageHeader } from './page-header'
+export { Modal } from './modal' 

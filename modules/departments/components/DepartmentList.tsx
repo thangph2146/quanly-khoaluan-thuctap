@@ -2,11 +2,11 @@
  * Department List Component
  */
 import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
 import type { Department, DepartmentListProps } from '../types'
-import { bulkSoftDeleteDepartments, softDeleteDepartment } from '@/lib/api/departments.api'
+import { bulkSoftDeleteDepartments } from '@/lib/api/departments.api'
 import { logger } from '@/lib/utils/logger'
 import { toast } from '@/components/ui/use-toast'
 
@@ -18,7 +18,6 @@ import { toast } from '@/components/ui/use-toast'
 export function DepartmentList({
   departments,
   isLoading,
-  onCreate,
   onEdit,
   onDelete,
   onView,
@@ -28,8 +27,7 @@ export function DepartmentList({
   onPageChange,
   limit,
   onLimitChange,
-  onDeleteMany, // thêm prop này nếu muốn nhận từ cha
-  onRestoreMany, // thêm prop này nếu muốn nhận từ cha
+  onDeleteMany,
 }: DepartmentListProps & {
   filterBar?: React.ReactNode
   page?: number
@@ -38,7 +36,6 @@ export function DepartmentList({
   limit?: number
   onLimitChange?: (limit: number) => void
   onDeleteMany?: (ids: (string | number)[]) => void
-  onRestoreMany?: (ids: (string | number)[]) => void
 }) {
   // Flatten tree data for DataTable
   function flattenDepartments(depts: Department[]): Department[] {
@@ -117,7 +114,7 @@ export function DepartmentList({
             <Button
               variant="destructive"
               size="icon"
-              onClick={() => handleDelete(dept)}
+              onClick={() => onDelete(dept)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
@@ -149,25 +146,6 @@ export function DepartmentList({
       })
     }
   })
-
-  // Hàm xóa mềm từng đơn vị (dùng cho nút xóa từng dòng)
-  const handleDelete = async (dept: Department) => {
-    try {
-      await softDeleteDepartment(dept.id)
-      toast({
-        title: 'Xóa thành công',
-        description: `Đơn vị "${dept.name}" đã được xóa mềm!`,
-        variant: 'default',
-      })
-      if (onDelete) onDelete(dept)
-    } catch (error) {
-      toast({
-        title: 'Lỗi khi xóa đơn vị',
-        description: 'Đã xảy ra lỗi khi xóa đơn vị.',
-        variant: 'destructive',
-      })
-    }
-  }
 
   return (
       <DataTable

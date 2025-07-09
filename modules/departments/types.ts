@@ -50,8 +50,14 @@ export interface DepartmentFormProps {
   onCancel: () => void
   isLoading: boolean
   mode: 'create' | 'edit'
+  isOpen: boolean
+  title: string
 }
 
 export interface DepartmentDetailsProps {
-  department: Department
+  department: Department | null
+  isOpen: boolean
+  onClose: () => void
+  onEdit: (department: Department) => void
+  onDelete: (department: Department) => void
 }

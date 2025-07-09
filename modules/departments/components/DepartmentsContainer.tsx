@@ -2,9 +2,9 @@
  * Departments Container Component
  * Manages state and actions for departments
  */
-'use client'
+'use-client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { DepartmentList } from './DepartmentList'
 import { DepartmentForm } from './DepartmentForm'
 import { DepartmentDetails } from './DepartmentDetails'
@@ -12,14 +12,28 @@ import { DepartmentDeletedList } from './DepartmentDeletedList'
 import { useDepartments, useDepartmentActions } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PageHeader } from '@/components/common/page-header';
-import type { Department } from '../types'
+import { PageHeader } from '@/components/common';
+import type { Department, CreateDepartmentData, UpdateDepartmentData } from '../types'
+import { logger } from '@/lib/utils/logger'
+
+const flattenDepartmentsForForm = (departments: Department[]): Department[] => {
+  const flatList: Department[] = [];
+  const recurse = (depts: Department[]) => {
+    for (const dept of depts) {
+      flatList.push(dept);
+      if (dept.childDepartments && dept.childDepartments.length > 0) {
+        recurse(dept.childDepartments);
+      }
+    }
+  };
+  recurse(departments);
+  return flatList;
+};
 
 export function DepartmentsContainer() {
-  const { departments, isLoading, refetch } = useDepartments()
+  const { departments, setDepartments, isLoading, refetch } = useDepartments()
   const { createDepartment, updateDepartment, deleteDepartment, isCreating, isUpdating, isDeleting } = useDepartmentActions(refetch)
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -34,13 +48,7 @@ export function DepartmentsContainer() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
 
-  // Build params for API (giả định hook hỗ trợ, nếu chưa có sẽ cần cập nhật hook)
-  const params = React.useMemo(() => {
-    const p: any = { page, limit };
-    if (searchTerm.trim()) p.search = searchTerm.trim();
-    return p;
-  }, [page, limit, searchTerm]);
-
+  const allDepartmentsForForm = useMemo(() => flattenDepartmentsForForm(departments), [departments]);
   const totalPages = Math.ceil((departments?.length || 0) / (limit || 10));
 
   const filterBar = (
@@ -78,16 +86,16 @@ export function DepartmentsContainer() {
     setIsDetailsSheetOpen(true)
   }
 
-  const handleCreateSubmit = async (data: any) => {
+  const handleCreateSubmit = useCallback(async (data: CreateDepartmentData) => {
     try {
       await createDepartment(data)
       setIsCreateDialogOpen(false)
     } catch (error) {
-      // Error is handled in the hook
+      logger.error('Failed to create department', error)
     }
-  }
+  }, [createDepartment])
 
-  const handleEditSubmit = async (data: any) => {
+  const handleEditSubmit = useCallback(async (data: UpdateDepartmentData) => {
     if (!selectedDepartment) return
     
     try {
@@ -95,19 +103,34 @@ export function DepartmentsContainer() {
       setIsEditDialogOpen(false)
       setSelectedDepartment(null)
     } catch (error) {
-      // Error is handled in the hook
+      logger.error('Failed to update department', error)
     }
-  }
+  }, [selectedDepartment, updateDepartment])
 
   const handleConfirmDelete = async () => {
     if (!departmentToDelete) return
     
     const success = await deleteDepartment(departmentToDelete.id)
     if (success) {
+      const removeRecursively = (depts: Department[], id: number): Department[] => {
+        return depts
+          .filter(dept => dept.id !== id)
+          .map(dept => ({
+            ...dept,
+            childDepartments: dept.childDepartments ? removeRecursively(dept.childDepartments, id) : []
+          }));
+      };
+      setDepartments(prev => removeRecursively(prev, departmentToDelete.id));
       setIsDeleteDialogOpen(false)
       setDepartmentToDelete(null)
     }
   }
+
+  const handleCancel = useCallback(() => {
+    setIsCreateDialogOpen(false)
+    setIsEditDialogOpen(false)
+    setSelectedDepartment(null)
+  }, [])
 
   return (
     <PageHeader
@@ -137,7 +160,6 @@ export function DepartmentsContainer() {
           onPageChange={setPage}
           limit={limit}
           onLimitChange={setLimit}
-          onRestoreMany={() => {}}
         />
       ) : (
         <DepartmentList
@@ -156,64 +178,26 @@ export function DepartmentsContainer() {
         />
       )}
 
-      {/* Create/Edit Sheet */}
-      <Sheet open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={open => {
-        setIsCreateDialogOpen(false)
-        setIsEditDialogOpen(false)
-        if (!open) setSelectedDepartment(null)
-      }}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>{isCreateDialogOpen ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}</SheetTitle>
-          </SheetHeader>
-          <DepartmentForm
-            department={isEditDialogOpen ? selectedDepartment : undefined}
-            allDepartments={departments}
-            onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
-            onCancel={() => {
-              setIsCreateDialogOpen(false)
-              setIsEditDialogOpen(false)
-              setSelectedDepartment(null)
-            }}
-            isLoading={isCreateDialogOpen ? isCreating : isUpdating}
-            mode={isCreateDialogOpen ? 'create' : 'edit'}
-          />
-        </SheetContent>
-      </Sheet>
+      {/* Create/Edit Modal */}
+      <DepartmentForm
+        isOpen={isCreateDialogOpen || isEditDialogOpen}
+        title={isCreateDialogOpen ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}
+        department={isEditDialogOpen ? selectedDepartment : undefined}
+        allDepartments={allDepartmentsForForm}
+        onSubmit={isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit}
+        onCancel={handleCancel}
+        isLoading={isCreateDialogOpen ? isCreating : isUpdating}
+        mode={isCreateDialogOpen ? 'create' : 'edit'}
+      />
 
-      {/* Details Sheet */}
-      <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Chi tiết đơn vị</SheetTitle>
-          </SheetHeader>
-          {departmentToView && (
-            <div className="space-y-4 p-4">
-              <DepartmentDetails department={departmentToView} />
-              <div className="flex gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsSheetOpen(false)
-                    handleEdit(departmentToView)
-                  }}
-                >
-                  Chỉnh sửa
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    setIsDetailsSheetOpen(false)
-                    handleDelete(departmentToView)
-                  }}
-                >
-                  Xóa
-                </Button>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Details Modal */}
+      <DepartmentDetails
+        isOpen={isDetailsSheetOpen}
+        onClose={() => setIsDetailsSheetOpen(false)}
+        department={departmentToView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -221,7 +205,7 @@ export function DepartmentsContainer() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa đơn vị "{departmentToDelete?.name}"? 
+              Bạn có chắc chắn muốn xóa đơn vị &quot;{departmentToDelete?.name}&quot;? 
               Hành động này không thể hoàn tác và có thể ảnh hưởng đến các đơn vị con.
             </AlertDialogDescription>
           </AlertDialogHeader>

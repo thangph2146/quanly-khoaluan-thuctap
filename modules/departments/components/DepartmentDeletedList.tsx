@@ -13,7 +13,6 @@ export function DepartmentDeletedList({
   onPageChange,
   limit,
   onLimitChange,
-  onRestoreMany,
 }: {
   isLoading?: boolean;
   filterBar?: React.ReactNode;
@@ -22,7 +21,6 @@ export function DepartmentDeletedList({
   onPageChange?: (page: number) => void;
   limit?: number;
   onLimitChange?: (limit: number) => void;
-  onRestoreMany?: (ids: (string | number)[]) => void;
 }) {
   const [deletedDepartments, setDeletedDepartments] = React.useState<Department[]>([]);
   React.useEffect(() => {
@@ -30,8 +28,8 @@ export function DepartmentDeletedList({
   }, []);
 
   const columns = [
-    { accessorKey: 'name', header: 'Tên đơn vị', cell: ({ row }: any) => <div>{row.original.name}</div> },
-    { accessorKey: 'code', header: 'Mã đơn vị', cell: ({ row }: any) => <div>{row.original.code}</div> },
+    { accessorKey: 'name', header: 'Tên đơn vị', cell: ({ row }: { row: { original: Department } }) => <div>{row.original.name}</div> },
+    { accessorKey: 'code', header: 'Mã đơn vị', cell: ({ row }: { row: { original: Department } }) => <div>{row.original.code}</div> },
     {
       id: 'actions',
       header: 'Thao tác',
@@ -79,6 +77,7 @@ export function DepartmentDeletedList({
         variant: 'default',
       });
     } catch (error) {
+      logger.error('Lỗi khi xóa vĩnh viễn đơn vị', error, 'DepartmentDeletedList');
       toast({
         title: 'Lỗi khi xóa vĩnh viễn',
         description: 'Đã xảy ra lỗi khi xóa vĩnh viễn đơn vị.',
