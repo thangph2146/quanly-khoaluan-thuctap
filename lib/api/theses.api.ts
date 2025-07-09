@@ -4,30 +4,50 @@ import type { Thesis } from '@/modules/thesis/types'
 // Define the structure for creating a thesis, matching backend Thesis model
 export interface CreateThesisData {
 	title: string
+	description?: string
 	studentId: number
+	supervisorId: number
+	examinerId?: number
 	academicYearId: number
 	semesterId: number
 	submissionDate: string
+	status?: string
 }
 
 // Define the structure for updating a thesis
 export interface UpdateThesisData {
 	title?: string
+	description?: string
 	studentId?: number
+	supervisorId?: number
+	examinerId?: number
 	academicYearId?: number
 	semesterId?: number
 	submissionDate?: string
+	status?: string
 }
 
-// Get all theses
-export const getTheses = async (): Promise<Thesis[]> => {
-	try {
-		const response = await httpsAPI.get<Thesis[]>('/Theses')
-		return response.data
-	} catch (error) {
-		console.error('Error fetching theses:', error)
-		throw new Error('Không thể tải danh sách khóa luận')
-	}
+// Define the structure for thesis search params
+export interface ThesisSearchParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+// Get all theses with pagination and search
+export const getTheses = async (
+  params: ThesisSearchParams = {}
+): Promise<{ data: Thesis[]; total: number }> => {
+  try {
+    const response = await httpsAPI.get<{ data: Thesis[]; total: number }>(
+      '/Theses',
+      { params }
+    )
+    return response.data
+  } catch (error) {
+    console.error('Error fetching theses:', error)
+    throw new Error('Không thể tải danh sách khóa luận')
+  }
 }
 
 // Get a single thesis by ID

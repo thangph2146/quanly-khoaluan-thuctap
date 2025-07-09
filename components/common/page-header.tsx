@@ -38,7 +38,7 @@ export function PageHeader({
     setIsClient(true);
   }, []);
   return (
-    <div className="w-full flex flex-col gap-4 p-4">
+    <div className="w-full flex flex-col gap-4 p-4 mb-0">
       <div className="sticky top-0 z-40 flex items-center gap-2">
         {/* SidebarTrigger chỉ render nếu có SidebarProvider (không phải mobile) */}
         <SidebarTrigger className="-ml-1" />

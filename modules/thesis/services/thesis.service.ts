@@ -15,10 +15,10 @@ import type { Thesis } from '../types'
  */
 export class ThesisService {
   /**
-   * Get all theses
+   * Get all theses with optional filtering
    */
-  static async getAll(): Promise<Thesis[]> {
-    return await getTheses()
+  static async getAll(params: import('@/lib/api/theses.api').ThesisSearchParams = {}): Promise<{ data: Thesis[]; total: number }> {
+    return await getTheses(params)
   }
 
   /**

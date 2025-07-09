@@ -115,7 +115,7 @@ export interface ThesisFormProps {
   academicYears: Array<{ id: string; name: string }>;
   semesters: Array<{ id: string; name: string }>;
   lecturers: Array<{ id: string; name: string; email?: string }>;
-  onSubmit: (data: CreateThesisData | UpdateThesisData) => void;
+  onSubmit: (data: CreateThesisData | UpdateThesisData) => Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
   mode: "create" | "edit";

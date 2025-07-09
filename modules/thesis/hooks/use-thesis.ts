@@ -2,24 +2,26 @@
  * Thesis Hooks
  * Custom hooks for thesis management
  */
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import type { CreateThesisData, Thesis, UpdateThesisData } from '../types'
 import { ThesisService } from '../services'
 
 /**
- * Hook for managing theses data
+ * Hook for managing theses data with pagination and search
  */
-export function useTheses() {
+export function useTheses(params: { page: number; limit: number; search?: string }) {
   const [theses, setTheses] = useState<Thesis[]>([])
+  const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTheses = async () => {
+  const fetchTheses = async (params: { page: number; limit: number; search?: string }) => {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await ThesisService.getAll()
-      setTheses(data)
+      const result = await ThesisService.getAll(params)
+      setTheses(result.data)
+      setTotal(result.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
     } finally {
@@ -27,16 +29,18 @@ export function useTheses() {
     }
   }
 
+  // Fetch when params change
   useEffect(() => {
-    fetchTheses()
-  }, [])
+    fetchTheses(params)
+  }, [params.page, params.limit, params.search])
 
   const refetch = () => {
-    fetchTheses()
+    fetchTheses(params)
   }
 
   return {
     theses,
+    total,
     isLoading,
     error,
     refetch,

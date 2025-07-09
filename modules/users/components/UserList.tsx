@@ -2,43 +2,52 @@
  * User List Component
  * Display and manage users in table format
  */
-import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/common/data-table'
-import { Badge } from '@/components/ui/badge'
-import type { User } from '../types'
+import React from "react";
+import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/common/data-table";
+import { Badge } from "@/components/ui/badge";
+import type { User } from "../types";
 
 interface UserListProps {
-  users: User[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (user: User) => void
-  onDelete: (user: User) => void
-  onView?: (user: User) => void
+  users: User[];
+  isLoading: boolean;
+  onCreate: () => void;
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+  onView?: (user: User) => void;
 }
 
-export function UserList({ users, isLoading, onCreate, onEdit, onDelete, onView }: UserListProps) {
+export function UserList({
+  users,
+  isLoading,
+  onCreate,
+  onEdit,
+  onDelete,
+  onView,
+}: UserListProps) {
   const columns = [
     {
-      accessorKey: 'name',
-      header: 'Họ và tên',
+      accessorKey: "name",
+      header: "Họ và tên",
       cell: ({ row }: { row: any }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
+        <div className="font-medium">{row.getValue("name")}</div>
       ),
     },
     {
-      accessorKey: 'email',
-      header: 'Email',
+      accessorKey: "email",
+      header: "Email",
       cell: ({ row }: { row: any }) => (
-        <div className="text-sm text-muted-foreground">{row.getValue('email')}</div>
+        <div className="text-sm text-muted-foreground">
+          {row.getValue("email")}
+        </div>
       ),
     },
     {
-      accessorKey: 'userRoles',
-      header: 'Vai trò',
+      accessorKey: "userRoles",
+      header: "Vai trò",
       cell: ({ row }: { row: any }) => {
-        const userRoles = row.getValue('userRoles') as string[] | undefined
+        const userRoles = row.getValue("userRoles") as string[] | undefined;
         return (
           <div className="flex flex-wrap gap-1">
             {userRoles && userRoles.length > 0 ? (
@@ -48,29 +57,31 @@ export function UserList({ users, isLoading, onCreate, onEdit, onDelete, onView 
                 </Badge>
               ))
             ) : (
-              <span className="text-xs text-muted-foreground">Chưa có vai trò</span>
+              <span className="text-xs text-muted-foreground">
+                Chưa có vai trò
+              </span>
             )}
           </div>
-        )
+        );
       },
     },
     {
-      accessorKey: 'isActive',
-      header: 'Trạng thái',
+      accessorKey: "isActive",
+      header: "Trạng thái",
       cell: ({ row }: { row: any }) => {
-        const isActive = row.getValue('isActive')
+        const isActive = row.getValue("isActive");
         return (
-          <Badge variant={isActive ? 'default' : 'secondary'}>
-            {isActive ? 'Kích hoạt' : 'Vô hiệu hóa'}
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "Kích hoạt" : "Vô hiệu hóa"}
           </Badge>
-        )
+        );
       },
     },
     {
-      id: 'actions',
-      header: 'Thao tác',
+      id: "actions",
+      header: "Thao tác",
       cell: ({ row }: { row: { original: User } }) => {
-        const user = row.original
+        const user = row.original;
         return (
           <div className="flex space-x-2">
             {onView && (
@@ -100,10 +111,10 @@ export function UserList({ users, isLoading, onCreate, onEdit, onDelete, onView 
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-        )
+        );
       },
     },
-  ]
+  ];
 
   return (
     <div className="space-y-4 p-4">
@@ -118,9 +129,7 @@ export function UserList({ users, isLoading, onCreate, onEdit, onDelete, onView 
         columns={columns}
         data={users}
         isLoading={isLoading}
-        searchableColumn="name"
-        searchPlaceholder="Tìm theo tên..."
       />
     </div>
-  )
+  );
 }
