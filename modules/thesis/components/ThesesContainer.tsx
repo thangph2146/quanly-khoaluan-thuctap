@@ -48,6 +48,7 @@ import {
   PaginationNext,
   PaginationLink,
 } from "@/components/ui/pagination";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function ThesesContainer() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -57,6 +58,9 @@ export function ThesesContainer() {
   const [thesisToDelete, setThesisToDelete] = useState<Thesis | null>(null);
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const [thesisToView, setThesisToView] = useState<Thesis | null>(null);
+  const [submissionDate, setSubmissionDate] = useState<string | undefined>(
+    undefined
+  );
 
   // Pagination/filter state
   const [page, setPage] = useState(1);
@@ -68,8 +72,9 @@ export function ThesesContainer() {
   const params = useMemo(() => {
     const p: any = { page, limit };
     if (debouncedSearch.trim()) p.search = debouncedSearch.trim();
+    if (submissionDate) p.submissionDate = submissionDate;
     return p;
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, submissionDate]);
 
   const { theses, total, isLoading, error, refetch } = useTheses(params);
 
@@ -100,7 +105,7 @@ export function ThesesContainer() {
     setIsDeleteDialogOpen(true);
   }, []);
   const handleView = useCallback((thesis: Thesis) => {
-    setThesisToView(thesis);
+    setThesisToView(mapThesisForDetails(thesis));
     setIsDetailsSheetOpen(true);
   }, []);
   const handleSearch = useCallback((term: string) => {
@@ -190,7 +195,7 @@ export function ThesesContainer() {
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-2 justify-between">
         <Label htmlFor="search">Tìm kiếm</Label>
         <Input
           placeholder="Tìm kiếm khóa luận..."
@@ -201,8 +206,35 @@ export function ThesesContainer() {
           }}
         />
       </div>
+      <div className="flex flex-col space-y-2">
+        <DatePicker
+          label="Ngày nộp"
+          value={submissionDate}
+          onChange={(date) => {
+            setSubmissionDate(date);
+            setPage(1);
+          }}
+          placeholder="Chọn ngày nộp"
+        />
+      </div>
     </div>
   );
+
+  // Helper to map flat thesis to nested structure for details view
+  function mapThesisForDetails(thesis: Thesis): any {
+    return {
+      ...thesis,
+      student: thesis.studentName || thesis.studentCode
+        ? { fullName: thesis.studentName, studentCode: thesis.studentCode }
+        : undefined,
+      academicYear: thesis.academicYearName
+        ? { name: thesis.academicYearName }
+        : undefined,
+      semester: thesis.semesterName
+        ? { name: thesis.semesterName }
+        : undefined,
+    };
+  }
 
   return (
     <PageHeader
@@ -289,7 +321,7 @@ export function ThesesContainer() {
             <SheetTitle>Chi tiết khóa luận</SheetTitle>
           </SheetHeader>
           {thesisToView && (
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <ThesisDetails thesis={thesisToView} />
               <div className="flex gap-2 pt-4 border-t">
                 <Button

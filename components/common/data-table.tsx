@@ -87,8 +87,6 @@ export function DataTable<TData, TValue>({
           {filterBar}
         </div>
       )}
-      <h1 className="mt-6 text-lg font-semibold">Bảng dữ liệu</h1>
-
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>

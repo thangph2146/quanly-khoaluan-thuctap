@@ -32,6 +32,7 @@ export interface ThesisSearchParams {
   page?: number;
   limit?: number;
   search?: string;
+  submissionDate?: string; // ISO date string (yyyy-MM-dd)
 }
 
 // Get all theses with pagination and search

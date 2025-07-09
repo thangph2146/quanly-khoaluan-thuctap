@@ -9,13 +9,13 @@ import { ThesisService } from '../services'
 /**
  * Hook for managing theses data with pagination and search
  */
-export function useTheses(params: { page: number; limit: number; search?: string }) {
+export function useTheses(params: { page: number; limit: number; search?: string; submissionDate?: string }) {
   const [theses, setTheses] = useState<Thesis[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTheses = async (params: { page: number; limit: number; search?: string }) => {
+  const fetchTheses = async (params: { page: number; limit: number; search?: string; submissionDate?: string }) => {
     try {
       setIsLoading(true)
       setError(null)
@@ -32,7 +32,7 @@ export function useTheses(params: { page: number; limit: number; search?: string
   // Fetch when params change
   useEffect(() => {
     fetchTheses(params)
-  }, [params.page, params.limit, params.search])
+  }, [params.page, params.limit, params.search, params.submissionDate])
 
   const refetch = () => {
     fetchTheses(params)

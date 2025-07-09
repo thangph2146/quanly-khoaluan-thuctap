@@ -5,7 +5,6 @@ import { ChevronDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Popover,
@@ -13,52 +12,79 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function DatePicker() {
-  const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(undefined)
+export interface DatePickerProps {
+  value?: string | Date | undefined;
+  onChange?: (date: string | undefined) => void;
+  placeholder?: string;
+  label?: string;
+}
+
+export function DatePicker({
+  value,
+  onChange,
+  placeholder = "Select date",
+  label = "Date",
+}: DatePickerProps) {
+  const [open, setOpen] = React.useState(false);
+  // Accept value as string (yyyy-MM-dd) or Date
+  const initialDate = React.useMemo(() => {
+    if (!value) return undefined;
+    if (typeof value === 'string') {
+      // Parse yyyy-MM-dd as local date
+      const [y, m, d] = value.split('-').map(Number);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        return new Date(y, m - 1, d);
+      }
+      // fallback: try Date parse
+      return new Date(value);
+    }
+    return value;
+  }, [value]);
+  const [internalDate, setInternalDate] = React.useState<Date | undefined>(initialDate);
+  const date = value !== undefined ? initialDate : internalDate;
+
+  const handleSelect = (date: Date | undefined) => {
+    if (onChange) {
+      if (date) {
+        // Always emit yyyy-MM-dd (local date, no timezone)
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        onChange(`${yyyy}-${mm}-${dd}`);
+      } else {
+        onChange(undefined);
+      }
+    } else {
+      setInternalDate(date);
+    }
+    setOpen(false);
+  };
 
   return (
-    <div className="flex gap-4">
-      <div className="flex flex-col gap-3">
-        <Label htmlFor="date-picker" className="px-1">
-          Date
-        </Label>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              id="date-picker"
-              className="w-32 justify-between font-normal"
-            >
-              {date ? date.toLocaleDateString() : "Select date"}
-              <ChevronDownIcon />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              captionLayout="dropdown"
-              onSelect={(date) => {
-                setDate(date)
-                setOpen(false)
-              }}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-      <div className="flex flex-col gap-3">
-        <Label htmlFor="time-picker" className="px-1">
-          Time
-        </Label>
-        <Input
-          type="time"
-          id="time-picker"
-          step="1"
-          defaultValue="10:30:00"
-          className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-        />
-      </div>
+    <div className="w-full flex flex-col gap-3">
+      <Label htmlFor="date-picker" className="px-1">
+        {label}
+      </Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            id="date-picker"
+            className="w-full justify-between font-normal"
+          >
+            {date ? date.toLocaleDateString() : placeholder}
+            <ChevronDownIcon />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            captionLayout="dropdown"
+            onSelect={handleSelect}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
-  )
+  );
 }

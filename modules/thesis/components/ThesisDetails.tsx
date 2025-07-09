@@ -6,10 +6,10 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import type { Thesis } from '../types'
+import type { ThesisDetailsData } from '../types'
 
 interface ThesisDetailsProps {
-  thesis: Thesis
+  thesis: ThesisDetailsData;
 }
 
 export function ThesisDetails({ thesis }: ThesisDetailsProps) {
@@ -62,8 +62,8 @@ export function ThesisDetails({ thesis }: ThesisDetailsProps) {
                 Mã số: {thesis.id}
               </CardDescription>
             </div>
-            <Badge variant={getStatusVariant('IN_PROGRESS')}>
-              {getStatusLabel('IN_PROGRESS')}
+            <Badge variant={getStatusVariant((thesis.status || '').toUpperCase())}>
+              {getStatusLabel((thesis.status || '').toUpperCase())}
             </Badge>
           </div>
         </CardHeader>
@@ -72,26 +72,23 @@ export function ThesisDetails({ thesis }: ThesisDetailsProps) {
             <div>
               <h4 className="font-semibold mb-2">Thông tin sinh viên</h4>
               <div className="space-y-1 text-sm">
-                <p><span className="font-medium">Tên:</span> {thesis.student?.fullName}</p>
-                <p><span className="font-medium">Mã SV:</span> {thesis.student?.studentCode}</p>
+                <p><span className="font-medium">Tên:</span> {thesis.student?.fullName || thesis.studentName || 'N/A'}</p>
+                <p><span className="font-medium">Mã SV:</span> {thesis.student?.studentCode || thesis.studentCode || 'N/A'}</p>
               </div>
             </div>
-            
             <div>
               <h4 className="font-semibold mb-2">Thông tin học tập</h4>
               <div className="space-y-1 text-sm">
-                <p><span className="font-medium">Năm học:</span> {thesis.academicYear?.name}</p>
-                <p><span className="font-medium">Học kỳ:</span> {thesis.semester?.name}</p>
+                <p><span className="font-medium">Năm học:</span> {(thesis as any).academicYear?.name || thesis.academicYearName || 'N/A'}</p>
+                <p><span className="font-medium">Học kỳ:</span> {(thesis as any).semester?.name || thesis.semesterName || 'N/A'}</p>
               </div>
             </div>
           </div>
-          
           <Separator className="my-4" />
-          
           <div>
             <h4 className="font-semibold mb-2">Thông tin khác</h4>
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">Ngày nộp:</span> {thesis.submissionDate ? new Date(thesis.submissionDate).toLocaleDateString('vi-VN') : 'Chưa nộp'}</p>
+              <p><span className="font-medium">Ngày nộp:</span> {thesis.submissionDate && thesis.submissionDate !== '0001-01-01T00:00:00' ? new Date(thesis.submissionDate).toLocaleDateString('vi-VN') : 'Chưa nộp'}</p>
             </div>
           </div>
         </CardContent>

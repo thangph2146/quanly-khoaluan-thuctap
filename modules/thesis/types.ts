@@ -40,6 +40,13 @@ export interface Thesis {
   updatedAt: string;
 }
 
+// Extended type for details view (allows nested fields)
+export type ThesisDetailsData = Thesis & {
+  student?: { fullName?: string; studentCode?: string };
+  academicYear?: { name?: string };
+  semester?: { name?: string };
+};
+
 // Additional types for thesis defense
 export interface CouncilMember {
   id: string;
@@ -122,5 +129,5 @@ export interface ThesisFormProps {
 }
 
 export interface ThesisDetailsProps {
-  thesis: Thesis;
+  thesis: ThesisDetailsData;
 }

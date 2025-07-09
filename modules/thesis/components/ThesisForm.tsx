@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import type { Thesis, CreateThesisData, UpdateThesisData } from '../types'
 import { useForm, Controller, FormProvider } from 'react-hook-form'
 import {
@@ -46,6 +47,7 @@ type ThesisFormFields = {
   academicYearId: string;
   semesterId: string;
   status: string;
+  submissionDate?: string;
 };
 
 export function ThesisForm({
@@ -59,7 +61,8 @@ export function ThesisForm({
   isLoading,
   mode,
 }: ThesisFormProps) {
-  const methods = useForm<ThesisFormFields>({
+  // Add submissionDate to form fields
+  const methods = useForm<ThesisFormFields & { submissionDate?: string }>({
     defaultValues: {
       title: '',
       description: '',
@@ -69,6 +72,7 @@ export function ThesisForm({
       academicYearId: '',
       semesterId: '',
       status: 'Draft',
+      submissionDate: undefined,
     },
   })
 
@@ -83,6 +87,7 @@ export function ThesisForm({
         academicYearId: thesis.academicYearId !== undefined && thesis.academicYearId !== null ? String(thesis.academicYearId) : '',
         semesterId: thesis.semesterId !== undefined && thesis.semesterId !== null ? String(thesis.semesterId) : '',
         status: thesis.status || 'pending',
+        submissionDate: thesis.submissionDate || undefined,
       }
       logger.formDebug('ThesisForm', 'reset(edit)', resetValues)
       methods.reset(resetValues)
@@ -96,6 +101,7 @@ export function ThesisForm({
         academicYearId: '',
         semesterId: '',
         status: 'pending',
+        submissionDate: undefined,
       }
       logger.formDebug('ThesisForm', 'reset(create)', resetValues)
       methods.reset(resetValues)
@@ -112,7 +118,12 @@ export function ThesisForm({
       academicYearId: data.academicYearId ? Number(data.academicYearId) : undefined,
       semesterId: data.semesterId ? Number(data.semesterId) : undefined,
       status: data.status,
-      ...(mode === 'create' && { submissionDate: new Date().toISOString() })
+      submissionDate:
+        data.submissionDate && data.submissionDate !== ''
+          ? data.submissionDate
+          : mode === 'create'
+          ? new Date().toISOString()
+          : undefined,
     }
     logger.formDebug('ThesisForm', 'submit', submissionData)
     onSubmit(submissionData)
@@ -267,6 +278,24 @@ export function ThesisForm({
                   <FormMessage />
                 </FormItem>
               )} />
+
+              <FormField
+                control={methods.control}
+                name="submissionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ngày nộp</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Chọn ngày nộp"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </form>
           </ScrollArea>
 
