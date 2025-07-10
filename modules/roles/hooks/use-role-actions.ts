@@ -5,7 +5,8 @@
 import { useToast } from '@/components/ui/use-toast'
 import { useCreateRole } from './use-create-role'
 import { useUpdateRole } from './use-update-role'
-import { useDeleteRole } from './use-delete-role'
+import { useSoftDeleteRole } from './use-soft-delete-role'
+import { useBulkRoleActions } from './use-bulk-actions'
 import type { CreateRoleRequest, UpdateRoleRequest } from '../types'
 
 /**
@@ -15,7 +16,8 @@ export function useRoleActions(onSuccess?: () => void) {
   const { toast } = useToast()
   const { createRole, isCreating } = useCreateRole()
   const { updateRole, isUpdating } = useUpdateRole()
-  const { deleteRole, isDeleting } = useDeleteRole()
+  const { softDeleteRole, isDeleting } = useSoftDeleteRole()
+  const { executeBulkAction, isLoading: isBulkActionLoading } = useBulkRoleActions(onSuccess);
 
   const handleCreateRole = async (data: CreateRoleRequest) => {
     try {
@@ -55,12 +57,12 @@ export function useRoleActions(onSuccess?: () => void) {
     }
   }
 
-  const handleDeleteRole = async (id: number) => {
+  const handleSoftDeleteRole = async (id: number) => {
     try {
-      await deleteRole(id)
+      await softDeleteRole(id)
       toast({
         title: 'Thành công',
-        description: 'Vai trò đã được xóa thành công.',
+        description: 'Vai trò đã được xóa tạm thời.',
       })
       onSuccess?.()
       return true
@@ -77,9 +79,11 @@ export function useRoleActions(onSuccess?: () => void) {
   return {
     createRole: handleCreateRole,
     updateRole: handleUpdateRole,
-    deleteRole: handleDeleteRole,
+    softDeleteRole: handleSoftDeleteRole,
+    bulkAction: executeBulkAction,
     isCreating,
     isUpdating,
     isDeleting,
+    isBulkActionLoading,
   }
 }

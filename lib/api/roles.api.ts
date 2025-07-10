@@ -1,70 +1,52 @@
-import httpsAPI from './client'
-import { Role, CreateRoleRequest, UpdateRoleRequest } from '@/modules/roles/types'
+import client from '@/lib/api/client'
+import type { PaginatedResponse, Role, CreateRoleRequest, UpdateRoleRequest, RoleFilters } from '@/modules/roles/types'
 
-// Get all roles
-export const getRoles = async (): Promise<Role[]> => {
-	try {
-		const response = await httpsAPI.get('/Roles')
-		return response.data
-	} catch (error) {
-		console.error('Failed to fetch roles:', error)
-		throw error
-	}
+export const getRoles = async (params: RoleFilters): Promise<PaginatedResponse<Role>> => {
+  const response = await client.get('/roles', { params })
+  return response.data
 }
 
-// Get role by ID
+export const getDeletedRoles = async (params: RoleFilters): Promise<PaginatedResponse<Role>> => {
+  const response = await client.get('/roles/deleted', { params })
+  return response.data
+}
+
+export const getAllRoles = async (): Promise<Role[]> => {
+  const response = await client.get('/roles/all');
+  return response.data;
+};
+
 export const getRoleById = async (id: number): Promise<Role> => {
-	try {
-		const response = await httpsAPI.get(`/Roles/${id}`)
-		return response.data
-	} catch (error) {
-		console.error(`Failed to fetch role ${id}:`, error)
-		throw error
-	}
+  const response = await client.get(`/roles/${id}`)
+  return response.data
 }
 
-// Create a new role
 export const createRole = async (data: CreateRoleRequest): Promise<Role> => {
-	try {
-		const response = await httpsAPI.post('/Roles', data)
-		return response.data
-	} catch (error) {
-		console.error('Failed to create role:', error)
-		throw error
-	}
+  const response = await client.post('/roles', data)
+  return response.data
 }
 
-// Update role
-export const updateRole = async (
-	id: number,
-	data: UpdateRoleRequest,
-): Promise<Role> => {
-	try {
-		// First get the current role to merge with update data
-		const currentRole = await getRoleById(id)
-		
-		// The backend expects a full Role object with Id
-		const roleData = {
-			id: id,
-			name: data.name || currentRole.name,
-			description: data.description !== undefined ? data.description : currentRole.description,
-			// Note: Backend Role model doesn't include permissionIds/menuIds directly
-			// These would need to be handled separately through RolePermissions/RoleMenus
-		}
-		const response = await httpsAPI.put(`/Roles/${id}`, roleData)
-		return response.data
-	} catch (error) {
-		console.error(`Failed to update role ${id}:`, error)
-		throw error
-	}
+export const updateRole = async (id: number, data: UpdateRoleRequest): Promise<Role> => {
+  const response = await client.put(`/roles/${id}`, data)
+  return response.data
 }
 
-// Delete role
-export const deleteRole = async (id: number): Promise<void> => {
-	try {
-		await httpsAPI.delete(`/Roles/${id}`)
-	} catch (error) {
-		console.error(`Failed to delete role ${id}:`, error)
-		throw error
-	}
+export const softDeleteRole = async (id: number): Promise<void> => {
+  await client.post(`/roles/soft-delete/${id}`)
+}
+
+export const permanentDeleteRole = async (id: number): Promise<void> => {
+  await client.delete(`/roles/permanent-delete/${id}`)
+}
+
+export const bulkSoftDeleteRoles = async (ids: number[]): Promise<void> => {
+  await client.post('/roles/bulk-soft-delete', ids)
+}
+
+export const bulkRestoreRoles = async (ids: number[]): Promise<void> => {
+  await client.post('/roles/bulk-restore', ids)
+}
+
+export const bulkPermanentDeleteRoles = async (ids: number[]): Promise<void> => {
+  await client.post('/roles/bulk-permanent-delete', ids)
 } 

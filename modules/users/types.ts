@@ -44,10 +44,54 @@ export interface User {
 	isActive: boolean
 	createdAt: string
 	updatedAt: string
+	deletedAt?: string
 	userRoles: string[] // Changed from UserRole[] to string[]
 
 	// Keep for backward compatibility if needed
 	roles?: Role[]
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface UserFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+
+export interface UserListProps {
+  users: User[];
+  isLoading: boolean;
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+  onView: (user: User) => void;
+  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void;
+  filterBar?: React.ReactNode;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
+}
+
+export interface UserDeletedListProps {
+  users: User[];
+  isLoading: boolean;
+  onRestore: (ids: (string | number)[], onSuccess: () => void) => void;
+  onPermanentDelete: (ids: (string | number)[], onSuccess: () => void) => void;
+  deleteButtonText?: string;
+  filterBar?: React.ReactNode;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
 }
 
 export interface CreateUserData {

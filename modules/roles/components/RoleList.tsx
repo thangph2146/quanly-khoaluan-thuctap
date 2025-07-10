@@ -3,35 +3,50 @@
  * Display and manage roles in table format
  */
 import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
 import type { Role } from '../types'
+import { Row } from '@tanstack/react-table'
 
 interface RoleListProps {
   roles: Role[]
   isLoading: boolean
-  onCreate: () => void
   onEdit: (role: Role) => void
   onDelete: (role: Role) => void
   onView?: (role: Role) => void
+  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void
+  filterBar?: React.ReactNode;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
 }
 
-export function RoleList({ roles, isLoading, onCreate, onEdit, onDelete, onView }: RoleListProps) {
+export function RoleList({ 
+  roles, 
+  isLoading, 
+  onEdit, 
+  onDelete, 
+  onView,
+  onDeleteMany,
+  ...props
+}: RoleListProps) {
   const columns = [
     {
       accessorKey: 'name',
       header: 'Tên vai trò',
-      cell: ({ row }: { row: any }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
+      cell: ({ row }: { row: Row<Role> }) => (
+        <div className="font-medium">{row.original.name}</div>
       ),
     },
     {
       accessorKey: 'description',
       header: 'Mô tả',
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: Row<Role> }) => (
         <div className="text-sm text-muted-foreground">
-          {row.getValue('description') || 'Không có mô tả'}
+          {row.original.description || 'Không có mô tả'}
         </div>
       ),
     },
@@ -64,7 +79,7 @@ export function RoleList({ roles, isLoading, onCreate, onEdit, onDelete, onView 
               variant="destructive"
               size="icon"
               onClick={() => onDelete(role)}
-              title="Xóa"
+              title="Xóa tạm thời"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -75,21 +90,13 @@ export function RoleList({ roles, isLoading, onCreate, onEdit, onDelete, onView 
   ]
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-end items-center">
-        <Button onClick={onCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm vai trò
-        </Button>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={roles}
-        isLoading={isLoading}
-        searchableColumn="name"
-        searchPlaceholder="Tìm theo tên vai trò..."
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={roles}
+      isLoading={isLoading}
+      onDeleteMany={onDeleteMany}
+      getId={(row) => row.id}
+      {...props}
+    />
   )
 }

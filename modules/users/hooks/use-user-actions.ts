@@ -3,7 +3,7 @@
  * Custom hook for user CRUD operations with toast notifications
  */
 import { useToast } from '@/components/ui/use-toast'
-import { useCreateUser, useUpdateUser, useDeleteUser } from './'
+import { useCreateUser, useUpdateUser, useSoftDeleteUser, useBulkUserActions } from './'
 import type { CreateUserData, UpdateUserData } from '../types'
 
 /**
@@ -13,7 +13,9 @@ export function useUserActions(onSuccess?: () => void) {
   const { toast } = useToast()
   const { createUser, isCreating } = useCreateUser()
   const { updateUser, isUpdating } = useUpdateUser()
-  const { deleteUser, isDeleting } = useDeleteUser()
+  const { softDeleteUser, isDeleting } = useSoftDeleteUser()
+  const { executeBulkAction, isLoading: isBulkActionLoading } = useBulkUserActions(onSuccess);
+
 
   const handleCreateUser = async (data: CreateUserData) => {
     try {
@@ -53,12 +55,12 @@ export function useUserActions(onSuccess?: () => void) {
     }
   }
 
-  const handleDeleteUser = async (id: number) => {
+  const handleSoftDeleteUser = async (id: number) => {
     try {
-      await deleteUser(id)
+      await softDeleteUser(id)
       toast({
         title: 'Thành công',
-        description: 'Người dùng đã được xóa thành công.',
+        description: 'Người dùng đã được xóa tạm thời.',
       })
       onSuccess?.()
       return true
@@ -75,9 +77,11 @@ export function useUserActions(onSuccess?: () => void) {
   return {
     createUser: handleCreateUser,
     updateUser: handleUpdateUser,
-    deleteUser: handleDeleteUser,
+    softDeleteUser: handleSoftDeleteUser,
+    bulkAction: executeBulkAction,
     isCreating,
     isUpdating,
     isDeleting,
+    isBulkActionLoading,
   }
 }

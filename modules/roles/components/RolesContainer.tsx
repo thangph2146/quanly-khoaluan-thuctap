@@ -2,148 +2,298 @@
  * Roles Container Component
  * Manages state and actions for roles
  */
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { RoleList } from './RoleList'
-import { RoleForm } from './RoleForm'
-import { RoleDetails } from './RoleDetails'
-import { useRoles, useRoleActions } from '../hooks'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import type { Role, CreateRoleRequest, UpdateRoleRequest } from '../types'
+import React, { useState, useCallback, useEffect } from "react";
+import { RoleList, RoleDeletedList, RoleForm, RoleDetails } from "./";
+import { useRoles, useRoleActions, useDeletedRoles } from "../hooks";
+import { PageHeader, Modal } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type {
+  Role,
+  CreateRoleRequest,
+  UpdateRoleRequest,
+  RoleFilters,
+} from "../types";
+import { useDebounce } from "@/hooks/use-debounce";
+
+type ModalState =
+  | { type: "idle" }
+  | { type: "create" }
+  | { type: "edit"; role: Role }
+  | { type: "delete"; role: Role }
+  | { type: "view"; role: Role }
+  | { type: "bulk-delete"; ids: number[]; onSuccess: () => void }
+  | { type: "bulk-restore"; ids: number[]; onSuccess: () => void }
+  | { type: "bulk-permanent-delete"; ids: number[]; onSuccess: () => void };
 
 export function RolesContainer() {
-  const [isSheetOpen, setSheetOpen] = useState(false)
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [isDetailsDialogOpen, setDetailsDialogOpen] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
-  const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
+  const [modalState, setModalState] = useState<ModalState>({ type: "idle" });
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [filters, setFilters] = useState<RoleFilters>({
+    page: 1,
+    limit: 10,
+    search: "",
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
-  const { roles, isLoading, refetch } = useRoles()
-  const { createRole, updateRole, deleteRole, isCreating, isUpdating, isDeleting } = useRoleActions(refetch)
+  useEffect(() => {
+    setFilters((f) => ({ ...f, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
 
-  const handleCreate = () => {
-    setSheetMode('create')
-    setSelectedRole(null)
-    setSheetOpen(true)
-  }
+  const {
+    roles,
+    isLoading: isLoadingRoles,
+    page: rolePage,
+    totalPages: roleTotalPages,
+    limit: roleLimit,
+    refetch: refetchUsers,
+  } = useRoles(filters);
 
-  const handleEdit = (role: Role) => {
-    setSheetMode('edit')
-    setSelectedRole(role)
-    setSheetOpen(true)
-  }
+  const {
+    roles: deletedRoles,
+    isLoading: isLoadingDeleted,
+    page: deletedPage,
+    totalPages: deletedTotalPages,
+    limit: deletedLimit,
+    refetch: refetchDeleted,
+  } = useDeletedRoles(filters);
 
-  const handleDelete = (role: Role) => {
-    setSelectedRole(role)
-    setDeleteDialogOpen(true)
-  }
+  const handleSuccess = useCallback(() => {
+    refetchUsers();
+    refetchDeleted();
+  }, [refetchUsers, refetchDeleted]);
 
-  const handleView = (role: Role) => {
-    setSelectedRole(role)
-    setDetailsDialogOpen(true)
-  }
+  const {
+    createRole,
+    updateRole,
+    softDeleteRole,
+    bulkAction,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isBulkActionLoading,
+  } = useRoleActions(handleSuccess);
 
-  const handleFormSubmit = async (data: CreateRoleRequest | UpdateRoleRequest) => {
-    try {
-      if (sheetMode === 'create') {
-        await createRole(data as CreateRoleRequest)
-      } else if (selectedRole) {
-        await updateRole(selectedRole.id, data as UpdateRoleRequest)
-      }
-      setSheetOpen(false)
-      setSelectedRole(null)
-    } catch (error) {
-      // Error handling is done in the hook
-      console.error('Form submission error:', error)
+  const handleCreate = () => setModalState({ type: "create" });
+  const handleEdit = (role: Role) => setModalState({ type: "edit", role });
+  const handleDelete = (role: Role) => setModalState({ type: "delete", role });
+  const handleView = (role: Role) => setModalState({ type: "view", role });
+  const handleCancel = () => setModalState({ type: "idle" });
+
+  const handleDeleteMany = (
+    ids: (string | number)[],
+    onSuccess: () => void
+  ) => {
+    setModalState({ type: "bulk-delete", ids: ids as number[], onSuccess });
+  };
+
+  const handleRestoreMany = (
+    ids: (string | number)[],
+    onSuccess: () => void
+  ) => {
+    setModalState({ type: "bulk-restore", ids: ids as number[], onSuccess });
+  };
+
+  const handlePermanentDeleteMany = (
+    ids: (string | number)[],
+    onSuccess: () => void
+  ) => {
+    setModalState({
+      type: "bulk-permanent-delete",
+      ids: ids as number[],
+      onSuccess,
+    });
+  };
+
+  const handleFormSubmit = async (
+    data: CreateRoleRequest | UpdateRoleRequest
+  ) => {
+    let success = false;
+    if (modalState.type === "create") {
+      success = await createRole(data as CreateRoleRequest);
+    } else if (modalState.type === "edit") {
+      success = await updateRole(modalState.role.id, data as UpdateRoleRequest);
     }
-  }
+    if (success) handleCancel();
+  };
 
   const handleDeleteConfirm = async () => {
-    if (selectedRole) {
-      const success = await deleteRole(selectedRole.id)
-      if (success) {
-        setDeleteDialogOpen(false)
-        setSelectedRole(null)
-      }
+    if (modalState.type === "delete") {
+      await softDeleteRole(modalState.role.id);
+      handleCancel();
+    } else if (modalState.type === "bulk-delete") {
+      await bulkAction(modalState.ids, "softDelete");
+      const onSuccess = modalState.onSuccess;
+      handleCancel();
+      onSuccess?.();
+    } else if (modalState.type === "bulk-permanent-delete") {
+      await bulkAction(modalState.ids, "permanentDelete");
+      const onSuccess = modalState.onSuccess;
+      handleCancel();
+      onSuccess?.();
+    } else if (modalState.type === "bulk-restore") {
+      await bulkAction(modalState.ids, "restore");
+      const onSuccess = modalState.onSuccess;
+      handleCancel();
+      onSuccess?.();
     }
-  }
+  };
 
-  const isFormLoading = isCreating || isUpdating
+  const handlePageChange = (page: number) => {
+    setFilters((f) => ({ ...f, page }));
+  };
+
+  const handleLimitChange = (limit: number) => {
+    setFilters((f) => ({ ...f, limit, page: 1 }));
+  };
+
+  const isFormLoading = isCreating || isUpdating;
+  const confirmationModalOpen =
+    modalState.type === "delete" ||
+    modalState.type === "bulk-delete" ||
+    modalState.type === "bulk-permanent-delete" ||
+    modalState.type === "bulk-restore";
+
+  const getConfirmationContent = () => {
+    if (modalState.type === "delete") {
+      return {
+        title: "Xác nhận xóa",
+        description: `Bạn có chắc muốn xóa tạm thời vai trò "${modalState.role.name}"?`,
+      };
+    }
+    if (modalState.type === "bulk-delete") {
+      return {
+        title: "Xác nhận xóa hàng loạt",
+        description: `Bạn có chắc muốn xóa tạm thời ${modalState.ids.length} vai trò đã chọn?`,
+      };
+    }
+    if (modalState.type === "bulk-permanent-delete") {
+      return {
+        title: "Xác nhận xóa vĩnh viễn",
+        description: `Bạn có chắc muốn xóa VĨNH VIỄN ${modalState.ids.length} vai trò đã chọn? Hành động này không thể hoàn tác.`,
+      };
+    }
+    if (modalState.type === "bulk-restore") {
+        return {
+          title: "Xác nhận khôi phục",
+          description: `Bạn có chắc muốn khôi phục ${modalState.ids.length} vai trò đã chọn?`,
+        };
+    }
+    return { title: "", description: "" };
+  };
+
+  const confirmationContent = getConfirmationContent();
+
+  const filterBar = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="flex flex-col space-y-2 justify-between">
+        <Label htmlFor="search">Tìm kiếm</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="search"
+            placeholder="Tìm kiếm vai trò..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-grow"
+          />
+          {searchTerm && (
+            <Button onClick={() => setSearchTerm("")}>Xóa filter</Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <>
-      <RoleList
-        roles={roles}
-        isLoading={isLoading}
-        onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
+    <PageHeader
+      title="Quản lý vai trò"
+      breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Roles" }]}
+      actions={
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={handleCreate}>Thêm vai trò</Button>
+          <Button
+            variant={"outline"}
+            onClick={() => setShowDeleted(!showDeleted)}
+          >
+            {showDeleted ? "Xem vai trò đang hoạt động" : "Xem vai trò đã xóa"}
+          </Button>
+        </div>
+      }
+    >
+      <div className="p-4">
+        {showDeleted ? (
+          <RoleDeletedList
+            roles={deletedRoles}
+            isLoading={isLoadingDeleted}
+            onRestore={handleRestoreMany}
+            onPermanentDelete={handlePermanentDeleteMany}
+            page={deletedPage}
+            totalPages={deletedTotalPages}
+            onPageChange={handlePageChange}
+            limit={deletedLimit}
+            onLimitChange={handleLimitChange}
+            filterBar={filterBar}
+          />
+        ) : (
+          <RoleList
+            roles={roles}
+            isLoading={isLoadingRoles}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onView={handleView}
+            onDeleteMany={handleDeleteMany}
+            page={rolePage}
+            totalPages={roleTotalPages}
+            onPageChange={handlePageChange}
+            limit={roleLimit}
+            onLimitChange={handleLimitChange}
+            filterBar={filterBar}
+          />
+        )}
+      </div>
+
+      <RoleForm
+        isOpen={modalState.type === "create" || modalState.type === "edit"}
+        onCancel={handleCancel}
+        role={modalState.type === "edit" ? modalState.role : null}
+        onSubmit={handleFormSubmit}
+        isLoading={isFormLoading}
+        mode={modalState.type === "create" ? "create" : "edit"}
       />
 
-      {/* Create/Edit Sheet */}
-      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create' ? 'Tạo vai trò mới' : 'Chỉnh sửa vai trò'}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
-                ? 'Điền thông tin để tạo vai trò mới'
-                : 'Cập nhật thông tin vai trò'}
-            </SheetDescription>
-          </SheetHeader>
-          <RoleForm
-            role={selectedRole}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setSheetOpen(false)}
-            isLoading={isFormLoading}
-            mode={sheetMode}
-          />
-        </SheetContent>
-      </Sheet>
+      {modalState.type === "view" && (
+        <RoleDetails
+          isOpen={modalState.type === "view"}
+          onClose={handleCancel}
+          role={modalState.role}
+        />
+      )}
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa vai trò này không?
-              Hành động này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction
+      <Modal
+        isOpen={confirmationModalOpen}
+        onOpenChange={(open) => !open && handleCancel()}
+        title={confirmationContent.title}
+      >
+        <div>
+          <p>{confirmationContent.description}</p>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCancel}>
+              Hủy
+            </Button>
+            <Button
+              variant={modalState.type === 'bulk-restore' ? 'default' : 'destructive'}
               onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={isDeleting}
+              disabled={isDeleting || isBulkActionLoading}
             >
-              {isDeleting ? 'Đang xóa...' : 'Xóa'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Role Details Dialog */}
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Chi tiết vai trò</DialogTitle>
-            <DialogDescription>
-              Thông tin chi tiết về vai trò được chọn
-            </DialogDescription>
-          </DialogHeader>
-          {selectedRole && (
-            <RoleDetails role={selectedRole} />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+              {isDeleting || isBulkActionLoading ? "Đang xử lý..." : "Xác nhận"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </PageHeader>
+  );
 }

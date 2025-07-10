@@ -3,11 +3,15 @@ import {
   getUserById, 
   createUser, 
   updateUser, 
-  deleteUser,
+  softDeleteUser,
+  getDeletedUsers,
+  bulkRestoreUsers,
+  bulkPermanentDeleteUsers,
+  bulkSoftDeleteUsers,
   type CreateUserData,
   type UpdateUserData
 } from '@/lib/api/users.api'
-import type { User } from '../types'
+import type { User, PaginatedResponse, UserFilters } from '../types'
 
 /**
  * User Service
@@ -15,10 +19,17 @@ import type { User } from '../types'
  */
 export class UserService {
   /**
-   * Get all users
+   * Get all users with pagination
    */
-  static async getAll(): Promise<User[]> {
-    return await getUsers()
+  static async getAll(params: UserFilters): Promise<PaginatedResponse<User>> {
+    return await getUsers(params)
+  }
+
+  /**
+   * Get deleted users with pagination
+   */
+  static async getDeleted(params: UserFilters): Promise<PaginatedResponse<User>> {
+    return await getDeletedUsers(params)
   }
 
   /**
@@ -43,10 +54,31 @@ export class UserService {
   }
 
   /**
-   * Delete user
+   * Soft delete user
    */
-  static async remove(id: number): Promise<void> {
-    return await deleteUser(id)
+  static async softDelete(id: number): Promise<void> {
+    return await softDeleteUser(id)
+  }
+
+  /**
+   * Bulk soft delete users
+   */
+  static async bulkSoftDelete(ids: number[]): Promise<void> {
+    return await bulkSoftDeleteUsers(ids);
+  }
+
+  /**
+   * Bulk restore users
+   */
+  static async bulkRestore(ids: number[]): Promise<void> {
+    return await bulkRestoreUsers(ids);
+  }
+
+  /**
+   * Bulk permanent delete users
+   */
+  static async bulkPermanentDelete(ids: number[]): Promise<void> {
+    return await bulkPermanentDeleteUsers(ids);
   }
 }
 

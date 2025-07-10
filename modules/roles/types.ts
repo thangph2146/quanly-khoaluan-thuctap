@@ -8,11 +8,25 @@ export interface Role {
 	id: number
 	name: RoleName
 	description?: string
+    deletedAt?: string
 
 	// Navigation properties
 	userRoles?: UserRole[]
 	rolePermissions?: RolePermission[]
 	roleMenus?: RoleMenu[]
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface RoleFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
 // Based on UserRole.cs - Junction table

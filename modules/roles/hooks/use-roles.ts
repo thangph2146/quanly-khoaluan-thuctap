@@ -2,42 +2,51 @@
  * Roles Hooks
  * Custom hooks for roles management
  */
-import { useState, useEffect } from 'react'
-import type { Role } from '../types'
-import type { CreateRoleRequest, UpdateRoleRequest } from '../services'
+import { useState, useEffect, useCallback } from 'react'
+import type { Role, PaginatedResponse, RoleFilters } from '../types'
 import { RoleService } from '../services'
 
 /**
  * Hook for managing roles data
  */
-export function useRoles() {
-  const [roles, setRoles] = useState<Role[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function useRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
+  const [response, setResponse] = useState<PaginatedResponse<Role>>({
+    data: [],
+    total: 0,
+    page: filters.page || 1,
+    limit: filters.limit || 10,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async (currentFilters: RoleFilters) => {
     try {
-      setIsLoading(true)
-      setError(null)
-      const data = await RoleService.getAll()
-      setRoles(data)
+      setIsLoading(true);
+      setError(null);
+      const data = await RoleService.getAll(currentFilters);
+      setResponse(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    fetchRoles()
-  }, [])
+    fetchRoles(filters);
+  }, [filters, fetchRoles]);
+
 
   const refetch = () => {
-    fetchRoles()
+    fetchRoles(filters)
   }
 
   return {
-    roles,
+    roles: response.data,
+    total: response.total,
+    page: response.page,
+    limit: response.limit,
+    totalPages: Math.ceil(response.total / response.limit),
     isLoading,
     error,
     refetch,

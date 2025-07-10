@@ -1,4 +1,5 @@
 export { RoleList } from './RoleList'
 export { RoleForm } from './RoleForm'
 export { RoleDetails } from './RoleDetails'
+export { RoleDeletedList } from './RoleDeletedList'
 export * from './RolesContainer'

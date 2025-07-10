@@ -1,22 +1,22 @@
 /**
- * Delete Role Hook
- * Custom hook for deleting roles
+ * Soft Delete Role Hook
+ * Custom hook for soft deleting roles
  */
 import { useState } from 'react'
 import { RoleService } from '../services'
 
 /**
- * Hook for deleting roles
+ * Hook for soft deleting roles
  */
-export function useDeleteRole() {
+export function useSoftDeleteRole() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const deleteRole = async (id: number) => {
+  const softDeleteRole = async (id: number) => {
     try {
       setIsDeleting(true)
       setError(null)
-      await RoleService.remove(id)
+      await RoleService.softDelete(id)
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
@@ -27,7 +27,7 @@ export function useDeleteRole() {
   }
 
   return {
-    deleteRole,
+    softDeleteRole,
     isDeleting,
     error,
   }
