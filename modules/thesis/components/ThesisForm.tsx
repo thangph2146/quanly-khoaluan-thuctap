@@ -1,322 +1,317 @@
-/**
- * Thesis Form Component
- * Form for creating and editing thesis
- */
-import React, { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { DatePicker } from '@/components/ui/date-picker'
-import type { Thesis, CreateThesisData, UpdateThesisData } from '../types'
-import { useForm, Controller, FormProvider } from 'react-hook-form'
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form'
-import { logger } from '@/lib/utils/logger'
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
 
-interface ThesisFormProps {
-  thesis?: Thesis | null
-  students: Array<{ id: string; name: string; studentId: string }>
-  academicYears: Array<{ id: string; name: string }>
-  semesters: Array<{ id: string; name: string }>
-  lecturers: Array<{ id: string; name: string; email?: string }>
-  onSubmit: (data: CreateThesisData | UpdateThesisData) => void
-  onCancel: () => void
-  isLoading: boolean
-  mode: 'create' | 'edit'
-}
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Combobox } from '@/components/common/combobox';
+import { Modal } from '@/components/common';
+import type { ThesisFormProps, ThesisMutationData } from '../types';
+import { getAcademicYearOptions, getLecturerOptions, getSemesterOptions, getStudentOptions } from '@/lib/api/selections.api';
+import { useDebounce } from '@/hooks/use-debounce';
 
-type ThesisFormFields = {
-  title: string;
-  description: string;
-  studentId: string;
-  supervisorId: string;
-  examinerId: string;
-  academicYearId: string;
-  semesterId: string;
-  status: string;
-  submissionDate?: string;
-};
+const thesisStatusOptions = [
+  { value: 'Draft', label: 'Bản nháp' },
+  { value: 'Submitted', label: 'Đã nộp' },
+  { value: 'In-Progress', label: 'Đang thực hiện' },
+  { value: 'Approved', label: 'Đã duyệt' },
+  { value: 'Rejected', label: 'Bị từ chối' },
+  { value: 'Completed', label: 'Đã hoàn thành' },
+];
+
+const thesisFormSchema = z.object({
+  title: z.string().min(1, 'Tên khóa luận không được để trống.'),
+  description: z.string().optional(),
+  studentId: z.coerce.number().min(1, 'Sinh viên không được để trống'),
+  supervisorId: z.coerce.number().min(1, 'GVHD không được để trống'),
+  examinerId: z.coerce.number().positive('ID không hợp lệ').nullable().optional(),
+  academicYearId: z.coerce.number().min(1, 'Năm học không được để trống'),
+  semesterId: z.coerce.number().min(1, 'Học kỳ không được để trống'),
+  submissionDate: z.string().min(1, 'Ngày nộp không được để trống.'),
+  status: z.string().optional(),
+});
+
+type ThesisFormData = z.infer<typeof thesisFormSchema>;
 
 export function ThesisForm({
   thesis,
-  students,
-  academicYears,
-  semesters,
-  lecturers,
   onSubmit,
   onCancel,
   isLoading,
   mode,
+  isOpen,
+  title,
 }: ThesisFormProps) {
-  // Add submissionDate to form fields
-  const methods = useForm<ThesisFormFields & { submissionDate?: string }>({
+  const form = useForm<ThesisFormData>({
+    resolver: zodResolver(thesisFormSchema),
     defaultValues: {
       title: '',
       description: '',
-      studentId: '',
-      supervisorId: '',
-      examinerId: 'none',
-      academicYearId: '',
-      semesterId: '',
+      studentId: undefined,
+      supervisorId: undefined,
+      examinerId: null,
+      academicYearId: undefined,
+      semesterId: undefined,
+      submissionDate: '',
       status: 'Draft',
-      submissionDate: undefined,
     },
-  })
+  });
+
+  const [academicYearSearch, setAcademicYearSearch] = useState('');
+  const [semesterSearch, setSemesterSearch] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [supervisorSearch, setSupervisorSearch] = useState('');
+  const [examinerSearch, setExaminerSearch] = useState('');
+
+  const debouncedAcademicYearSearch = useDebounce(academicYearSearch, 300);
+  const debouncedSemesterSearch = useDebounce(semesterSearch, 300);
+  const debouncedStudentSearch = useDebounce(studentSearch, 300);
+  const debouncedSupervisorSearch = useDebounce(supervisorSearch, 300);
+  const debouncedExaminerSearch = useDebounce(examinerSearch, 300);
+
+  const { data: academicYears, isLoading: isLoadingAcademicYears } = useQuery({
+    queryKey: ['academicYearOptions', debouncedAcademicYearSearch],
+    queryFn: () => getAcademicYearOptions(debouncedAcademicYearSearch),
+  });
+
+  const { data: semesters, isLoading: isLoadingSemesters } = useQuery({
+    queryKey: ['semesterOptions', debouncedSemesterSearch],
+    queryFn: () => getSemesterOptions(debouncedSemesterSearch),
+  });
+
+  const { data: students, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ['studentOptions', debouncedStudentSearch],
+    queryFn: () => getStudentOptions(debouncedStudentSearch),
+  });
+
+  const { data: supervisors, isLoading: isLoadingSupervisors } = useQuery({
+    queryKey: ['supervisorOptions', debouncedSupervisorSearch],
+    queryFn: () => getLecturerOptions(debouncedSupervisorSearch),
+  });
+
+  const { data: examiners, isLoading: isLoadingExaminers } = useQuery({
+    queryKey: ['examinerOptions', debouncedExaminerSearch],
+    queryFn: () => getLecturerOptions(debouncedExaminerSearch),
+  });
+
 
   useEffect(() => {
     if (thesis && mode === 'edit') {
-      const resetValues = {
-        title: thesis.title || '',
-        description: thesis.description || '',
-        studentId: thesis.studentId !== undefined && thesis.studentId !== null ? String(thesis.studentId) : '',
-        supervisorId: thesis.supervisorId !== undefined && thesis.supervisorId !== null ? String(thesis.supervisorId) : '',
-        examinerId: thesis.examinerId !== undefined && thesis.examinerId !== null ? String(thesis.examinerId) : 'none',
-        academicYearId: thesis.academicYearId !== undefined && thesis.academicYearId !== null ? String(thesis.academicYearId) : '',
-        semesterId: thesis.semesterId !== undefined && thesis.semesterId !== null ? String(thesis.semesterId) : '',
-        status: thesis.status || 'pending',
-        submissionDate: thesis.submissionDate || undefined,
-      }
-      logger.formDebug('ThesisForm', 'reset(edit)', resetValues)
-      methods.reset(resetValues)
-    } else if (mode === 'create') {
-      const resetValues = {
+      form.reset({
+        ...thesis,
+        description: thesis.description ?? '',
+        examinerId: thesis.examinerId ?? null,
+        status: thesis.status ?? 'Draft',
+        submissionDate: new Date(thesis.submissionDate).toISOString().split('T')[0],
+      });
+    } else {
+      form.reset({
         title: '',
         description: '',
-        studentId: '',
-        supervisorId: '',
-        examinerId: 'none',
-        academicYearId: '',
-        semesterId: '',
-        status: 'pending',
-        submissionDate: undefined,
-      }
-      logger.formDebug('ThesisForm', 'reset(create)', resetValues)
-      methods.reset(resetValues)
+        studentId: undefined,
+        supervisorId: undefined,
+        examinerId: null,
+        academicYearId: undefined,
+        semesterId: undefined,
+        submissionDate: new Date().toISOString().split('T')[0],
+        status: 'Draft',
+      });
     }
-  }, [thesis, mode, methods])
+  }, [thesis, mode, form.reset]);
 
-  const handleFormSubmit = methods.handleSubmit((data) => {
-    // Convert string to number for select fields
-    const submissionData = {
+  function handleFormSubmit(data: ThesisFormData) {
+    const submissionData: ThesisMutationData = {
       ...data,
-      studentId: data.studentId ? Number(data.studentId) : undefined,
-      supervisorId: data.supervisorId ? Number(data.supervisorId) : undefined,
-      examinerId: data.examinerId && String(data.examinerId) !== 'none' ? Number(data.examinerId) : undefined,
-      academicYearId: data.academicYearId ? Number(data.academicYearId) : undefined,
-      semesterId: data.semesterId ? Number(data.semesterId) : undefined,
-      status: data.status,
-      submissionDate:
-        data.submissionDate && data.submissionDate !== ''
-          ? data.submissionDate
-          : mode === 'create'
-          ? new Date().toISOString()
-          : undefined,
-    }
-    logger.formDebug('ThesisForm', 'submit', submissionData)
-    onSubmit(submissionData)
-  })
-
+      studentId: Number(data.studentId),
+      supervisorId: Number(data.supervisorId),
+      academicYearId: Number(data.academicYearId),
+      semesterId: Number(data.semesterId),
+      examinerId: data.examinerId ? Number(data.examinerId) : null,
+      submissionDate: new Date(data.submissionDate).toISOString(),
+    };
+    onSubmit(submissionData);
+  }
+  
   return (
-    <FormProvider {...methods}>
-        <div className="flex flex-col h-full">
-          <ScrollArea className="flex-1">
-            <form onSubmit={handleFormSubmit} className="space-y-4 p-4">
-              <FormField name="title" control={methods.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tiêu đề khóa luận *</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Nhập tiêu đề khóa luận" required />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && onCancel()}
+      title={title}
+      className="sm:max-w-2xl"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 p-2">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tên khóa luận *</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField name="description" control={methods.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mô tả</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} placeholder="Nhập mô tả khóa luận" rows={4} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mô tả</FormLabel>
+                <FormControl>
+                  <Textarea {...field} value={field.value ?? ''} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField name="studentId" control={methods.control} render={({ field }) => (
-                <FormItem>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="studentId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
                   <FormLabel>Sinh viên *</FormLabel>
-                  <FormControl>
-                    <Select value={field.value ? String(field.value) : ''} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn sinh viên" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {students.map((student) => (
-                          <SelectItem key={student.id} value={String(student.id)}>
-                            {student.name} - {student.studentId}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                  <Combobox
+                    options={(students || []).map(s => ({ value: s.id, label: s.name }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onInputChange={setStudentSearch}
+                    isLoading={isLoadingStudents}
+                    disabled={isLoading}
+                    placeholder="Tìm kiếm sinh viên..."
+                  />
                   <FormMessage />
                 </FormItem>
-              )} />
-
-              <FormField name="supervisorId" control={methods.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Giảng viên hướng dẫn *</FormLabel>
-                  <FormControl>
-                    <Select value={field.value ? String(field.value) : ''} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn giảng viên hướng dẫn" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {lecturers.map(l => (
-                          <SelectItem key={l.id} value={String(l.id)}>
-                            {l.name} {l.email ? `(${l.email})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="supervisorId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>GV Hướng dẫn *</FormLabel>
+                  <Combobox
+                    options={(supervisors || []).map(l => ({ value: l.id, label: l.name }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onInputChange={setSupervisorSearch}
+                    isLoading={isLoadingSupervisors}
+                    disabled={isLoading}
+                    placeholder="Tìm kiếm GVHD..."
+                  />
                   <FormMessage />
                 </FormItem>
-              )} />
-
-              <FormField name="examinerId" control={methods.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Giảng viên phản biện</FormLabel>
-                  <FormControl>
-                    <Select value={field.value && field.value !== '' ? String(field.value) : 'none'} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn giảng viên phản biện (nếu có)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">-- Không chọn --</SelectItem>
-                        {lecturers.map(l => (
-                          <SelectItem key={l.id} value={String(l.id)}>
-                            {l.name} {l.email ? `(${l.email})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="examinerId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>GV Phản biện</FormLabel>
+                   <Combobox
+                    options={(examiners || []).map(l => ({ value: l.id, label: l.name }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onInputChange={setExaminerSearch}
+                    isLoading={isLoadingExaminers}
+                    disabled={isLoading}
+                    placeholder="Tìm kiếm GVPB..."
+                  />
                   <FormMessage />
                 </FormItem>
-              )} />
-
-              <FormField name="academicYearId" control={methods.control} render={({ field }) => (
-                <FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="academicYearId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
                   <FormLabel>Năm học *</FormLabel>
-                  <FormControl>
-                    <Select value={field.value ? String(field.value) : ''} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn năm học" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {academicYears.map((year) => (
-                          <SelectItem key={year.id} value={String(year.id)}>
-                            {year.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                  <Combobox
+                    options={(academicYears || []).map(ay => ({ value: ay.id, label: ay.name }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onInputChange={setAcademicYearSearch}
+                    isLoading={isLoadingAcademicYears}
+                    disabled={isLoading}
+                    placeholder="Tìm kiếm năm học..."
+                  />
                   <FormMessage />
                 </FormItem>
-              )} />
-
-              <FormField name="semesterId" control={methods.control} render={({ field }) => (
-                <FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="semesterId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
                   <FormLabel>Học kỳ *</FormLabel>
-                  <FormControl>
-                    <Select value={field.value ? String(field.value) : ''} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn học kỳ" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {semesters.map((semester) => (
-                          <SelectItem key={semester.id} value={String(semester.id)}>
-                            {semester.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                  <Combobox
+                    options={(semesters || []).map(s => ({ value: s.id, label: s.name }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onInputChange={setSemesterSearch}
+                    isLoading={isLoadingSemesters}
+                    disabled={isLoading}
+                    placeholder="Tìm kiếm học kỳ..."
+                  />
                   <FormMessage />
                 </FormItem>
-              )} />
-
-              <FormField name="status" control={methods.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Trạng thái</FormLabel>
-                  <FormControl>
-                    <Select value={field.value || 'Draft'} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn trạng thái" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Chờ phê duyệt</SelectItem>
-                        <SelectItem value="approved">Đã phê duyệt</SelectItem>
-                        <SelectItem value="rejected">Từ chối</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-
+              )}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                control={methods.control}
+                control={form.control}
                 name="submissionDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ngày nộp</FormLabel>
+                    <FormLabel>Ngày nộp *</FormLabel>
                     <FormControl>
-                      <DatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Chọn ngày nộp"
-                      />
+                      <Input type="date" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </form>
-          </ScrollArea>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Trạng thái</FormLabel>
+                    <Combobox
+                      options={thesisStatusOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoading}
+                      placeholder="Chọn trạng thái"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+          </div>
 
-          <div className="flex justify-end space-x-2 p-4 border-t bg-background">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleFormSubmit}
-              disabled={isLoading}
-            >
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Hủy</Button>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
             </Button>
           </div>
-        </div>
-    </FormProvider>
-  )
-}
+        </form>
+      </Form>
+    </Modal>
+  );
+} 

@@ -1,98 +1,86 @@
-/**
- * Thesis Details Component
- * Display detailed information about a thesis
- */
-import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import type { ThesisDetailsData } from '../types'
+import React from 'react';
+import type { ThesisDetailsProps } from '../types';
+import { Modal } from '@/components/common';
 
-interface ThesisDetailsProps {
-  thesis: ThesisDetailsData;
-}
+const InfoBlock: React.FC<{
+  label: string;
+  children: React.ReactNode;
+}> = ({ label, children }) => (
+  <div className="rounded-lg p-4 border bg-gray-50 border-gray-200">
+    <label className="text-sm font-medium text-gray-800">{label}</label>
+    <div className="mt-2 space-y-1 text-sm text-gray-700">{children}</div>
+  </div>
+);
 
-export function ThesisDetails({ thesis }: ThesisDetailsProps) {
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'APPROVED':
-        return 'default'
-      case 'PENDING_DEFENSE':
-        return 'secondary'
-      case 'IN_PROGRESS':
-        return 'outline'
-      case 'COMPLETED':
-        return 'default'
-      case 'OVERDUE':
-        return 'destructive'
-      case 'CANCELLED':
-        return 'destructive'
-      default:
-        return 'outline'
-    }
+export function ThesisDetails({
+  thesis,
+  isOpen,
+  onClose,
+}: ThesisDetailsProps) {
+  if (!thesis) {
+    return null;
   }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'APPROVED':
-        return 'Đã phê duyệt'
-      case 'PENDING_DEFENSE':
-        return 'Chờ bảo vệ'
-      case 'IN_PROGRESS':
-        return 'Đang thực hiện'
-      case 'COMPLETED':
-        return 'Hoàn thành'
-      case 'OVERDUE':
-        return 'Quá hạn'
-      case 'CANCELLED':
-        return 'Đã hủy'
-      default:
-        return status
-    }
-  }
-
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-xl">{thesis.title}</CardTitle>
-              <CardDescription className="mt-2">
-                Mã số: {thesis.id}
-              </CardDescription>
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title="Chi tiết khóa luận"
+      className="sm:max-w-2xl"
+    >
+      <div className="space-y-6">
+        <div className="text-center pb-4 border-b">
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {thesis.title}
+          </h3>
+          <p className="text-sm text-gray-500">
+            Trạng thái: {thesis.status || 'Chưa cập nhật'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InfoBlock label="Sinh viên thực hiện">
+            <p><span className="font-medium">Họ tên:</span> {thesis.studentName || 'N/A'}</p>
+            <p><span className="font-medium">MSSV:</span> {thesis.studentCode || 'N/A'}</p>
+          </InfoBlock>
+
+          <InfoBlock label="Giảng viên hướng dẫn">
+            <p><span className="font-medium">Họ tên:</span> {thesis.supervisorName || 'N/A'}</p>
+            <p><span className="font-medium">Email:</span> {thesis.supervisorEmail || 'N/A'}</p>
+          </InfoBlock>
+
+          {thesis.examinerName && (
+            <InfoBlock label="Giảng viên phản biện">
+              <p><span className="font-medium">Họ tên:</span> {thesis.examinerName}</p>
+              <p><span className="font-medium">Email:</span> {thesis.examinerEmail || 'N/A'}</p>
+            </InfoBlock>
+          )}
+
+          <InfoBlock label="Thông tin học kỳ">
+            <p><span className="font-medium">Năm học:</span> {thesis.academicYearName || 'N/A'}</p>
+            <p><span className="font-medium">Học kỳ:</span> {thesis.semesterName || 'N/A'}</p>
+          </InfoBlock>
+        </div>
+
+        <InfoBlock label="Mô tả">
+          <p className="whitespace-pre-wrap">{thesis.description || 'Không có mô tả.'}</p>
+        </InfoBlock>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium text-gray-600">Ngày nộp</span>
+                <span>{new Date(thesis.submissionDate).toLocaleDateString('vi-VN')}</span>
             </div>
-            <Badge variant={getStatusVariant((thesis.status || '').toUpperCase())}>
-              {getStatusLabel((thesis.status || '').toUpperCase())}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-semibold mb-2">Thông tin sinh viên</h4>
-              <div className="space-y-1 text-sm">
-                <p><span className="font-medium">Tên:</span> {thesis.student?.fullName || thesis.studentName || 'N/A'}</p>
-                <p><span className="font-medium">Mã SV:</span> {thesis.student?.studentCode || thesis.studentCode || 'N/A'}</p>
-              </div>
+            <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium text-gray-600">Ngày tạo</span>
+                <span>{thesis.createdAt ? new Date(thesis.createdAt).toLocaleString('vi-VN') : 'N/A'}</span>
             </div>
-            <div>
-              <h4 className="font-semibold mb-2">Thông tin học tập</h4>
-              <div className="space-y-1 text-sm">
-                <p><span className="font-medium">Năm học:</span> {(thesis as any).academicYear?.name || thesis.academicYearName || 'N/A'}</p>
-                <p><span className="font-medium">Học kỳ:</span> {(thesis as any).semester?.name || thesis.semesterName || 'N/A'}</p>
-              </div>
+            <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                <span className="font-medium text-gray-600">Cập nhật lần cuối</span>
+                <span>{thesis.updatedAt ? new Date(thesis.updatedAt).toLocaleString('vi-VN') : 'N/A'}</span>
             </div>
-          </div>
-          <Separator className="my-4" />
-          <div>
-            <h4 className="font-semibold mb-2">Thông tin khác</h4>
-            <div className="space-y-1 text-sm">
-              <p><span className="font-medium">Ngày nộp:</span> {thesis.submissionDate && thesis.submissionDate !== '0001-01-01T00:00:00' ? new Date(thesis.submissionDate).toLocaleDateString('vi-VN') : 'Chưa nộp'}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+        </div>
+
+      </div>
+    </Modal>
+  );
+} 

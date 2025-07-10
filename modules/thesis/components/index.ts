@@ -1,4 +1,5 @@
-export { ThesisList } from './ThesisList'
-export { ThesisForm } from './ThesisForm'
-export { ThesisDetails } from './ThesisDetails'
-export { ThesesContainer } from './ThesesContainer'
+export * from './ThesesContainer';
+export * from './ThesisDeletedList';
+export * from './ThesisDetails';
+export * from './ThesisForm';
+export * from './ThesisList'; 

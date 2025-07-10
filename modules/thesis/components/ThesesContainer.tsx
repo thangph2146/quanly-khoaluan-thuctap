@@ -1,385 +1,316 @@
-/**
- * Thesis Container Component
- * Manages state and actions for thesis
- */
-"use client";
+'use client';
 
-import React, { useState, useMemo, useCallback } from "react";
-import { ThesisList } from "./ThesisList";
-import { ThesisForm } from "./ThesisForm";
-import { ThesisDetails } from "./ThesisDetails";
-import { useTheses, useThesisActions } from "../hooks";
-import { useStudents } from "@/modules/students/hooks";
-import { useAcademicYears } from "@/modules/academic-years/hooks";
-import { useSemesters } from "@/modules/semesters/hooks";
-import { useLecturers } from "@/modules/lecturers/hooks";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import type { Thesis } from "../types";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
-import { CreateThesisData, UpdateThesisData } from "@/lib/api/theses.api";
-import { Student } from "@/modules/students/types";
-import { logger } from "@/lib/utils/logger";
-import { useDebounce } from "@/hooks/use-debounce";
-import { Label } from "@/components/ui/label";
-import { PageHeader } from "@/components/common/page-header";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationLink,
-} from "@/components/ui/pagination";
-import { DatePicker } from "@/components/ui/date-picker";
+import React, { useState, useCallback, useEffect } from 'react';
+import { ThesisList } from './ThesisList';
+import { ThesisForm } from './ThesisForm';
+import { ThesisDetails } from './ThesisDetails';
+import { ThesisDeletedList } from './ThesisDeletedList';
+import { useTheses, useThesisActions, useDeletedTheses } from '../hooks';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PageHeader, Modal } from '@/components/common';
+import type { Thesis, ThesisMutationData, ThesisFilters } from '../types';
+import { logger } from '@/lib/utils/logger';
+
+type ModalState =
+  | { type: 'create' }
+  | { type: 'edit'; thesis: Thesis }
+  | { type: 'delete'; thesis: Thesis }
+  | { type: 'delete-many'; ids: (string | number)[]; onSuccess: () => void; permanent?: boolean }
+  | { type: 'restore-many'; ids: number[]; onSuccess: () => void }
+  | { type: 'view'; thesis: Thesis }
+  | { type: 'idle' };
 
 export function ThesesContainer() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedThesis, setSelectedThesis] = useState<Thesis | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [thesisToDelete, setThesisToDelete] = useState<Thesis | null>(null);
-  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
-  const [thesisToView, setThesisToView] = useState<Thesis | null>(null);
-  const [submissionDate, setSubmissionDate] = useState<string | undefined>(
-    undefined
-  );
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [filters, setFilters] = useState<ThesisFilters>({ page: 1, limit: 10, search: '' });
 
-  // Pagination/filter state
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 500);
+  const {
+    theses: activeTheses,
+    setTheses: setActiveTheses,
+    total: activeTotal,
+    isLoading: isLoadingActive,
+    refetch: refetchActive,
+  } = useTheses(filters);
 
-  // Build params for API
-  const params = useMemo(() => {
-    const p: any = { page, limit };
-    if (debouncedSearch.trim()) p.search = debouncedSearch.trim();
-    if (submissionDate) p.submissionDate = submissionDate;
-    return p;
-  }, [page, limit, debouncedSearch, submissionDate]);
+  const {
+    deletedTheses,
+    total: deletedTotal,
+    isLoading: isLoadingDeleted,
+    refetch: refetchDeleted,
+  } = useDeletedTheses(filters);
 
-  const { theses, total, isLoading, error, refetch } = useTheses(params);
+  useEffect(() => {
+    setFilters((f: ThesisFilters) => ({ ...f, page: 1 }));
+  }, [showDeleted]);
 
   const {
     createThesis,
     updateThesis,
     deleteThesis,
+    restoreTheses,
+    permanentDeleteTheses,
+    softDeleteTheses,
     isCreating,
     isUpdating,
     isDeleting,
-  } = useThesisActions(refetch);
+    isRestoring,
+  } = useThesisActions(() => {
+    refetchActive();
+    refetchDeleted();
+  });
 
-  // Data for forms
-  const { students } = useStudents();
-  const { academicYears } = useAcademicYears();
-  const { semesters } = useSemesters();
-  const lecturerParams = useMemo(() => ({ isActive: true }), []);
-  const { lecturers } = useLecturers(lecturerParams);
+  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  // Handler functions
-  const handleCreate = useCallback(() => setIsCreateDialogOpen(true), []);
-  const handleEdit = useCallback((thesis: Thesis) => {
-    setSelectedThesis(thesis);
-    setIsEditDialogOpen(true);
-  }, []);
-  const handleDelete = useCallback((thesis: Thesis) => {
-    setThesisToDelete(thesis);
-    setIsDeleteDialogOpen(true);
-  }, []);
-  const handleView = useCallback((thesis: Thesis) => {
-    setThesisToView(mapThesisForDetails(thesis));
-    setIsDetailsSheetOpen(true);
-  }, []);
-  const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-    setPage(1);
-  }, []);
-
-  const handleCreateSubmit = async (
-    data: CreateThesisData | UpdateThesisData
-  ) => {
-    try {
-      if (
-        "title" in data &&
-        typeof data.title === "string" &&
-        "studentId" in data &&
-        "academicYearId" in data &&
-        "semesterId" in data &&
-        "submissionDate" in data &&
-        "supervisorId" in data
-      ) {
-        await createThesis(data as CreateThesisData);
-        setIsCreateDialogOpen(false);
-      } else {
-        logger.error("Invalid data for createThesis", data);
-      }
-    } catch (error) {
-      logger.error("Error creating thesis", error);
-    }
-  };
-
-  const handleEditSubmit = async (
-    data: CreateThesisData | UpdateThesisData
-  ) => {
-    if (!selectedThesis) return;
-
-    try {
-      if (
-        "title" in data ||
-        "studentId" in data ||
-        "academicYearId" in data ||
-        "semesterId" in data ||
-        "submissionDate" in data ||
-        "supervisorId" in data
-      ) {
-        await updateThesis(selectedThesis.id, data as UpdateThesisData);
-        setIsEditDialogOpen(false);
-        setSelectedThesis(null);
-      } else {
-        logger.error("Invalid data for updateThesis", data);
-      }
-    } catch (error) {
-      logger.error("Error updating thesis", error);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!thesisToDelete) return;
-
-    const success = await deleteThesis(thesisToDelete.id);
-    if (success) {
-      setIsDeleteDialogOpen(false);
-      setThesisToDelete(null);
-    }
-  };
-
-  // Transform data for form
-  const formStudents =
-    students?.map((student: Student) => ({
-      id: student.id?.toString() || "",
-      name: student.fullName || "",
-      studentId: student.studentCode || "",
-    })) || [];
-
-  const formAcademicYears =
-    academicYears?.map((year) => ({
-      id: year.id?.toString() || "",
-      name: year.name || "",
-    })) || [];
-
-  const formSemesters =
-    semesters?.map((semester) => ({
-      id: semester.id?.toString() || "",
-      name: semester.name || "",
-    })) || [];
-
-  const totalPages = Math.ceil((total || 0) / (limit || 10));
+  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <div className="flex flex-col space-y-2 justify-between">
         <Label htmlFor="search">Tìm kiếm</Label>
-        <Input
-          placeholder="Tìm kiếm khóa luận..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1);
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            id="search"
+            placeholder="Tìm kiếm khóa luận..."
+            value={filters.search || ''}
+            onChange={(e) => setFilters((f: ThesisFilters) => ({ ...f, search: e.target.value, page: 1 }))}
+            className="flex-grow"
+          />
+          {filters.search && (
+            <Button onClick={() => setFilters((f: ThesisFilters) => ({ ...f, search: '', page: 1 }))}>
+              Xóa filter
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="flex flex-col space-y-2">
-        <DatePicker
-          label="Ngày nộp"
-          value={submissionDate}
-          onChange={(date) => {
-            setSubmissionDate(date);
-            setPage(1);
-          }}
-          placeholder="Chọn ngày nộp"
-        />
-      </div>
+      {/* TODO: Add date filter */}
     </div>
   );
 
-  // Helper to map flat thesis to nested structure for details view
-  function mapThesisForDetails(thesis: Thesis): any {
-    return {
-      ...thesis,
-      student: thesis.studentName || thesis.studentCode
-        ? { fullName: thesis.studentName, studentCode: thesis.studentCode }
-        : undefined,
-      academicYear: thesis.academicYearName
-        ? { name: thesis.academicYearName }
-        : undefined,
-      semester: thesis.semesterName
-        ? { name: thesis.semesterName }
-        : undefined,
-    };
-  }
+  const handleCreate = () => setModalState({ type: 'create' });
+  const handleEdit = (thesis: Thesis) => setModalState({ type: 'edit', thesis });
+  const handleDelete = (thesis: Thesis) => setModalState({ type: 'delete', thesis });
+  const handleView = (thesis: Thesis) => setModalState({ type: 'view', thesis });
+  const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
+
+  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess });
+  };
+
+  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'restore-many', ids: ids as number[], onSuccess });
+  };
+
+  const handleCreateSubmit = useCallback(
+    async (data: ThesisMutationData) => {
+      try {
+        await createThesis(data);
+        handleCancel();
+      } catch (error) {
+        logger.error('Failed to create thesis', error);
+      }
+    },
+    [createThesis, handleCancel]
+  );
+
+  const handleEditSubmit = useCallback(
+    async (data: ThesisMutationData) => {
+      if (modalState.type !== 'edit') return;
+      try {
+        await updateThesis(modalState.thesis.id, data);
+        handleCancel();
+      } catch (error) {
+        logger.error('Failed to update thesis', error);
+      }
+    },
+    [modalState, updateThesis, handleCancel]
+  );
+
+  const handleConfirmDelete = async () => {
+    if (modalState.type !== 'delete') return;
+    const success = await deleteThesis(modalState.thesis.id);
+    if (success) {
+      setActiveTheses((prev: Thesis[]) => prev.filter((t: Thesis) => t.id !== modalState.thesis.id));
+      handleCancel();
+      refetchDeleted();
+    }
+  };
+
+  const handleConfirmDeleteMany = async () => {
+    if (modalState.type !== 'delete-many') return;
+    const success = await softDeleteTheses(modalState.ids as number[]);
+    if (success) {
+      modalState.onSuccess();
+      handleCancel();
+    }
+  };
+
+  const handleConfirmRestoreMany = async () => {
+    if (modalState.type !== 'restore-many') return;
+    const success = await restoreTheses(modalState.ids);
+    if (success) {
+      modalState.onSuccess();
+      handleCancel();
+    }
+  };
+
+  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
+  };
+
+  const handleConfirmPermanentDeleteMany = async () => {
+    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
+    const success = await permanentDeleteTheses(modalState.ids as number[]);
+    if (success) {
+      modalState.onSuccess();
+      handleCancel();
+    }
+  };
 
   return (
     <PageHeader
       title="Quản lý Khóa luận"
       description="Quản lý các khóa luận tốt nghiệp trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Khóa luận", href: "/thesis" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Khóa luận', href: '/thesis' },
       ]}
       actions={
-        <Button onClick={handleCreate} disabled={isCreating}>
-          + Thêm khóa luận
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleCreate} disabled={isCreating}>
+            + Thêm khóa luận
+          </Button>
+          <Button variant={'outline'} onClick={() => setShowDeleted((v) => !v)}>
+            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
+          </Button>
+        </div>
       }
     >
-      {/* filterBar is now injected into ThesisList, not rendered here */}
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Lỗi</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+      {showDeleted ? (
+        <ThesisDeletedList
+          theses={deletedTheses}
+          isLoading={isLoadingDeleted}
+          onRestore={handleRestoreMany}
+          onPermanentDelete={handlePermanentDeleteMany}
+          deleteButtonText="Xóa vĩnh viễn"
+          filterBar={filterBar}
+          page={filters.page}
+          totalPages={totalPages}
+          onPageChange={(p: number) => setFilters((f: ThesisFilters) => ({ ...f, page: p }))}
+          limit={filters.limit}
+          onLimitChange={(l: number) => setFilters((f: ThesisFilters) => ({ ...f, limit: l, page: 1 }))}
+        />
+      ) : (
+        <ThesisList
+          theses={activeTheses}
+          isLoading={isLoadingActive}
+          onEdit={handleEdit}
+          onView={handleView}
+          onDelete={handleDelete}
+          onDeleteMany={handleDeleteMany}
+          filterBar={filterBar}
+          page={filters.page}
+          totalPages={totalPages}
+          onPageChange={(p: number) => setFilters((f: ThesisFilters) => ({ ...f, page: p }))}
+          limit={filters.limit}
+          onLimitChange={(l: number) => setFilters((f: ThesisFilters) => ({ ...f, limit: l, page: 1 }))}
+        />
       )}
 
-      <ThesisList
-        theses={theses}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
-        filterBar={filterBar}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        limit={limit}
-        onLimitChange={setLimit}
+      <ThesisForm
+        isOpen={modalState.type === 'create' || modalState.type === 'edit'}
+        title={modalState.type === 'create' ? 'Tạo khóa luận mới' : 'Chỉnh sửa khóa luận'}
+        thesis={modalState.type === 'edit' ? modalState.thesis : undefined}
+        onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
+        onCancel={handleCancel}
+        isLoading={isCreating || isUpdating}
+        mode={modalState.type === 'create' ? 'create' : 'edit'}
       />
 
-      {/* Create/Edit Sheet */}
-      <Sheet
-        open={isCreateDialogOpen || isEditDialogOpen}
-        onOpenChange={(open) => {
-          setIsCreateDialogOpen(false);
-          setIsEditDialogOpen(false);
-          if (!open) setSelectedThesis(null);
-        }}
-      >
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>
-              {isCreateDialogOpen ? "Tạo khóa luận mới" : "Chỉnh sửa khóa luận"}
-            </SheetTitle>
-          </SheetHeader>
-          <ThesisForm
-            thesis={isEditDialogOpen ? selectedThesis : undefined}
-            students={formStudents}
-            academicYears={formAcademicYears}
-            semesters={formSemesters}
-            lecturers={
-              lecturers?.map((l) => ({
-                id: l.id.toString(),
-                name: l.name,
-                email: l.email,
-              })) || []
-            }
-            onSubmit={
-              isCreateDialogOpen ? handleCreateSubmit : handleEditSubmit
-            }
-            onCancel={() => {
-              setIsCreateDialogOpen(false);
-              setIsEditDialogOpen(false);
-              setSelectedThesis(null);
-            }}
-            isLoading={isCreateDialogOpen ? isCreating : isUpdating}
-            mode={isCreateDialogOpen ? "create" : "edit"}
-          />
-        </SheetContent>
-      </Sheet>
+      <ThesisDetails
+        isOpen={modalState.type === 'view'}
+        onClose={handleCancel}
+        thesis={modalState.type === 'view' ? modalState.thesis : null}
+      />
 
-      {/* Details Sheet */}
-      <Sheet open={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Chi tiết khóa luận</SheetTitle>
-          </SheetHeader>
-          {thesisToView && (
-            <div className="space-y-4 p-4">
-              <ThesisDetails thesis={thesisToView} />
-              <div className="flex gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsDetailsSheetOpen(false);
-                    handleEdit(thesisToView);
-                  }}
-                >
-                  Chỉnh sửa
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    setIsDetailsSheetOpen(false);
-                    handleDelete(thesisToView);
-                  }}
-                >
-                  Xóa
-                </Button>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+      <Modal
+        isOpen={modalState.type === 'delete'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title="Xác nhận xóa"
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa khóa luận &quot;{thesisToDelete?.title}
-              &quot;? Hành động này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setIsDeleteDialogOpen(false);
-                setThesisToDelete(null);
-              }}
-            >
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Bạn có chắc chắn muốn xóa khóa luận &quot;{modalState.type === 'delete' ? modalState.thesis.title : ''}
+            &quot;? Hành động này sẽ chuyển mục này vào thùng rác.
+          </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
               Hủy
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Đang xóa...' : 'Xóa'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalState.type === 'delete-many'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title={
+          modalState.type === 'delete-many' && modalState.permanent
+            ? 'Xác nhận xóa vĩnh viễn'
+            : 'Xác nhận xóa nhiều mục'
+        }
+      >
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {modalState.type === 'delete-many' && modalState.permanent
+              ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} mục đã chọn? Hành động này không thể hoàn tác.`
+              : `Bạn có chắc chắn muốn xóa ${
+                  modalState.type === 'delete-many' ? modalState.ids.length : 0
+                } mục đã chọn? Hành động này sẽ chuyển các mục vào thùng rác.`}
+          </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={
+                modalState.type === 'delete-many' && modalState.permanent
+                  ? handleConfirmPermanentDeleteMany
+                  : handleConfirmDeleteMany
+              }
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
             >
-              {isDeleting ? "Đang xóa..." : "Xóa"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalState.type === 'restore-many'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title="Xác nhận khôi phục nhiều mục"
+      >
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' ? modalState.ids.length : 0} mục đã
+            chọn?
+          </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
+              Hủy
+            </Button>
+            <Button onClick={handleConfirmRestoreMany} disabled={isRestoring}>
+              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </PageHeader>
   );
-}
+} 

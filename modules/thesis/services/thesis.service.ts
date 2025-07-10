@@ -1,51 +1,56 @@
-import { 
-  getTheses, 
-  getThesis, 
-  createThesis, 
-  updateThesis, 
-  deleteThesis,
-  type CreateThesisData,
-  type UpdateThesisData
-} from '@/lib/api/theses.api'
-import type { Thesis } from '../types'
-
 /**
  * Thesis Service
- * Business logic layer for thesis operations
  */
+import {
+  getTheses,
+  getThesisById,
+  createThesis,
+  updateThesis,
+  softDeleteThesis,
+  getDeletedTheses,
+  bulkPermanentDeleteTheses,
+  bulkRestoreTheses,
+  bulkSoftDeleteTheses,
+  type Thesis,
+  type ThesisFilters,
+  type PaginatedTheses,
+  type ThesisMutationData
+} from '@/lib/api/theses.api'
+
 export class ThesisService {
-  /**
-   * Get all theses with optional filtering
-   */
-  static async getAll(params: import('@/lib/api/theses.api').ThesisSearchParams = {}): Promise<{ data: Thesis[]; total: number }> {
-    return await getTheses(params)
+  static async getAll(filters: ThesisFilters): Promise<PaginatedTheses> {
+    return getTheses(filters)
   }
 
-  /**
-   * Get thesis by ID
-   */
+  static async getDeleted(filters: ThesisFilters): Promise<PaginatedTheses> {
+    return getDeletedTheses(filters)
+  }
+
   static async getById(id: number): Promise<Thesis> {
-    return await getThesis(id)
+    return getThesisById(id)
   }
 
-  /**
-   * Create new thesis
-   */
-  static async create(data: CreateThesisData): Promise<Thesis> {
-    return await createThesis(data)
+  static async create(data: ThesisMutationData): Promise<Thesis> {
+    return createThesis(data)
   }
 
-  /**
-   * Update thesis
-   */
-  static async update(id: number, data: UpdateThesisData): Promise<Thesis> {
-    return await updateThesis(id, data)
+  static async update(id: number, data: ThesisMutationData): Promise<void> {
+    return updateThesis(id, data)
   }
 
-  /**
-   * Delete thesis
-   */
-  static async remove(id: number): Promise<void> {
-    return await deleteThesis(id)
+  static async delete(id: number): Promise<void> {
+    return softDeleteThesis(id)
   }
-}
+
+  static async bulkSoftDelete(ids: number[]): Promise<void> {
+    return bulkSoftDeleteTheses(ids);
+  }
+
+  static async bulkPermanentDelete(ids: number[]): Promise<void> {
+    return bulkPermanentDeleteTheses(ids);
+  }
+
+  static async bulkRestore(ids: number[]): Promise<void> {
+    return bulkRestoreTheses(ids);
+  }
+} 
