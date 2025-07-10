@@ -44,7 +44,6 @@ export function DepartmentsContainer() {
   // Deleted departments state
   const { 
     deletedDepartments, 
-    setDeletedDepartments, 
     total: deletedTotal, 
     isLoading: isLoadingDeleted,
     refetch: refetchDeleted,
@@ -79,27 +78,33 @@ export function DepartmentsContainer() {
 
   const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
 
-  // Client-side pagination logic for the flat 'deleted' list
-  const paginatedDeletedDepartments = useMemo(() => {
-    const { page = 1, limit = 10 } = filters;
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    return deletedDepartments.slice(start, end);
-  }, [deletedDepartments, filters]);
-
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <div className="flex flex-col space-y-2 justify-between">
         <Label htmlFor="search">Tìm kiếm</Label>
-        <Input
-          id="search"
-          placeholder="Tìm kiếm đơn vị..."
-          value={filters.search}
-          onChange={(e) => setFilters(f => ({...f, search: e.target.value}))}
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            id="search"
+            placeholder="Tìm kiếm đơn vị..."
+            value={filters.search || ''}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))
+            }
+            className="flex-grow"
+          />
+          {filters.search && (
+            <Button
+              onClick={() =>
+                setFilters((f) => ({ ...f, search: '', page: 1 }))
+              }
+            >
+              Xóa filter
+            </Button>
+          )}
+        </div>
       </div>
     </div>
-  );
+  )
 
   const handleCreate = () => setModalState({ type: 'create' });
   const handleEdit = (department: Department) => setModalState({ type: 'edit', department });
@@ -171,8 +176,7 @@ export function DepartmentsContainer() {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
     const success = await permanentDeleteDepartments(modalState.ids as number[]);
     if (success) {
-      // Optimistic update
-      setDeletedDepartments(prev => prev.filter(d => !modalState.ids.includes(d.id)));
+      // Let the hook handle refetching instead of optimistic update
       handleCancel();
     }
   }
@@ -196,10 +200,9 @@ export function DepartmentsContainer() {
         </div>
       }
     >
-      {filterBar}
       {showDeleted ? (
         <DepartmentDeletedList
-          departments={paginatedDeletedDepartments}
+          departments={deletedDepartments}
           isLoading={isLoadingDeleted}
           onRestore={handleRestoreMany}
           onPermanentDelete={handlePermanentDeleteMany}
@@ -219,6 +222,12 @@ export function DepartmentsContainer() {
           onView={handleView}
           onDelete={handleDelete}
           onDeleteMany={handleDeleteMany}
+          filterBar={filterBar}
+          page={filters.page}
+          totalPages={totalPages}
+          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+          limit={filters.limit}
+          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
         />
       )}
 

@@ -22,6 +22,8 @@ export interface DepartmentFilters {
 export interface PaginatedDepartments {
   data: Department[];
   total: number;
+  page?: number;
+  limit?: number;
 }
 
 
@@ -31,6 +33,15 @@ export interface PaginatedDepartments {
 export const getDepartments = async (filters: DepartmentFilters = {}): Promise<PaginatedDepartments> => {
   try {
     const response = await apiClient.get('/departments', { params: filters })
+    // Handle both old format (direct array) and new format (paginated object)
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        total: response.data.length,
+        page: filters.page || 1,
+        limit: filters.limit || 10
+      }
+    }
     return response.data
   } catch (error) {
     console.error('Error fetching departments:', error)
@@ -108,6 +119,15 @@ export const bulkRestoreDepartments = async (ids: number[]): Promise<void> => {
 export const getDeletedDepartments = async (filters: DepartmentFilters = {}): Promise<PaginatedDepartments> => {
   try {
     const response = await apiClient.get('/departments/deleted', { params: filters })
+    // Handle both old format (direct array) and new format (paginated object)
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        total: response.data.length,
+        page: filters.page || 1,
+        limit: filters.limit || 10
+      }
+    }
     return response.data
   } catch (error) {
     console.error('Error fetching deleted departments:', error)
@@ -118,9 +138,18 @@ export const getDeletedDepartments = async (filters: DepartmentFilters = {}): Pr
 /**
  * Get all departments (not deleted)
  */
-export const getDepartmentList = async (): Promise<Department[]> => {
+export const getDepartmentList = async (filters: DepartmentFilters = {}): Promise<PaginatedDepartments> => {
   try {
-    const response = await apiClient.get('/departments/list')
+    const response = await apiClient.get('/departments/list', { params: filters })
+    // Handle both old format (direct array) and new format (paginated object)
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        total: response.data.length,
+        page: filters.page || 1,
+        limit: filters.limit || 10
+      }
+    }
     return response.data
   } catch (error) {
     console.error('Error fetching department list:', error)

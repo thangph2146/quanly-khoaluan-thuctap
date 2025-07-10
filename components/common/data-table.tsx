@@ -382,7 +382,7 @@ export function DataTable<TData, TValue>({
 					</div>
 				)}
 				{typeof page === "number" &&
-					typeof totalPages === "number" && page > 1 && (
+					typeof totalPages === "number" && onPageChange && (
 						<Pagination className="flex items-end justify-end gap-2">
 							<PaginationContent>
 								<PaginationItem>
