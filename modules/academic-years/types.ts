@@ -1,61 +1,50 @@
-// Academic Year types
+import type { 
+  AcademicYear as ApiAcademicYear, 
+  CreateAcademicYearData as ApiCreateAcademicYearData,
+  AcademicYearFilters as ApiAcademicYearFilters 
+} from '@/lib/api/academic-years.api'
 
-// Based on AcademicYear.cs and API response structure
-export interface AcademicYear {
-	id: number
-	name: string // e.g., "2024-2025"
-	startDate: string // ISO date string format
-	endDate: string // ISO date string format
-    deletedAt?: string | null
-}
-
-// Create and Update types for AcademicYear
-export interface CreateAcademicYearData {
-	name: string
-	startDate: string // ISO date string format
-	endDate: string // ISO date string format
-}
-
-export interface UpdateAcademicYearData {
-	name?: string
-	startDate?: string // ISO date string format
-	endDate?: string // ISO date string format
-}
-
-export interface AcademicYearFilters {
-    page?: number;
-    limit?: number;
-    search?: string;
-    startDate?: string;
-    endDate?: string;
-}
-
-export interface PaginatedAcademicYears {
-    data: AcademicYear[];
-    total: number;
-    page: number;
-    limit: number;
-}
-
-export interface AcademicYearDetailProps {
-  academicYear: AcademicYear | null
-  isOpen: boolean
-  onClose: () => void
-}
+export type AcademicYear = ApiAcademicYear;
+export type AcademicYearMutationData = ApiCreateAcademicYearData;
+export type AcademicYearFilters = Omit<ApiAcademicYearFilters, 'startDate' | 'endDate'>;
+export type PaginatedAcademicYears = {
+  data: AcademicYear[];
+  total: number;
+  page: number;
+  limit: number;
+};
 
 export interface AcademicYearListProps {
   academicYears: AcademicYear[];
   isLoading: boolean;
-  onEdit: (academicYear: AcademicYear) => void;
-  onView: (academicYear: AcademicYear) => void;
-  onDelete: (academicYear: AcademicYear) => void;
+  onEdit: (year: AcademicYear) => void;
+  onView: (year: AcademicYear) => void;
+  onDelete: (year: AcademicYear) => void;
   onDeleteMany: (ids: (string | number)[], onSuccess: () => void) => void;
   filterBar?: React.ReactNode;
   page?: number;
   totalPages?: number;
-  onPageChange?: (page: number) => void
-  limit?: number
-  onLimitChange?: (limit: number) => void
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
+}
+
+export interface AcademicYearFormProps {
+  academicYear?: AcademicYear | null;
+  onSubmit: (data: AcademicYearMutationData) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+  mode: 'create' | 'edit';
+  isOpen: boolean;
+  title: string;
+}
+
+export interface AcademicYearDetailProps {
+  academicYear: AcademicYear | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: (year: AcademicYear) => void;
+  onDelete: (year: AcademicYear) => void;
 }
 
 export interface AcademicYearDeletedListProps {
@@ -67,7 +56,7 @@ export interface AcademicYearDeletedListProps {
   filterBar?: React.ReactNode;
   page?: number;
   totalPages?: number;
-  onPageChange?: (page: number) => void
-  limit?: number
-  onLimitChange?: (limit: number) => void
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
 }

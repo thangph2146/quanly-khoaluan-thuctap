@@ -21,8 +21,8 @@ type ModalState =
   | { type: 'create' }
   | { type: 'edit', student: Student }
   | { type: 'delete', student: Student }
-  | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
-  | { type: 'restore-many', ids: number[] }
+  | { type: 'delete-many', ids: (string | number)[], onSuccess: () => void, permanent?: boolean }
+  | { type: 'restore-many', ids: (string | number)[], onSuccess: () => void }
   | { type: 'view', student: Student }
   | { type: 'idle' };
 
@@ -103,16 +103,16 @@ export function StudentsContainer() {
   const handleView = (student: Student) => setModalState({ type: 'view', student });
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
-  const handleDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids });
+  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess });
   };
   
-  const handleRestoreMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'restore-many', ids: ids as number[] });
+  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'restore-many', ids, onSuccess });
   };
 
-  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids, permanent: true });
+  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
   };
 
   const handleCreateSubmit = useCallback(async (data: StudentMutationData) => {
@@ -146,14 +146,16 @@ export function StudentsContainer() {
     if (modalState.type !== 'delete-many') return;
     const success = await softDeleteStudents(modalState.ids as number[]);
     if (success) {
+      modalState.onSuccess();
       handleCancel();
     }
   };
 
   const handleConfirmRestoreMany = async () => {
     if (modalState.type !== 'restore-many') return;
-    const success = await restoreStudents(modalState.ids);
+    const success = await restoreStudents(modalState.ids as number[]);
     if (success) {
+      modalState.onSuccess();
       handleCancel();
     }
   };
@@ -162,6 +164,7 @@ export function StudentsContainer() {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
     const success = await permanentDeleteStudents(modalState.ids as number[]);
     if (success) {
+      modalState.onSuccess();
       handleCancel();
     }
   };
@@ -230,8 +233,6 @@ export function StudentsContainer() {
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
         student={modalState.type === 'view' ? modalState.student : null}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
       <Modal

@@ -5,28 +5,16 @@ import React from 'react';
 import { User, Mail, Phone, Calendar } from 'lucide-react';
 import type { StudentDetailsProps } from '../types';
 import { Modal } from '@/components/common';
-import { Button } from '@/components/ui/button';
 
 export function StudentDetails({
   student,
   isOpen,
   onClose,
-  onEdit,
-  onDelete,
 }: StudentDetailsProps) {
   if (!student) {
     return null;
   }
 
-  const handleEditClick = () => {
-    onEdit(student);
-    onClose();
-  };
-
-  const handleDeleteClick = () => {
-    onDelete(student);
-    onClose();
-  };
 
   return (
     <Modal
@@ -84,14 +72,7 @@ export function StudentDetails({
           </div>
         </div>
       </div>
-      <div className="flex gap-2 pt-4 mt-6 border-t">
-        <Button variant="outline" onClick={handleEditClick}>
-          Chỉnh sửa
-        </Button>
-        <Button variant="destructive" onClick={handleDeleteClick}>
-          Xóa
-        </Button>
-      </div>
+
     </Modal>
   );
 }

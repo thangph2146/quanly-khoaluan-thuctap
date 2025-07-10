@@ -4,29 +4,19 @@
  */
 import React from 'react';
 import { Modal } from '@/components/common';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { LecturerDetailsProps } from '../types';
 
 export function LecturerDetails({
   lecturer,
-  isOpen,
+  isOpen, 
   onClose,
-  onEdit,
-  onDelete,
 }: LecturerDetailsProps) {
   if (!lecturer) {
     return null;
   }
 
-  const handleEditClick = () => {
-    onEdit(lecturer);
-  };
-
-  const handleDeleteClick = () => {
-    onDelete(lecturer);
-  };
 
   return (
     <Modal
@@ -71,14 +61,6 @@ export function LecturerDetails({
             {lecturer.updatedAt && <InfoItem label="Cập nhật lần cuối" value={new Date(lecturer.updatedAt).toLocaleString('vi-VN')} />}
         </div>
 
-      </div>
-      <div className="flex justify-end gap-2 pt-4 mt-6 border-t">
-        <Button variant="outline" onClick={handleEditClick}>
-          Chỉnh sửa
-        </Button>
-        <Button variant="destructive" onClick={handleDeleteClick}>
-          Xóa
-        </Button>
       </div>
     </Modal>
   );

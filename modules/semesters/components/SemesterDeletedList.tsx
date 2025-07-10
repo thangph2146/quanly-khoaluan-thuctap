@@ -1,6 +1,10 @@
-import React from "react";
-import { DataTable } from "@/components/common/data-table";
-import type { Semester, SemesterDeletedListProps } from "../types";
+/**
+ * Component to display a list of deleted semesters
+ */
+import React from 'react';
+import { DataTable } from '@/components/common/data-table';
+import type { Semester, SemesterDeletedListProps } from '../types';
+import { type ColumnDef, type Row } from '@tanstack/react-table';
 
 export function SemesterDeletedList({
   semesters,
@@ -8,57 +12,56 @@ export function SemesterDeletedList({
   onRestore,
   onPermanentDelete,
   deleteButtonText,
-  ...props
-}: SemesterDeletedListProps & {
-  filterBar?: React.ReactNode;
-  page?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-  limit?: number;
-  onLimitChange?: (limit: number) => void;
-}) {
-  const columns = [
+  filterBar,
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
+}: SemesterDeletedListProps) {
+  const columns: ColumnDef<Semester>[] = [
     {
-      accessorKey: "name",
-      header: "Tên học kỳ",
-      cell: ({ row }: { row: { original: Semester } }) => (
-        <div>{row.original.name}</div>
+      accessorKey: 'name',
+      header: 'Tên học kỳ',
+      cell: ({ row }: { row: Row<Semester> }) => (
+        <div className="font-medium">{row.getValue('name')}</div>
       ),
     },
     {
-      accessorKey: "academicYear.name",
-      header: "Năm học",
-      cell: ({ row }: { row: { original: Semester } }) => (
-        <div>{row.original.academicYear.name}</div>
-      ),
+        accessorKey: 'academicYear.name',
+        header: 'Năm học',
+        cell: ({ row }: { row: Row<Semester> }) => (
+          <div>{row.original.academicYear?.name}</div>
+        ),
     },
     {
-        accessorKey: "deletedAt",
-        header: "Ngày xóa",
-        cell: ({ row }: { row: { original: Semester } }) => (
-            <div>{row.original.deletedAt ? new Date(row.original.deletedAt).toLocaleString() : ''}</div>
-        )
-    }
+      accessorKey: 'deletedAt',
+      header: 'Ngày xóa',
+      cell: ({ row }: { row: Row<Semester> }) => {
+        const date = row.getValue('deletedAt');
+        return date
+          ? new Date(date as string).toLocaleDateString('vi-VN')
+          : 'Không rõ';
+      },
+    },
   ];
 
-  const handleRestore = (ids: (string | number)[]) => {
-    onRestore(ids as number[]);
-  };
-
-  const handlePermanentDelete = (ids: (string | number)[]) => {
-    onPermanentDelete(ids as number[]);
-  };
-
   return (
-    <DataTable
-      columns={columns}
-      data={semesters}
-      isLoading={isLoading}
-      onRestoreMany={handleRestore}
-      onDeleteMany={handlePermanentDelete}
-      deleteButtonText={deleteButtonText}
-      getId={(row) => row.id}
-      {...props}
-    />
+    <div className="space-y-4 p-4">
+      <DataTable
+        columns={columns}
+        data={semesters}
+        isLoading={isLoading}
+        filterBar={filterBar}
+        onDeleteMany={onPermanentDelete}
+        onRestoreMany={onRestore}
+        deleteButtonText={deleteButtonText}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        limit={limit}
+        onLimitChange={onLimitChange}
+      />
+    </div>
   );
 } 

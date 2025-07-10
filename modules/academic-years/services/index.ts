@@ -1,1 +1,1 @@
-export * from './academic-year.service'
+export * from './academic-year.service';

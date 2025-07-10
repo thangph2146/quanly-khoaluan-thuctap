@@ -39,21 +39,13 @@ export function LecturerDeletedList({
     },
   ];
 
-  const handleRestore = (ids: (string | number)[]) => {
-    onRestore(ids as number[]);
-  };
-
-  const handlePermanentDelete = (ids: (string | number)[]) => {
-    onPermanentDelete(ids as number[]);
-  };
-
   return (
     <DataTable
       columns={columns}
       data={lecturers}
       isLoading={isLoading}
-      onRestoreMany={handleRestore}
-      onDeleteMany={handlePermanentDelete}
+      onRestoreMany={onRestore}
+      onDeleteMany={onPermanentDelete}
       deleteButtonText={deleteButtonText}
       getId={(row) => row.id}
       {...props}

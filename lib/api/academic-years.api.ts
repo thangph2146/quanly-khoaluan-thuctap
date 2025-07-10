@@ -1,100 +1,127 @@
-import apiClient from './client'
+/**
+ * API functions for Academic Years
+ */
+import client from './client';
 
+// Keep in sync with backend
 export interface AcademicYear {
-  id: number
-  name: string
-  startDate: string
-  endDate: string
-  deletedAt?: string | null
-}
-
-export interface CreateAcademicYearData {
-	name: string
-	startDate: string 
-	endDate: string 
-}
-
-export interface UpdateAcademicYearData {
-	name?: string
-	startDate?: string
-	endDate?: string
-}
-
-export interface AcademicYearFilters {
-  page?: number
-  limit?: number
-  search?: string
-  startDate?: string
-  endDate?: string
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  updatedAt?: string | null;
+  deletedAt?: string | null;
 }
 
 export interface PaginatedAcademicYears {
-  data: AcademicYear[]
-  total: number
-  page: number
-  limit: number
+  data: AcademicYear[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-export const getAcademicYears = async (filters: AcademicYearFilters = {}): Promise<PaginatedAcademicYears> => {
-  const response = await apiClient.get('/academicyears/list', { params: filters })
-  return response.data
+export interface AcademicYearFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
-export const getDeletedAcademicYears = async (filters: AcademicYearFilters = {}): Promise<PaginatedAcademicYears> => {
-    const response = await apiClient.get('/academicyears/deleted', { params: filters });
+export type CreateAcademicYearData = Omit<AcademicYear, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+export type UpdateAcademicYearData = Partial<CreateAcademicYearData>;
+
+/**
+ * Get paginated list of active academic years
+ */
+export async function getAcademicYears(filters: AcademicYearFilters): Promise<PaginatedAcademicYears> {
+  const params = new URLSearchParams();
+  if (filters.page) params.append('page', filters.page.toString());
+  if (filters.limit) params.append('limit', filters.limit.toString());
+  if (filters.search) params.append('search', filters.search);
+
+  const response = await client.get(`/academic-years`, { params });
+  return response.data;
+}
+
+/**
+ * Get all active academic years (for dropdowns)
+ */
+export async function getAllAcademicYears(): Promise<AcademicYear[]> {
+    const response = await client.get(`/academic-years/all`);
     return response.data;
-};
-
-export const getAcademicYearById = async (id: number): Promise<AcademicYear> => {
-  const response = await apiClient.get(`/academicyears/${id}`)
-  return response.data
 }
 
-export const createAcademicYear = async (data: CreateAcademicYearData): Promise<AcademicYear> => {
-  const response = await apiClient.post('/academicyears', data)
-  return response.data
+/**
+ * Get paginated list of deleted academic years
+ */
+export async function getDeletedAcademicYears(filters: AcademicYearFilters): Promise<PaginatedAcademicYears> {
+  const params = new URLSearchParams();
+  if (filters.page) params.append('page', filters.page.toString());
+  if (filters.limit) params.append('limit', filters.limit.toString());
+  if (filters.search) params.append('search', filters.search);
+
+  const response = await client.get(`/academic-years/deleted`, { params });
+  return response.data;
 }
 
-export const updateAcademicYear = async (
-	id: number,
-	data: UpdateAcademicYearData & { id?: number },
-): Promise<AcademicYear> => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id: _, ...updateData } = data;
-  const response = await apiClient.put(`/academicyears/${id}`, updateData)
-  return response.data
+/**
+ * Get a single academic year by ID
+ */
+export async function getAcademicYearById(id: number): Promise<AcademicYear> {
+  const response = await client.get(`/academic-years/${id}`);
+  return response.data;
 }
 
-export const softDeleteAcademicYear = async (id: number): Promise<void> => {
-  await apiClient.post(`/academicyears/soft-delete/${id}`)
+/**
+ * Create a new academic year
+ */
+export async function createAcademicYear(data: CreateAcademicYearData): Promise<AcademicYear> {
+  const response = await client.post('/academic-years', data);
+  return response.data;
 }
 
-export const bulkSoftDeleteAcademicYears = async (ids: number[]): Promise<void> => {
-    await apiClient.post('/academicyears/bulk-soft-delete', ids);
-};
+/**
+ * Update an existing academic year
+ */
+export async function updateAcademicYear(id: number, data: AcademicYear): Promise<AcademicYear> {
+  const response = await client.put(`/academic-years/${id}`, data);
+  return response.data;
+}
 
-export const permanentDeleteAcademicYear = async (id: number): Promise<void> => {
-    await apiClient.delete(`/academicyears/permanent-delete/${id}`);
-};
+/**
+ * Soft delete an academic year
+ */
+export async function softDeleteAcademicYear(id: number): Promise<void> {
+  await client.post(`/academic-years/soft-delete/${id}`);
+}
 
-export const bulkPermanentDeleteAcademicYears = async (ids: number[]): Promise<void> => {
-    await apiClient.post('/academicyears/bulk-permanent-delete', ids);
-};
+/**
+ * Bulk soft delete academic years
+ */
+export async function bulkSoftDeleteAcademicYears(ids: number[]): Promise<{ softDeleted: number }> {
+    const response = await client.post('/academic-years/bulk-soft-delete', ids);
+    return response.data;
+}
 
-export const bulkRestoreAcademicYears = async (ids: number[]): Promise<void> => {
-    await apiClient.post('/academicyears/bulk-restore', ids);
-};
+/**
+ * Permanently delete an academic year
+ */
+export async function permanentDeleteAcademicYear(id: number): Promise<void> {
+  await client.delete(`/academic-years/permanent-delete/${id}`);
+}
 
+/**
+ * Bulk permanently delete academic years
+ */
+export async function bulkPermanentDeleteAcademicYears(ids: number[]): Promise<{ permanentlyDeleted: number }> {
+    const response = await client.post('/academic-years/bulk-permanent-delete', ids);
+    return response.data;
+}
 
-export const AcademicYearsApi = {
-	getAll: getAcademicYears,
-	getDeleted: getDeletedAcademicYears,
-	getById: getAcademicYearById,
-	create: createAcademicYear,
-	update: updateAcademicYear,
-	softDelete: softDeleteAcademicYear,
-    bulkSoftDelete: bulkSoftDeleteAcademicYears,
-    permanentDelete: permanentDeleteAcademicYear,
-    bulkPermanentDelete: bulkPermanentDeleteAcademicYears,
-    bulkRestore: bulkRestoreAcademicYears,
+/**
+ * Bulk restore academic years
+ */
+export async function bulkRestoreAcademicYears(ids: number[]): Promise<{ restored: number }> {
+    const response = await client.post('/academic-years/bulk-restore', ids);
+    return response.data;
 }

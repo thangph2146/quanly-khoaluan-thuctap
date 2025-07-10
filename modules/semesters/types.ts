@@ -36,7 +36,7 @@ export interface SemesterListProps {
   onEdit: (semester: Semester) => void
   onDelete: (semester: Semester) => void
   onView: (semester: Semester) => void
-  onDeleteMany?: (ids: (string | number)[]) => void
+  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void
 }
 
 export interface SemesterFormProps {
@@ -54,14 +54,18 @@ export interface SemesterDetailsProps {
   semester: Semester | null
   isOpen:boolean
   onClose: () => void
-  onEdit: (semester: Semester) => void
-  onDelete: (semester: Semester) => void
 }
 
 export interface SemesterDeletedListProps {
   semesters: Semester[]
   isLoading: boolean
-  onRestore: (ids: number[]) => void
-  onPermanentDelete: (ids: (string | number)[]) => void
+  onRestore: (ids: (string | number)[], onSuccess: () => void) => void
+  onPermanentDelete: (ids: (string | number)[], onSuccess: () => void) => void
   deleteButtonText?: string
+  filterBar?: React.ReactNode;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
 }

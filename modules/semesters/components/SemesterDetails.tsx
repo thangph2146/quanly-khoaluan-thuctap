@@ -4,7 +4,6 @@
 import React from 'react'
 import type { SemesterDetailsProps } from '../types'
 import { Modal } from '@/components/common'
-import { Button } from '@/components/ui/button'
 
 const InfoBlock: React.FC<{
   iconColor: string
@@ -28,22 +27,11 @@ export function SemesterDetails({
   semester,
   isOpen,
   onClose,
-  onEdit,
-  onDelete,
 }: SemesterDetailsProps) {
   if (!semester) {
     return null
   }
 
-  const handleEditClick = () => {
-    onEdit(semester)
-    onClose()
-  }
-
-  const handleDeleteClick = () => {
-    onDelete(semester)
-    onClose()
-  }
 
   return (
     <Modal
@@ -76,14 +64,6 @@ export function SemesterDetails({
             </p>
           </InfoBlock>
         </div>
-      </div>
-      <div className="flex gap-2 pt-4 mt-6 border-t">
-        <Button variant="outline" onClick={handleEditClick}>
-          Chỉnh sửa
-        </Button>
-        <Button variant="destructive" onClick={handleDeleteClick}>
-          Xóa
-        </Button>
       </div>
     </Modal>
   )

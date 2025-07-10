@@ -13,12 +13,12 @@ import { PageHeader, Modal } from '@/components/common';
 import type { Lecturer, LecturerMutationData, LecturerFilters } from '../types'
 import { logger } from '@/lib/utils/logger'
 
-type ModalState = 
+type ModalState =
   | { type: 'create' }
   | { type: 'edit', lecturer: Lecturer }
   | { type: 'delete', lecturer: Lecturer }
-  | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
-  | { type: 'restore-many', ids: number[] }
+  | { type: 'delete-many', ids: (string | number)[], onSuccess: () => void, permanent?: boolean }
+  | { type: 'restore-many', ids: (string | number)[], onSuccess: () => void }
   | { type: 'view', lecturer: Lecturer }
   | { type: 'idle' };
 
@@ -26,43 +26,45 @@ type ModalState =
 export function LecturersContainer() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<LecturerFilters>({ page: 1, limit: 10, search: "" });
-  
-  const { 
-    lecturers: activeLecturers, 
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
+
+  const handleRefetch = () => {
+    refetchActive();
+    refetchDeleted();
+  }
+
+  const {
+    lecturers: activeLecturers,
+    total: activeTotal,
+    isLoading: isLoadingActive,
     refetch: refetchActive,
   } = useLecturers(filters);
 
-  const { 
-    deletedLecturers, 
-    total: deletedTotal, 
+  const {
+    deletedLecturers,
+    total: deletedTotal,
     isLoading: isLoadingDeleted,
     refetch: refetchDeleted,
   } = useDeletedLecturers(filters);
-  
+
   const { departments } = useDepartments();
-  
+
   useEffect(() => {
     setFilters(f => ({ ...f, page: 1 }));
   }, [showDeleted]);
 
-  const { 
-    createLecturer, 
-    updateLecturer, 
-    deleteLecturer, 
+  const {
+    createLecturer,
+    updateLecturer,
+    deleteLecturer,
     restoreLecturers,
     permanentDeleteLecturers,
     softDeleteLecturers,
-    isCreating, 
-    isUpdating, 
+    isCreating,
+    isUpdating,
     isDeleting,
     isRestoring,
-  } = useLecturerActions(() => {
-    refetchActive();
-    refetchDeleted();
-  })
-  
+  } = useLecturerActions(handleRefetch)
+
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
   const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
@@ -73,18 +75,18 @@ export function LecturersContainer() {
   const handleView = (lecturer: Lecturer) => setModalState({ type: 'view', lecturer });
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
-  const handleDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids });
-  };
-  
-  const handleRestoreMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'restore-many', ids: ids as number[] });
+  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess });
   };
 
-  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids, permanent: true });
+  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'restore-many', ids, onSuccess });
   };
-  
+
+  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
+  };
+
   const handleCreateSubmit = useCallback(async (data: LecturerMutationData) => {
     try {
       await createLecturer(data)
@@ -96,7 +98,7 @@ export function LecturersContainer() {
 
   const handleEditSubmit = useCallback(async (data: LecturerMutationData) => {
     if (modalState.type !== 'edit') return
-    
+
     try {
       await updateLecturer(modalState.lecturer.id, data)
       handleCancel()
@@ -113,30 +115,26 @@ export function LecturersContainer() {
     }
   }
 
-  const handleConfirmDeleteMany = async () => {
-    if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteLecturers(modalState.ids as number[]);
+  const handleConfirmBulkAction = async () => {
+    if (modalState.type !== 'delete-many' && modalState.type !== 'restore-many') return;
+
+    let success = false;
+    if (modalState.type === 'delete-many') {
+        if(modalState.permanent) {
+            success = await permanentDeleteLecturers(modalState.ids as number[]);
+        } else {
+            success = await softDeleteLecturers(modalState.ids as number[]);
+        }
+    } else if (modalState.type === 'restore-many') {
+        success = await restoreLecturers(modalState.ids as number[]);
+    }
+
     if (success) {
+      modalState.onSuccess();
       handleCancel();
     }
   }
 
-  const handleConfirmRestoreMany = async () => {
-    if (modalState.type !== 'restore-many') return;
-    const success = await restoreLecturers(modalState.ids);
-    if (success) {
-      handleCancel();
-    }
-  }
-  
-  const handleConfirmPermanentDeleteMany = async () => {
-    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteLecturers(modalState.ids as number[]);
-    if (success) {
-      handleCancel();
-    }
-  }
-  
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <div className="flex flex-col space-y-2 justify-between">
@@ -222,8 +220,6 @@ export function LecturersContainer() {
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
         lecturer={modalState.type === 'view' ? modalState.lecturer : null}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
       <Modal
@@ -233,7 +229,7 @@ export function LecturersContainer() {
       >
         <div>
           <p className="text-sm text-muted-foreground">
-            Bạn có chắc chắn muốn xóa giảng viên &quot;{modalState.type === 'delete' ? modalState.lecturer.name : ''}&quot;? 
+            Bạn có chắc chắn muốn xóa giảng viên &quot;{modalState.type === 'delete' ? modalState.lecturer.name : ''}&quot;?
             Hành động này sẽ chuyển mục này vào thùng rác.
           </p>
           <div className="flex justify-end gap-2 mt-6">
@@ -246,42 +242,32 @@ export function LecturersContainer() {
       </Modal>
 
       <Modal
-        isOpen={modalState.type === 'delete-many'}
+        isOpen={
+          modalState.type === 'delete-many' || modalState.type === 'restore-many'
+        }
         onOpenChange={(open) => !open && handleCancel()}
-        title={modalState.type === 'delete-many' && modalState.permanent ? "Xác nhận xóa vĩnh viễn" : "Xác nhận xóa nhiều mục"}
+        title="Xác nhận hàng loạt"
       >
         <div>
           <p className="text-sm text-muted-foreground">
-            {modalState.type === 'delete-many' && modalState.permanent
-              ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} mục đã chọn? Hành động này không thể hoàn tác.`
-              : `Bạn có chắc chắn muốn xóa ${modalState.type === 'delete-many' ? modalState.ids.length : 0} mục đã chọn? Hành động này sẽ chuyển các mục vào thùng rác.`}
+            {modalState.type === 'delete-many'
+              ? `Bạn có chắc muốn ${modalState.permanent ? 'xóa vĩnh viễn' : 'xóa'} ${
+                  modalState.ids.length
+                } mục đã chọn?`
+              : modalState.type === 'restore-many' ? `Bạn có chắc muốn khôi phục ${
+                  modalState.type === 'restore-many' ? modalState.ids.length : 0
+                } mục đã chọn?` : ''}
           </p>
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}> Hủy </Button>
-            <Button
-              variant="destructive"
-              onClick={modalState.type === 'delete-many' && modalState.permanent ? handleConfirmPermanentDeleteMany : handleConfirmDeleteMany}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+            <Button variant="outline" onClick={handleCancel}>
+              Hủy
             </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={modalState.type === 'restore-many'}
-        onOpenChange={(open) => !open && handleCancel()}
-        title="Xác nhận khôi phục nhiều mục"
-      >
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' ? modalState.ids.length : 0} mục đã chọn?
-          </p>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}> Hủy </Button>
-            <Button onClick={handleConfirmRestoreMany} disabled={isRestoring}>
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+            <Button
+              onClick={handleConfirmBulkAction}
+              disabled={isDeleting || isRestoring}
+              variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
+            >
+              {isDeleting || isRestoring ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
           </div>
         </div>

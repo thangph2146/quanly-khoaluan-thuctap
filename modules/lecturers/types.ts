@@ -26,7 +26,7 @@ export interface LecturerListProps {
   onEdit: (lecturer: Lecturer) => void
   onDelete: (lecturer: Lecturer) => void
   onView: (lecturer: Lecturer) => void
-  onDeleteMany?: (ids: (string | number)[]) => void
+  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void
 }
 
 export interface LecturerFormProps {
@@ -44,14 +44,12 @@ export interface LecturerDetailsProps {
   lecturer: Lecturer | null
   isOpen: boolean
   onClose: () => void
-  onEdit: (lecturer: Lecturer) => void
-  onDelete: (lecturer: Lecturer) => void
 }
 
 export interface LecturerDeletedListProps {
   lecturers: Lecturer[]
   isLoading: boolean
-  onRestore: (ids: number[]) => void
-  onPermanentDelete: (ids: (string | number)[]) => void
+  onRestore: (ids: (string | number)[], onSuccess: () => void) => void
+  onPermanentDelete: (ids: (string | number)[], onSuccess: () => void) => void
   deleteButtonText?: string
 } 

@@ -39,7 +39,7 @@ export interface StudentListProps {
   onEdit: (student: Student) => void;
   onDelete: (student: Student) => void;
   onView: (student: Student) => void;
-  onDeleteMany?: (ids: (string | number)[]) => void;
+  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void;
 }
 
 export interface StudentFormProps {
@@ -56,14 +56,12 @@ export interface StudentDetailsProps {
   student: Student | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (student: Student) => void;
-  onDelete: (student: Student) => void;
 }
 
 export interface StudentDeletedListProps {
   students: Student[];
   isLoading: boolean;
-  onRestore: (ids: number[]) => void;
-  onPermanentDelete: (ids: (string | number)[]) => void;
+  onRestore: (ids: (string | number)[], onSuccess: () => void) => void;
+  onPermanentDelete: (ids: (string | number)[], onSuccess: () => void) => void;
   deleteButtonText?: string;
 }

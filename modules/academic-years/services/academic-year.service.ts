@@ -1,56 +1,70 @@
 /**
  * Academic Year Service
- * Service for academic year management
+ * Business logic layer for academic year operations
  */
-import { AcademicYearsApi } from '@/lib/api/academic-years.api'
-import type { 
-    AcademicYear, 
-    CreateAcademicYearData, 
-    UpdateAcademicYearData,
-    AcademicYearFilters,
-    PaginatedAcademicYears
-} from '../types'
+import { 
+  getAcademicYears,
+  getDeletedAcademicYears,
+  getAcademicYearById,
+  getAllAcademicYears,
+  createAcademicYear,
+  updateAcademicYear,
+  softDeleteAcademicYear,
+  bulkSoftDeleteAcademicYears,
+  permanentDeleteAcademicYear,
+  bulkPermanentDeleteAcademicYears,
+  bulkRestoreAcademicYears,
+  type AcademicYear,
+  type CreateAcademicYearData,
+  type UpdateAcademicYearData,
+  type PaginatedAcademicYears,
+  type AcademicYearFilters
+} from '@/lib/api/academic-years.api'
 
 export class AcademicYearService {
   static async getAll(filters: AcademicYearFilters): Promise<PaginatedAcademicYears> {
-    return AcademicYearsApi.getAll(filters)
+    return getAcademicYears(filters)
+  }
+  
+  static async getAllList(): Promise<AcademicYear[]> {
+    return getAllAcademicYears()
   }
 
   static async getDeleted(filters: AcademicYearFilters): Promise<PaginatedAcademicYears> {
-    return AcademicYearsApi.getDeleted(filters);
+    return getDeletedAcademicYears(filters)
   }
 
-  /**
-   * Create a new academic year
-   */
+  static async getById(id: number): Promise<AcademicYear> {
+    return getAcademicYearById(id)
+  }
+
   static async create(data: CreateAcademicYearData): Promise<AcademicYear> {
-    return await AcademicYearsApi.create(data)
+    return createAcademicYear(data)
   }
 
-  /**
-   * Update an existing academic year
-   */
-  static async update(id: number, data: UpdateAcademicYearData): Promise<AcademicYear> {
-    return AcademicYearsApi.update(id, data)
+  static async update(id: number, data: AcademicYear): Promise<AcademicYear> {
+    return updateAcademicYear(id, data)
   }
 
   static async softDelete(id: number): Promise<void> {
-    return AcademicYearsApi.softDelete(id)
+    return softDeleteAcademicYear(id)
   }
 
   static async bulkSoftDelete(ids: number[]): Promise<void> {
-    return AcademicYearsApi.bulkSoftDelete(ids);
+    await bulkSoftDeleteAcademicYears(ids);
   }
 
   static async permanentDelete(id: number): Promise<void> {
-    return AcademicYearsApi.permanentDelete(id);
+    return permanentDeleteAcademicYear(id);
   }
 
   static async bulkPermanentDelete(ids: number[]): Promise<void> {
-    return AcademicYearsApi.bulkPermanentDelete(ids);
+    await bulkPermanentDeleteAcademicYears(ids);
   }
   
   static async bulkRestore(ids: number[]): Promise<void> {
-    return AcademicYearsApi.bulkRestore(ids);
+    await bulkRestoreAcademicYears(ids);
   }
 }
+
+export type { CreateAcademicYearData, UpdateAcademicYearData }
