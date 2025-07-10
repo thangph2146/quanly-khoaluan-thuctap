@@ -3,43 +3,41 @@
  * Display and manage semesters in table format
  */
 import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
-import type { Semester } from '../types'
+import type { Semester, SemesterListProps } from '../types'
 
-interface SemesterListProps {
-  semesters: Semester[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (semester: Semester) => void
-  onDelete: (semester: Semester) => void
-  onView?: (semester: Semester) => void
-}
-
-export function SemesterList({ 
-  semesters, 
-  isLoading, 
-  onCreate, 
-  onEdit, 
-  onDelete, 
-  onView 
-}: SemesterListProps) {
+export function SemesterList({
+  semesters,
+  isLoading,
+  onEdit,
+  onDelete,
+  onView,
+  onDeleteMany,
+  ...props
+}: SemesterListProps & {
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
+  filterBar?: React.ReactNode;
+}) {
   const columns = [
     {
       accessorKey: 'name',
       header: 'Tên học kỳ',
-      cell: ({ row }: { row: any }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
+      cell: ({ row }: { row: { original: Semester } }) => (
+        <div className="font-medium">{row.original.name}</div>
       ),
     },
     {
-      accessorKey: 'academicYear',
+      accessorKey: 'academicYear.name',
       header: 'Năm học',
-      cell: ({ row }: { row: any }) => {
-        const academicYear = row.getValue('academicYear') as any
+      cell: ({ row }: { row: { original: Semester } }) => {
         return (
-          <div className="text-sm">{academicYear?.name || 'N/A'}</div>
+          <div className="text-sm">{row.original.academicYear?.name || 'N/A'}</div>
         )
       },
     },
@@ -83,21 +81,13 @@ export function SemesterList({
   ]
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-end items-center">
-        <Button onClick={onCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm học kỳ
-        </Button>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={semesters}
-        isLoading={isLoading}
-        searchableColumn="name"
-        searchPlaceholder="Tìm theo tên học kỳ..."
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={semesters || []}
+      isLoading={isLoading}
+      onDeleteMany={onDeleteMany}
+      getId={(row) => row.id}
+      {...props}
+    />
   )
 }

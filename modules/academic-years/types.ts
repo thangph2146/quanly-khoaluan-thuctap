@@ -41,8 +41,6 @@ export interface AcademicYearDetailProps {
   academicYear: AcademicYear | null
   isOpen: boolean
   onClose: () => void
-  onEdit: (year: AcademicYear) => void
-  onDelete: (year: AcademicYear) => void
 }
 
 export interface AcademicYearListProps {

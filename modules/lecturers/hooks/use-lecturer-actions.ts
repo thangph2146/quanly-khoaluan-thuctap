@@ -1,85 +1,159 @@
 /**
  * Lecturer Actions Hook
- * Custom hook for lecturer CRUD operations with toast notifications
  */
+import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
-import { useCreateLecturer } from './use-create-lecturer'
-import { useUpdateLecturer } from './use-update-lecturer'
-import { useDeleteLecturer } from './use-delete-lecturer'
-import type { CreateLecturerData, UpdateLecturerData } from '../services'
+import { LecturerService } from '../services'
+import type { LecturerMutationData } from '../types'
+import type { UpdateLecturerData } from '@/lib/api/lecturers.api'
 
-/**
- * Hook for lecturer actions with error handling and notifications
- */
 export function useLecturerActions(onSuccess?: () => void) {
+  const [isCreating, setIsCreating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
   const { toast } = useToast()
-  const { createLecturer, isCreating } = useCreateLecturer()
-  const { updateLecturer, isUpdating } = useUpdateLecturer()
-  const { deleteLecturer, isDeleting } = useDeleteLecturer()
 
-  const handleCreateLecturer = async (data: CreateLecturerData) => {
+  const createLecturer = async (data: LecturerMutationData) => {
     try {
-      await createLecturer(data)
+      setIsCreating(true)
+      await LecturerService.create(data)
       toast({
         title: 'Thành công',
-        description: 'Giảng viên đã được tạo thành công.',
+        description: 'Tạo giảng viên mới thành công',
       })
       onSuccess?.()
-      return true
     } catch (error) {
       toast({
         title: 'Lỗi',
-        description: error instanceof Error ? error.message : 'Không thể tạo giảng viên.',
+        description: error instanceof Error ? error.message : 'Không thể tạo giảng viên mới',
         variant: 'destructive',
       })
-      return false
+      throw error
+    } finally {
+      setIsCreating(false)
     }
   }
 
-  const handleUpdateLecturer = async (id: number, data: UpdateLecturerData) => {
+  const updateLecturer = async (id: number, data: Partial<UpdateLecturerData>) => {
     try {
-      await updateLecturer(id, data)
+      setIsUpdating(true)
+      await LecturerService.update(id, data)
       toast({
         title: 'Thành công',
-        description: 'Giảng viên đã được cập nhật thành công.',
+        description: 'Cập nhật giảng viên thành công',
       })
       onSuccess?.()
-      return true
     } catch (error) {
       toast({
         title: 'Lỗi',
-        description: error instanceof Error ? error.message : 'Không thể cập nhật giảng viên.',
+        description: error instanceof Error ? error.message : 'Không thể cập nhật giảng viên',
         variant: 'destructive',
       })
-      return false
+      throw error
+    } finally {
+      setIsUpdating(false)
     }
   }
 
-  const handleDeleteLecturer = async (id: number) => {
+  const deleteLecturer = async (id: number): Promise<boolean> => {
     try {
-      await deleteLecturer(id)
+      setIsDeleting(true)
+      await LecturerService.softDelete(id)
       toast({
         title: 'Thành công',
-        description: 'Giảng viên đã được xóa thành công.',
+        description: 'Xóa giảng viên thành công',
       })
       onSuccess?.()
       return true
     } catch (error) {
       toast({
         title: 'Lỗi',
-        description: error instanceof Error ? error.message : 'Không thể xóa giảng viên.',
+        description: error instanceof Error ? error.message : 'Không thể xóa giảng viên',
         variant: 'destructive',
       })
       return false
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const softDeleteLecturers = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsDeleting(true)
+      await LecturerService.bulkSoftDelete(ids);
+      toast({
+        title: 'Thành công',
+        description: `Đã xóa tạm thời ${ids.length} giảng viên.`,
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa tạm thời các giảng viên',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const restoreLecturers = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsRestoring(true)
+      await LecturerService.bulkRestore(ids)
+      toast({
+        title: 'Thành công',
+        description: `Khôi phục ${ids.length} giảng viên thành công`,
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể khôi phục giảng viên',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsRestoring(false)
+    }
+  }
+
+  const permanentDeleteLecturers = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsDeleting(true)
+      await LecturerService.bulkPermanentDelete(ids)
+      toast({
+        title: 'Thành công',
+        description: `Xóa vĩnh viễn ${ids.length} giảng viên thành công`,
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa vĩnh viễn giảng viên',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return {
-    createLecturer: handleCreateLecturer,
-    updateLecturer: handleUpdateLecturer,
-    deleteLecturer: handleDeleteLecturer,
+    createLecturer,
+    updateLecturer,
+    deleteLecturer,
+    softDeleteLecturers,
+    restoreLecturers,
+    permanentDeleteLecturers,
     isCreating,
     isUpdating,
     isDeleting,
+    isRestoring,
   }
 }

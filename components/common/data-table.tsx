@@ -266,11 +266,15 @@ export function DataTable<TData, TValue>({
 	const showBulkActions = selectedIds.length > 0 && (onDeleteMany || onRestoreMany);
 	
 	const handleDeleteManyTrigger = () => {
-		if (onDeleteMany) onDeleteMany(selectedIds);
+		if (onDeleteMany) {
+			onDeleteMany(selectedIds);
+		}
 	};
 
 	const handleRestoreManyTrigger = () => {
-		if (onRestoreMany) onRestoreMany(selectedIds);
+		if (onRestoreMany) {
+			onRestoreMany(selectedIds);
+		}
 	};
 
 	return (

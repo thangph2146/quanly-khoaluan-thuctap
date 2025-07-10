@@ -1,74 +1,123 @@
-import { Student } from '@/modules/students/types'
-import httpsAPI from './client'
-import { AxiosError } from 'axios'
+import client from './client';
 
-export class StudentsApi {
-	// Lấy danh sách tất cả sinh viên
-	static async getAll(): Promise<Student[]> {
-		try {
-			const response = await httpsAPI.get('/Students')
-			return response.data
-		} catch (error) {
-			console.error('Error fetching students:', error)
-			if (error instanceof AxiosError) {
-				throw new Error(error.response?.data?.message || 'Không thể tải danh sách sinh viên')
-			}
-			throw new Error('Không thể tải danh sách sinh viên')
-		}
-	}
+// Re-defining interfaces here to avoid circular dependencies
+// A more robust solution might involve a shared types package.
+export interface Student {
+  id: number;
+  studentCode: string;
+  fullName: string;
+  dateOfBirth: string; // Assuming string for simplicity, will be formatted
+  email: string;
+  phoneNumber: string;
+  deletedAt?: string | null;
+}
 
-	// Lấy thông tin sinh viên theo ID
-	static async getById(id: number): Promise<Student> {
-		try {
-			const response = await httpsAPI.get(`/Students/${id}`)
-			return response.data
-		} catch (error) {
-			console.error('Error fetching student:', error)
-			if (error instanceof AxiosError) {
-				throw new Error(error.response?.data?.message || 'Không thể tải thông tin sinh viên')
-			}
-			throw new Error('Không thể tải thông tin sinh viên')
-		}
-	}
+export interface PaginatedStudents {
+  data: Student[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
-	// Tạo sinh viên mới
-	static async create(student: Omit<Student, 'id'>): Promise<Student> {
-		try {
-			const response = await httpsAPI.post('/Students', student)
-			return response.data
-		} catch (error) {
-			console.error('Error creating student:', error)
-			if (error instanceof AxiosError) {
-				throw new Error(error.response?.data?.message || 'Không thể tạo sinh viên mới')
-			}
-			throw new Error('Không thể tạo sinh viên mới')
-		}
-	}
+export interface StudentFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
 
-	// Cập nhật thông tin sinh viên
-	static async update(id: number, student: Student): Promise<Student> {
-		try {
-			const response = await httpsAPI.put(`/Students/${id}`, student)
-			return response.data
-		} catch (error) {
-			console.error('Error updating student:', error)
-			if (error instanceof AxiosError) {
-				throw new Error(error.response?.data?.message || 'Không thể cập nhật thông tin sinh viên')
-			}
-			throw new Error('Không thể cập nhật thông tin sinh viên')
-		}
-	}
+export interface StudentMutationData {
+  studentCode: string;
+  fullName: string;
+  dateOfBirth: string;
+  email: string;
+  phoneNumber: string;
+}
 
-	// Xóa sinh viên
-	static async delete(id: number): Promise<void> {
-		try {
-			await httpsAPI.delete(`/Students/${id}`)
-		} catch (error) {
-			console.error('Error deleting student:', error)
-			if (error instanceof AxiosError) {
-				throw new Error(error.response?.data?.message || 'Không thể xóa sinh viên')
-			}
-			throw new Error('Không thể xóa sinh viên')
-		}
-	}
+const API_URL = '/students';
+
+/**
+ * Fetches paginated active students.
+ */
+export async function getStudents(filters: StudentFilters): Promise<PaginatedStudents> {
+  const params = new URLSearchParams();
+  if (filters.page) params.append('page', filters.page.toString());
+  if (filters.limit) params.append('limit', filters.limit.toString());
+  if (filters.search) params.append('search', filters.search);
+  
+  const response = await client.get(API_URL, { params });
+  return response.data;
+}
+
+/**
+ * Fetches paginated soft-deleted students.
+ */
+export async function getDeletedStudents(filters: StudentFilters): Promise<PaginatedStudents> {
+    const params = new URLSearchParams();
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.limit) params.append('limit', filters.limit.toString());
+    if (filters.search) params.append('search', filters.search);
+
+    const response = await client.get(`${API_URL}/deleted`, { params });
+    return response.data;
+}
+
+/**
+ * Fetches a single student by their ID.
+ */
+export async function getStudentById(id: number): Promise<Student> {
+  const response = await client.get(`${API_URL}/${id}`);
+  return response.data;
+}
+
+/**
+ * Creates a new student.
+ */
+export async function createStudent(data: StudentMutationData): Promise<Student> {
+  const response = await client.post(API_URL, data);
+  return response.data;
+}
+
+/**
+ * Updates an existing student.
+ */
+export async function updateStudent(id: number, data: Student): Promise<void> {
+  await client.put(`${API_URL}/${id}`, data);
+}
+
+/**
+ * Soft deletes a student.
+ */
+export async function softDeleteStudent(id: number): Promise<void> {
+  await client.post(`${API_URL}/soft-delete/${id}`);
+}
+
+/**
+ * Permanently deletes a student.
+ */
+export async function permanentDeleteStudent(id: number): Promise<void> {
+    await client.delete(`${API_URL}/permanent-delete/${id}`);
+}
+
+/**
+ * Bulk soft deletes multiple students.
+ */
+export async function bulkSoftDeleteStudents(ids: number[]): Promise<{ softDeleted: number }> {
+    const response = await client.post(`${API_URL}/bulk-soft-delete`, ids);
+    return response.data;
+}
+
+/**
+ * Bulk permanently deletes multiple students.
+ */
+export async function bulkPermanentDeleteStudents(ids: number[]): Promise<{ permanentlyDeleted: number }> {
+    const response = await client.post(`${API_URL}/bulk-permanent-delete`, ids);
+    return response.data;
+}
+
+/**
+ * Bulk restores multiple students.
+ */
+export async function bulkRestoreStudents(ids: number[]): Promise<{ restored: number }> {
+    const response = await client.post(`${API_URL}/bulk-restore`, ids);
+    return response.data;
 }

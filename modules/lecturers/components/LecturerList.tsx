@@ -1,44 +1,44 @@
 /**
  * Lecturer List Component
- * Display and manage lecturers in table format
  */
 import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
 import { Badge } from '@/components/ui/badge'
-import type { Lecturer } from '../types'
+import type { Lecturer, LecturerListProps } from '../types'
 
-interface LecturerListProps {
-  lecturers: Lecturer[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (lecturer: Lecturer) => void
-  onDelete: (lecturer: Lecturer) => void
-  onView?: (lecturer: Lecturer) => void
-}
+export function LecturerList({
+  lecturers,
+  isLoading,
+  onEdit,
+  onDelete,
+  onView,
+  onDeleteMany,
+  ...props
+}: LecturerListProps & {
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
+  filterBar?: React.ReactNode;
+}) {
 
-export function LecturerList({ lecturers, isLoading, onCreate, onEdit, onDelete, onView }: LecturerListProps) {
   const columns = [
     {
       accessorKey: 'name',
       header: 'Họ và tên',
-      cell: ({ row }: { row: any }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
-      ),
     },
     {
       accessorKey: 'email',
       header: 'Email',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm text-muted-foreground">{row.getValue('email')}</div>
-      ),
     },
     {
-      accessorKey: 'departmentName',
+      accessorKey: 'department',
       header: 'Khoa/Bộ môn',
-      cell: ({ row }: { row: any }) => {
-        const departmentName = row.getValue('departmentName') as string | undefined
+      cell: ({ row }: { row: { original: Lecturer } }) => {
+        const departmentName = row.original.department?.name
         return (
           <div className="text-sm">
             {departmentName || <span className="text-muted-foreground">Chưa có</span>}
@@ -49,8 +49,8 @@ export function LecturerList({ lecturers, isLoading, onCreate, onEdit, onDelete,
     {
       accessorKey: 'academicRank',
       header: 'Học hàm',
-      cell: ({ row }: { row: any }) => {
-        const academicRank = row.getValue('academicRank') as string | undefined
+      cell: ({ row }: { row: { original: Lecturer } }) => {
+        const academicRank = row.original.academicRank
         return (
           <div className="text-sm">
             {academicRank || <span className="text-muted-foreground">Chưa có</span>}
@@ -61,8 +61,8 @@ export function LecturerList({ lecturers, isLoading, onCreate, onEdit, onDelete,
     {
       accessorKey: 'degree',
       header: 'Học vị',
-      cell: ({ row }: { row: any }) => {
-        const degree = row.getValue('degree') as string | undefined
+      cell: ({ row }: { row: { original: Lecturer } }) => {
+        const degree = row.original.degree
         return (
           <div className="text-sm">
             {degree || <span className="text-muted-foreground">Chưa có</span>}
@@ -73,8 +73,8 @@ export function LecturerList({ lecturers, isLoading, onCreate, onEdit, onDelete,
     {
       accessorKey: 'isActive',
       header: 'Trạng thái',
-      cell: ({ row }: { row: any }) => {
-        const isActive = row.getValue('isActive')
+      cell: ({ row }: { row: { original: Lecturer } }) => {
+        const isActive = row.original.isActive
         return (
           <Badge variant={isActive ? 'default' : 'secondary'}>
             {isActive ? 'Hoạt động' : 'Không hoạt động'}
@@ -122,21 +122,13 @@ export function LecturerList({ lecturers, isLoading, onCreate, onEdit, onDelete,
   ]
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-end items-center">
-        <Button onClick={onCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm giảng viên
-        </Button>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={lecturers}
-        isLoading={isLoading}
-        searchableColumn="name"
-        searchPlaceholder="Tìm theo tên..."
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={lecturers}
+      isLoading={isLoading}
+      onDeleteMany={onDeleteMany}
+      getId={(row) => row.id}
+      {...props}
+    />
   )
 } 

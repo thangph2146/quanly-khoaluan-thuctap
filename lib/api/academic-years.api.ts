@@ -57,9 +57,11 @@ export const createAcademicYear = async (data: CreateAcademicYearData): Promise<
 
 export const updateAcademicYear = async (
 	id: number,
-	data: UpdateAcademicYearData,
+	data: UpdateAcademicYearData & { id?: number },
 ): Promise<AcademicYear> => {
-  const response = await apiClient.put(`/academicyears/${id}`, data)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _, ...updateData } = data;
+  const response = await apiClient.put(`/academicyears/${id}`, updateData)
   return response.data
 }
 

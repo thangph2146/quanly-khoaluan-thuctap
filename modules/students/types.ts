@@ -1,62 +1,69 @@
 /**
- * Students Module Types
+ * Student Module Types
  */
 
 export interface Student {
-  id: number
-  studentCode: string
-  fullName: string
-  dateOfBirth: string
-  email: string
-  phoneNumber: string
+  id: number;
+  studentCode: string;
+  fullName: string;
+  dateOfBirth: string;
+  email: string;
+  phoneNumber: string;
+  deletedAt?: string | null;
 }
 
-export interface CreateStudentData {
-  studentCode: string
-  fullName: string
-  dateOfBirth: string
-  email: string
-  phoneNumber: string
-}
-
-export interface UpdateStudentData {
-  studentCode: string
-  fullName: string
-  dateOfBirth: string
-  email: string
-  phoneNumber: string
-}
-
-export interface StudentFormData {
-  studentCode: string
-  fullName: string
-  dateOfBirth: string
-  email: string
-  phoneNumber: string
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface StudentFilters {
-  search?: string
-  code?: string
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface StudentMutationData {
+  studentCode: string;
+  fullName: string;
+  dateOfBirth: string; // Keep as string to match form
+  email: string;
+  phoneNumber: string;
 }
 
 export interface StudentListProps {
-  students: Student[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (student: Student) => void
-  onDelete: (student: Student) => void
-  onView: (student: Student) => void
+  students: Student[];
+  isLoading: boolean;
+  onEdit: (student: Student) => void;
+  onDelete: (student: Student) => void;
+  onView: (student: Student) => void;
+  onDeleteMany?: (ids: (string | number)[]) => void;
 }
 
 export interface StudentFormProps {
-  student?: Student | null
-  onSubmit: (data: CreateStudentData | UpdateStudentData) => void
-  onCancel: () => void
-  isLoading: boolean
-  mode: 'create' | 'edit'
+  student?: Student | null;
+  onSubmit: (data: StudentMutationData) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+  mode: 'create' | 'edit';
+  isOpen: boolean;
+  title: string;
 }
 
 export interface StudentDetailsProps {
-  student: Student
+  student: Student | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: (student: Student) => void;
+  onDelete: (student: Student) => void;
+}
+
+export interface StudentDeletedListProps {
+  students: Student[];
+  isLoading: boolean;
+  onRestore: (ids: number[]) => void;
+  onPermanentDelete: (ids: (string | number)[]) => void;
+  deleteButtonText?: string;
 }

@@ -95,15 +95,51 @@ export function AcademicYearsContainer() {
   }
 
   const handleDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids });
+    return new Promise<void>((resolve, reject) => {
+      if (window.confirm(`Bạn có chắc muốn xóa ${ids.length} năm học đã chọn?`)) {
+        softDeleteAcademicYears(ids as number[]).then((success) => {
+          if (success) {
+            resolve();
+          } else {
+            reject(new Error("Xóa nhiều năm học thất bại"));
+          }
+        });
+      } else {
+        reject(new Error("Hủy bỏ hành động"));
+      }
+    });
   };
   
   const handleRestoreMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'restore-many', ids: ids as number[] });
+    return new Promise<void>((resolve, reject) => {
+      if (window.confirm(`Bạn có chắc muốn khôi phục ${ids.length} năm học đã chọn?`)) {
+        restoreAcademicYears(ids as number[]).then((success) => {
+          if (success) {
+            resolve();
+          } else {
+            reject(new Error("Khôi phục nhiều năm học thất bại"));
+          }
+        });
+      } else {
+        reject(new Error("Hủy bỏ hành động"));
+      }
+    });
   };
   
   const handlePermanentDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids, permanent: true });
+    return new Promise<void>((resolve, reject) => {
+      if (window.confirm(`Bạn có chắc muốn xóa vĩnh viễn ${ids.length} năm học đã chọn? Hành động này không thể hoàn tác.`)) {
+        permanentDeleteAcademicYears(ids as number[]).then((success) => {
+          if (success) {
+            resolve();
+          } else {
+            reject(new Error("Xóa vĩnh viễn nhiều năm học thất bại"));
+          }
+        });
+      } else {
+        reject(new Error("Hủy bỏ hành động"));
+      }
+    });
   };
   
   const handleConfirmBulkAction = async () => {
@@ -220,8 +256,6 @@ export function AcademicYearsContainer() {
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
         academicYear={selectedYear}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
 
@@ -250,32 +284,38 @@ export function AcademicYearsContainer() {
       </Modal>
 
        {/* Bulk Actions Confirmation */}
+       {/* This modal can now be removed if we are using window.confirm */}
       <Modal
-        isOpen={modalState.type === 'delete-many' || modalState.type === 'restore-many'}
+        isOpen={
+          (modalState.type === 'delete-many' || modalState.type === 'restore-many') && false // Keep it disabled
+        }
         onOpenChange={(open) => !open && handleCancel()}
-        title="Xác nhận hành động"
+        title="Xác nhận hàng loạt"
       >
         <div>
-            <p>
-                {modalState.type === 'restore-many' && `Bạn có chắc chắn muốn khôi phục ${modalState.ids.length} mục đã chọn?`}
-                {modalState.type === 'delete-many' && modalState.permanent && `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} mục đã chọn? Hành động này không thể hoàn tác.`}
-                {modalState.type === 'delete-many' && !modalState.permanent && `Bạn có chắc chắn muốn xóa ${modalState.ids.length} mục đã chọn?`}
-            </p>
+          <p className="text-sm text-muted-foreground">
+            {modalState.type === 'delete-many'
+              ? `Bạn có chắc muốn ${modalState.permanent ? 'xóa vĩnh viễn' : 'xóa'} ${
+                  modalState.ids.length
+                } mục đã chọn?`
+              : modalState.type === 'restore-many' ? `Bạn có chắc muốn khôi phục ${
+                  modalState.ids.length
+                } mục đã chọn?` : ''}
+          </p>
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={handleCancel}>
               Hủy
             </Button>
             <Button
-              variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
               onClick={handleConfirmBulkAction}
               disabled={isDeleting || isRestoring}
+              variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
             >
-              {isDeleting ? 'Đang xóa...' : isRestoring ? 'Đang khôi phục...' : 'Xác nhận'}
+              {isDeleting || isRestoring ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
           </div>
         </div>
       </Modal>
-
     </PageHeader>
   )
 }

@@ -1,196 +1,175 @@
 /**
  * Student Form Component
  */
-import React, { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { useForm, FormProvider } from 'react-hook-form'
+import React, { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Modal } from "@/components/common";
+import type { StudentFormProps, StudentMutationData } from "../types";
 import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form'
-import type { Student, CreateStudentData, UpdateStudentData, StudentFormProps } from '../types'
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+  } from "@/components/ui/form"
 
-export function StudentForm({
+const studentFormSchema = z.object({
+  fullName: z.string().min(1, "Họ và tên không được để trống."),
+  studentCode: z.string().min(1, "Mã sinh viên không được để trống."),
+  email: z.string().email("Email không hợp lệ."),
+  phoneNumber: z.string().min(10, "Số điện thoại phải có ít nhất 10 chữ số.").regex(/^[0-9]+$/, "Số điện thoại chỉ được chứa số."),
+  dateOfBirth: z.string().min(1, "Ngày sinh không được để trống."),
+});
+
+export const StudentForm = React.memo(function StudentForm({
   student,
   onSubmit,
   onCancel,
   isLoading,
   mode,
+  isOpen,
+  title,
 }: StudentFormProps) {
-  const methods = useForm<CreateStudentData | UpdateStudentData>({
+  const form = useForm<z.infer<typeof studentFormSchema>>({
+    resolver: zodResolver(studentFormSchema),
     defaultValues: {
-      studentCode: '',
-      fullName: '',
-      dateOfBirth: '',
-      email: '',
-      phoneNumber: '',
+      fullName: "",
+      studentCode: "",
+      email: "",
+      phoneNumber: "",
+      dateOfBirth: "",
     },
-  })
+  });
 
   useEffect(() => {
-    if (student && mode === 'edit') {
-      methods.reset({
-        studentCode: student.studentCode || '',
-        fullName: student.fullName || '',
-        dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
-        email: student.email || '',
-        phoneNumber: student.phoneNumber || '',
-      })
-    } else {
-      methods.reset({
-        studentCode: '',
-        fullName: '',
-        dateOfBirth: '',
-        email: '',
-        phoneNumber: '',
-      })
+    if (isOpen) {
+        if (student && mode === 'edit') {
+            form.reset({
+              fullName: student.fullName || '',
+              studentCode: student.studentCode || '',
+              email: student.email || '',
+              phoneNumber: student.phoneNumber || '',
+              dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
+            });
+          } else {
+            form.reset({
+                fullName: "",
+                studentCode: "",
+                email: "",
+                phoneNumber: "",
+                dateOfBirth: "",
+            });
+          }
     }
-  }, [student, mode])
+  }, [student, mode, isOpen, form.reset]);
 
-  const handleFormSubmit = methods.handleSubmit((data: CreateStudentData | UpdateStudentData) => {
-    onSubmit(data)
-  })
+  function handleFormSubmit(data: z.infer<typeof studentFormSchema>) {
+    onSubmit(data as StudentMutationData);
+  }
 
   return (
-    <FormProvider {...methods}>
-      <div className="flex flex-col h-full">
-        <ScrollArea className="flex-1 p-4">
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <FormField
-              name="studentCode"
-              control={methods.control}
-              rules={{ required: 'Mã sinh viên không được để trống' }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mã sinh viên *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Ví dụ: 2021001"
-                      required
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="fullName"
-              control={methods.control}
-              rules={{ required: 'Họ và tên không được để trống' }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Họ và tên *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Nhập họ và tên"
-                      required
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="dateOfBirth"
-              control={methods.control}
-              rules={{ required: 'Ngày sinh không được để trống' }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ngày sinh *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="date"
-                      required
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="email"
-              control={methods.control}
-              rules={{
-                required: 'Email không được để trống',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'Email không hợp lệ',
-                },
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="email"
-                      placeholder="Nhập địa chỉ email"
-                      required
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="phoneNumber"
-              control={methods.control}
-              rules={{
-                required: 'Số điện thoại không được để trống',
-                pattern: {
-                  value: /^[0-9]{10,11}$/,
-                  message: 'Số điện thoại không hợp lệ',
-                },
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Số điện thoại *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Nhập số điện thoại"
-                      required
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </ScrollArea>
-        <div className="flex justify-end space-x-2 p-4 border-t bg-background">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            Hủy
-          </Button>
-          <Button
-            type="submit"
-            onClick={handleFormSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
-          </Button>
-        </div>
-      </div>
-    </FormProvider>
-  )
-}
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && onCancel()}
+      title={title}
+      className="sm:max-w-lg"
+    >
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(handleFormSubmit)}
+                className="space-y-4 p-2"
+            >
+                <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Họ và tên *</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Nhập họ và tên" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="studentCode"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Mã sinh viên *</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Ví dụ: 20240001" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Ngày sinh *</FormLabel>
+                        <FormControl>
+                            <Input type="date" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email *</FormLabel>
+                        <FormControl>
+                            <Input type="email" placeholder="email@example.com" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Số điện thoại *</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Nhập số điện thoại" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Buttons */}
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={isLoading}
+                >
+                    Hủy
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                    {isLoading
+                    ? "Đang xử lý..."
+                    : mode === "create"
+                    ? "Tạo mới"
+                    : "Cập nhật"}
+                </Button>
+                </div>
+            </form>
+      </Form>
+    </Modal>
+  );
+});

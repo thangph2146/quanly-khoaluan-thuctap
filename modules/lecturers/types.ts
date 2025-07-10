@@ -1,46 +1,57 @@
-/**
- * Lecturer Types
- * Type definitions for lecturer management
- */
+import type { 
+  Lecturer as ApiLecturer, 
+  CreateLecturerData as ApiCreateLecturerData,
+  LecturerFilters as ApiLecturerFilters 
+} from '@/lib/api/lecturers.api'
+import type { Department } from '@/lib/api/departments.api'
 
-export interface Lecturer {
-  id: number
-  name: string
-  email: string
-  phoneNumber?: string
-  departmentId?: number
-  departmentName?: string
-  academicRank?: string
-  degree?: string
-  specialization?: string
-  avatarUrl?: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
+export type Lecturer = ApiLecturer & {
+  department?: Department | null
 }
 
-export interface CreateLecturerData {
-  name: string
-  email: string
-  phoneNumber?: string
-  departmentId?: number
-  academicRank?: string
-  degree?: string
-  specialization?: string
-  avatarUrl?: string
-  isActive: boolean
+export type LecturerMutationData = ApiCreateLecturerData
+
+export type LecturerFilters = ApiLecturerFilters
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-export interface UpdateLecturerData {
-  name: string
-  email: string
-  phoneNumber?: string
-  departmentId?: number
-  academicRank?: string
-  degree?: string
-  specialization?: string
-  avatarUrl?: string
-  isActive: boolean
+export interface LecturerListProps {
+  lecturers: Lecturer[]
+  isLoading: boolean
+  onEdit: (lecturer: Lecturer) => void
+  onDelete: (lecturer: Lecturer) => void
+  onView: (lecturer: Lecturer) => void
+  onDeleteMany?: (ids: (string | number)[]) => void
 }
 
-export type LecturerStatus = 'ACTIVE' | 'INACTIVE' 
+export interface LecturerFormProps {
+  lecturer?: Lecturer | null
+  allDepartments: Department[]
+  onSubmit: (data: LecturerMutationData) => void
+  onCancel: () => void
+  isLoading: boolean
+  mode: 'create' | 'edit'
+  isOpen: boolean
+  title: string
+}
+
+export interface LecturerDetailsProps {
+  lecturer: Lecturer | null
+  isOpen: boolean
+  onClose: () => void
+  onEdit: (lecturer: Lecturer) => void
+  onDelete: (lecturer: Lecturer) => void
+}
+
+export interface LecturerDeletedListProps {
+  lecturers: Lecturer[]
+  isLoading: boolean
+  onRestore: (ids: number[]) => void
+  onPermanentDelete: (ids: (string | number)[]) => void
+  deleteButtonText?: string
+} 

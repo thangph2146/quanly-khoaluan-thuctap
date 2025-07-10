@@ -1,36 +1,58 @@
-/**
- * Semester Service
- * Service for semester management
- */
-import { SemestersApi } from '@/lib/api/semesters.api'
-import type { Semester, CreateSemesterData, UpdateSemesterData } from '../types'
+import { SemestersApi } from "@/lib/api/semesters.api";
+import type {
+  Semester,
+  SemesterFilters,
+  SemesterMutationData,
+  PaginatedResponse,
+} from "../types";
 
 export class SemesterService {
-  /**
-   * Get all semesters
-   */
-  static async getAll(): Promise<Semester[]> {
-    return await SemestersApi.getAll()
+  static async getAll(
+    filters: SemesterFilters
+  ): Promise<PaginatedResponse<Semester>> {
+    return SemestersApi.getAll(filters);
   }
 
-  /**
-   * Create a new semester
-   */
-  static async create(data: CreateSemesterData): Promise<Semester> {
-    return await SemestersApi.create(data)
+  static async getDeleted(
+    filters: SemesterFilters
+  ): Promise<PaginatedResponse<Semester>> {
+    return SemestersApi.getDeleted(filters);
   }
 
-  /**
-   * Update an existing semester
-   */
-  static async update(id: number, data: UpdateSemesterData): Promise<Semester> {
-    return await SemestersApi.update(id, data)
+  static async getById(id: number): Promise<Semester> {
+    return SemestersApi.getById(id);
   }
 
-  /**
-   * Delete a semester
-   */
-  static async remove(id: number): Promise<void> {
-    return await SemestersApi.delete(id)
+  static async create(data: SemesterMutationData): Promise<Semester> {
+    return SemestersApi.create(data);
+  }
+
+  static async update(
+    id: number,
+    data: SemesterMutationData
+  ): Promise<Semester> {
+    return SemestersApi.update(id, data);
+  }
+
+  static async softDelete(id: number): Promise<void> {
+    return SemestersApi.softDelete(id);
+  }
+
+  static async bulkSoftDelete(ids: number[]): Promise<void> {
+    await SemestersApi.bulkSoftDelete(ids);
+  }
+
+  static async permanentDelete(id: number): Promise<void> {
+    return SemestersApi.permanentDelete(id);
+  }
+
+  static async bulkPermanentDelete(
+    ids: number[]
+  ): Promise<void> {
+    await SemestersApi.bulkPermanentDelete(ids);
+  }
+
+  static async bulkRestore(ids: number[]): Promise<void> {
+    await SemestersApi.bulkRestore(ids);
   }
 }

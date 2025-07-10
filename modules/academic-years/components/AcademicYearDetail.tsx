@@ -8,29 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CalendarDays, Clock, Info } from 'lucide-react'
 import type { AcademicYearDetailProps } from '../types'
 import { Modal } from '@/components/common'
-import { Button } from '@/components/ui/button'
 
 export function AcademicYearDetail({ 
     academicYear,
     isOpen,
     onClose,
-    onEdit,
-    onDelete,
  }: AcademicYearDetailProps) {
 
     if (!academicYear) {
         return null;
     }
 
-    const handleEditClick = () => {
-        onEdit(academicYear);
-        onClose();
-    };
-
-    const handleDeleteClick = () => {
-        onDelete(academicYear);
-        onClose();
-    };
 
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -193,14 +181,6 @@ export function AcademicYearDetail({
                 </CardContent>
             </Card>
         </div>
-        <div className="flex gap-2 pt-4 mt-6 border-t">
-            <Button variant="outline" onClick={handleEditClick}>
-                Chỉnh sửa
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteClick}>
-                Xóa
-            </Button>
-      </div>
     </Modal>
   )
 }

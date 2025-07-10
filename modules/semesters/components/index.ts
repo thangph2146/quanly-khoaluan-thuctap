@@ -1,3 +1,5 @@
 export * from './SemesterForm'
 export * from './SemesterList'
 export * from './SemestersContainer'
+export * from './SemesterDetails'
+export * from './SemesterDeletedList'

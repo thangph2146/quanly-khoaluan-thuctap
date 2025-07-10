@@ -248,8 +248,6 @@ export function DepartmentsContainer() {
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
         department={modalState.type === 'view' ? modalState.department : null}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -54,8 +54,6 @@ export interface DepartmentDetailsProps {
   department: Department | null
   isOpen: boolean
   onClose: () => void
-  onEdit: (department: Department) => void
-  onDelete: (department: Department) => void
 }
 
 export interface DepartmentDeletedListProps {

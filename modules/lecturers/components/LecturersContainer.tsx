@@ -1,64 +1,64 @@
 'use-client'
 
 import React, { useState, useCallback, useEffect } from 'react'
-import { SemesterList } from './SemesterList'
-import { SemesterForm } from './SemesterForm'
-import { SemesterDetails } from './SemesterDetails'
-import { SemesterDeletedList } from './SemesterDeletedList'
-import { useSemesters, useSemesterActions, useDeletedSemesters } from '../hooks'
-import { useAcademicYears } from '@/modules/academic-years/hooks'
+import { LecturerList } from './LecturerList'
+import { LecturerForm } from './LecturerForm'
+import { LecturerDetails } from './LecturerDetails'
+import { LecturerDeletedList } from './LecturerDeletedList'
+import { useLecturers, useLecturerActions, useDeletedLecturers, useDepartments } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
-import type { Semester, SemesterMutationData, SemesterFilters } from '../types'
+import type { Lecturer, LecturerMutationData, LecturerFilters } from '../types'
 import { logger } from '@/lib/utils/logger'
 
 type ModalState = 
   | { type: 'create' }
-  | { type: 'edit', semester: Semester }
-  | { type: 'delete', semester: Semester }
+  | { type: 'edit', lecturer: Lecturer }
+  | { type: 'delete', lecturer: Lecturer }
   | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
   | { type: 'restore-many', ids: number[] }
-  | { type: 'view', semester: Semester }
+  | { type: 'view', lecturer: Lecturer }
   | { type: 'idle' };
 
-export function SemestersContainer() {
+
+export function LecturersContainer() {
   const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<SemesterFilters>({ page: 1, limit: 10, search: "" });
+  const [filters, setFilters] = useState<LecturerFilters>({ page: 1, limit: 10, search: "" });
   
   const { 
-    semesters: activeSemesters, 
+    lecturers: activeLecturers, 
     total: activeTotal, 
     isLoading: isLoadingActive, 
     refetch: refetchActive,
-  } = useSemesters(filters);
+  } = useLecturers(filters);
 
   const { 
-    deletedSemesters, 
+    deletedLecturers, 
     total: deletedTotal, 
     isLoading: isLoadingDeleted,
     refetch: refetchDeleted,
-  } = useDeletedSemesters(filters);
+  } = useDeletedLecturers(filters);
   
-  const { data: academicYears } = useAcademicYears({ page: 1, limit: 9999 });
-
+  const { departments } = useDepartments();
+  
   useEffect(() => {
     setFilters(f => ({ ...f, page: 1 }));
   }, [showDeleted]);
 
   const { 
-    createSemester, 
-    updateSemester, 
-    deleteSemester, 
-    restoreSemesters,
-    permanentDeleteSemesters,
-    softDeleteSemesters,
+    createLecturer, 
+    updateLecturer, 
+    deleteLecturer, 
+    restoreLecturers,
+    permanentDeleteLecturers,
+    softDeleteLecturers,
     isCreating, 
     isUpdating, 
     isDeleting,
     isRestoring,
-  } = useSemesterActions(() => {
+  } = useLecturerActions(() => {
     refetchActive();
     refetchDeleted();
   })
@@ -67,38 +67,10 @@ export function SemestersContainer() {
 
   const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
 
-  const filterBar = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-      <div className="flex flex-col space-y-2 justify-between">
-        <Label htmlFor="search">Tìm kiếm</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="search"
-            placeholder="Tìm kiếm học kỳ..."
-            value={filters.search || ''}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))
-            }
-            className="flex-grow"
-          />
-          {filters.search && (
-            <Button
-              onClick={() =>
-                setFilters((f) => ({ ...f, search: '', page: 1 }))
-              }
-            >
-              Xóa filter
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
   const handleCreate = () => setModalState({ type: 'create' });
-  const handleEdit = (semester: Semester) => setModalState({ type: 'edit', semester });
-  const handleDelete = (semester: Semester) => setModalState({ type: 'delete', semester });
-  const handleView = (semester: Semester) => setModalState({ type: 'view', semester });
+  const handleEdit = (lecturer: Lecturer) => setModalState({ type: 'edit', lecturer });
+  const handleDelete = (lecturer: Lecturer) => setModalState({ type: 'delete', lecturer });
+  const handleView = (lecturer: Lecturer) => setModalState({ type: 'view', lecturer });
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
   const handleDeleteMany = (ids: (string | number)[]) => {
@@ -109,67 +81,94 @@ export function SemestersContainer() {
     setModalState({ type: 'restore-many', ids: ids as number[] });
   };
 
-  const handleCreateSubmit = useCallback(async (data: SemesterMutationData) => {
-    try {
-      await createSemester(data)
-      handleCancel()
-    } catch (error) {
-      logger.error('Failed to create semester', error)
-    }
-  }, [createSemester, handleCancel])
-
-  const handleEditSubmit = useCallback(async (data: SemesterMutationData) => {
-    if (modalState.type !== 'edit') return
-    
-    try {
-      await updateSemester(modalState.semester.id, data)
-      handleCancel()
-    } catch (error) {
-      logger.error('Failed to update semester', error)
-    }
-  }, [modalState, updateSemester, handleCancel])
-
-  const handleConfirmDelete = async () => {
-    if (modalState.type !== 'delete') return
-    
-    await deleteSemester(modalState.semester.id)
-    handleCancel()
-  }
-
-  const handleConfirmDeleteMany = async () => {
-    if (modalState.type !== 'delete-many') return;
-    await softDeleteSemesters(modalState.ids as number[]);
-    handleCancel();
-  }
-
-  const handleConfirmRestoreMany = async () => {
-    if (modalState.type !== 'restore-many') return;
-    await restoreSemesters(modalState.ids);
-    handleCancel();
-  }
-
   const handlePermanentDeleteMany = (ids: (string | number)[]) => {
     setModalState({ type: 'delete-many', ids, permanent: true });
   };
   
+  const handleCreateSubmit = useCallback(async (data: LecturerMutationData) => {
+    try {
+      await createLecturer(data)
+      handleCancel()
+    } catch (error) {
+      logger.error('Failed to create lecturer', error)
+    }
+  }, [createLecturer, handleCancel])
+
+  const handleEditSubmit = useCallback(async (data: LecturerMutationData) => {
+    if (modalState.type !== 'edit') return
+    
+    try {
+      await updateLecturer(modalState.lecturer.id, data)
+      handleCancel()
+    } catch (error) {
+      logger.error('Failed to update lecturer', error)
+    }
+  }, [modalState, updateLecturer, handleCancel])
+
+  const handleConfirmDelete = async () => {
+    if (modalState.type !== 'delete') return
+    const success = await deleteLecturer(modalState.lecturer.id)
+    if (success) {
+      handleCancel()
+    }
+  }
+
+  const handleConfirmDeleteMany = async () => {
+    if (modalState.type !== 'delete-many') return;
+    const success = await softDeleteLecturers(modalState.ids as number[]);
+    if (success) {
+      handleCancel();
+    }
+  }
+
+  const handleConfirmRestoreMany = async () => {
+    if (modalState.type !== 'restore-many') return;
+    const success = await restoreLecturers(modalState.ids);
+    if (success) {
+      handleCancel();
+    }
+  }
+  
   const handleConfirmPermanentDeleteMany = async () => {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    await permanentDeleteSemesters(modalState.ids as number[]);
-    handleCancel();
+    const success = await permanentDeleteLecturers(modalState.ids as number[]);
+    if (success) {
+      handleCancel();
+    }
   }
+  
+  const filterBar = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="flex flex-col space-y-2 justify-between">
+        <Label htmlFor="search">Tìm kiếm</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="search"
+            placeholder="Tìm kiếm giảng viên..."
+            value={filters.search || ''}
+            onChange={(e) =>
+              setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))
+            }
+            className="flex-grow"
+          />
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <PageHeader
-      title="Quản lý Học kỳ"
-      description="Quản lý các học kỳ trong hệ thống"
+      title="Quản lý Giảng viên"
+      description="Quản lý các giảng viên trong hệ thống"
       breadcrumbs={[
         { label: "Trang chủ", href: "/" },
-        { label: "Học kỳ", href: "/semesters" },
+        { label: "Học thuật", href: "/academic" },
+        { label: "Giảng viên", href: "/academic/lecturers" },
       ]}
       actions={
         <div className="flex gap-2">
           <Button onClick={handleCreate} disabled={isCreating}>
-            + Thêm học kỳ
+            + Thêm giảng viên
           </Button>
           <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
             {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
@@ -178,8 +177,8 @@ export function SemestersContainer() {
       }
     >
       {showDeleted ? (
-        <SemesterDeletedList
-          semesters={deletedSemesters}
+        <LecturerDeletedList
+          lecturers={deletedLecturers}
           isLoading={isLoadingDeleted}
           onRestore={handleRestoreMany}
           onPermanentDelete={handlePermanentDeleteMany}
@@ -192,8 +191,8 @@ export function SemestersContainer() {
           onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
         />
       ) : (
-        <SemesterList
-          semesters={activeSemesters}
+        <LecturerList
+          lecturers={activeLecturers}
           isLoading={isLoadingActive}
           onEdit={handleEdit}
           onView={handleView}
@@ -204,25 +203,25 @@ export function SemestersContainer() {
           totalPages={totalPages}
           onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
           limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page:1 }))}
+          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
         />
       )}
 
-      <SemesterForm
+      <LecturerForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
-        title={modalState.type === 'create' ? 'Tạo học kỳ mới' : 'Chỉnh sửa học kỳ'}
-        semester={modalState.type === 'edit' ? modalState.semester : undefined}
-        academicYears={academicYears}
+        title={modalState.type === 'create' ? 'Tạo giảng viên mới' : 'Chỉnh sửa giảng viên'}
+        lecturer={modalState.type === 'edit' ? modalState.lecturer : undefined}
+        allDepartments={departments}
         onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
         isLoading={isCreating || isUpdating}
         mode={modalState.type === 'create' ? 'create' : 'edit'}
       />
 
-      <SemesterDetails
+      <LecturerDetails
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
-        semester={modalState.type === 'view' ? modalState.semester : null}
+        lecturer={modalState.type === 'view' ? modalState.lecturer : null}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
@@ -234,18 +233,12 @@ export function SemestersContainer() {
       >
         <div>
           <p className="text-sm text-muted-foreground">
-            Bạn có chắc chắn muốn xóa học kỳ &quot;{modalState.type === 'delete' ? modalState.semester.name : ''}&quot;? 
+            Bạn có chắc chắn muốn xóa giảng viên &quot;{modalState.type === 'delete' ? modalState.lecturer.name : ''}&quot;? 
             Hành động này sẽ chuyển mục này vào thùng rác.
           </p>
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}>
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-            >
+            <Button variant="outline" onClick={handleCancel}> Hủy </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
               {isDeleting ? 'Đang xóa...' : 'Xóa'}
             </Button>
           </div>
@@ -264,9 +257,7 @@ export function SemestersContainer() {
               : `Bạn có chắc chắn muốn xóa ${modalState.type === 'delete-many' ? modalState.ids.length : 0} mục đã chọn? Hành động này sẽ chuyển các mục vào thùng rác.`}
           </p>
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}>
-              Hủy
-            </Button>
+            <Button variant="outline" onClick={handleCancel}> Hủy </Button>
             <Button
               variant="destructive"
               onClick={modalState.type === 'delete-many' && modalState.permanent ? handleConfirmPermanentDeleteMany : handleConfirmDeleteMany}
@@ -288,13 +279,8 @@ export function SemestersContainer() {
             Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' ? modalState.ids.length : 0} mục đã chọn?
           </p>
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}>
-              Hủy
-            </Button>
-            <Button
-              onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
-            >
+            <Button variant="outline" onClick={handleCancel}> Hủy </Button>
+            <Button onClick={handleConfirmRestoreMany} disabled={isRestoring}>
               {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
@@ -302,4 +288,4 @@ export function SemestersContainer() {
       </Modal>
     </PageHeader>
   )
-}
+} 

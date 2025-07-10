@@ -4,7 +4,6 @@
 import React from 'react'
 import type { DepartmentDetailsProps } from '../types'
 import { Modal } from '@/components/common'
-import { Button } from '@/components/ui/button'
 
 // Sub-component for a single piece of information
 const InfoBlock: React.FC<{
@@ -29,23 +28,10 @@ export function DepartmentDetails({
   department,
   isOpen,
   onClose,
-  onEdit,
-  onDelete,
 }: DepartmentDetailsProps) {
   if (!department) {
     return null
   }
-
-  const handleEditClick = () => {
-    onEdit(department)
-    onClose()
-  }
-
-  const handleDeleteClick = () => {
-    onDelete(department)
-    onClose()
-  }
-
   return (
     <Modal
       isOpen={isOpen}
@@ -93,14 +79,6 @@ export function DepartmentDetails({
               </InfoBlock>
             )}
         </div>
-      </div>
-      <div className="flex gap-2 pt-4 mt-6 border-t">
-        <Button variant="outline" onClick={handleEditClick}>
-          Chỉnh sửa
-        </Button>
-        <Button variant="destructive" onClick={handleDeleteClick}>
-          Xóa
-        </Button>
       </div>
     </Modal>
   )
