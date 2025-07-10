@@ -1,125 +1,140 @@
-import httpsAPI from './client'
-import type { Permission, CreatePermissionData, UpdatePermissionData } from '@/modules/permission/types'
+import client from './client'
+import type { Permission, PermissionFilters, PermissionMutationData } from '@/modules/permissions/types'
 
-/**
- * Fetches all permissions from the API.
- * @returns A promise that resolves to an array of permissions.
- */
-export const getPermissions = async (): Promise<Permission[]> => {
-	try {
-		const response = await httpsAPI.get('/Permissions')
-		return response.data
-	} catch (error: unknown) {
-		console.error('Error fetching permissions:', error)
-		const message = error instanceof Error ? error.message : 'Không thể tải danh sách permission'
-		throw new Error(message)
-	}
+// The backend returns a different structure for paginated responses, so we define a specific one here.
+export interface PaginatedPermissions {
+  data: Permission[]
+  total: number
+  page: number
+  limit: number
 }
 
-/**
- * Fetches a single permission by ID.
- * @param id The ID of the permission to fetch.
- * @returns A promise that resolves to the permission object.
- */
+
+export const getPermissions = async (
+  filters: PermissionFilters = {},
+): Promise<PaginatedPermissions> => {
+  try {
+    const response = await client.get('/permissions', { params: filters })
+    if (Array.isArray(response.data)) {
+      return { data: response.data, total: response.data.length, page: filters.page || 1, limit: filters.limit || response.data.length };
+    }
+    return response.data
+  } catch (error) {
+    console.error('Error fetching permissions:', error);
+    throw error;
+  }
+}
+
+export const getDeletedPermissions = async (
+  filters: PermissionFilters = {},
+): Promise<PaginatedPermissions> => {
+  try {
+    const response = await client.get('/permissions/deleted', { params: filters })
+    if (Array.isArray(response.data)) {
+      return { data: response.data, total: response.data.length, page: filters.page || 1, limit: filters.limit || response.data.length };
+    }
+    return response.data
+  } catch (error) {
+    console.error('Error fetching deleted permissions:', error);
+    throw error;
+  }
+}
+
 export const getPermissionById = async (id: number): Promise<Permission> => {
-	try {
-		const response = await httpsAPI.get(`/Permissions/${id}`)
-		return response.data
-	} catch (error: unknown) {
-		console.error('Error fetching permission:', error)
-		const message = error instanceof Error ? error.message : 'Không thể tải thông tin permission'
-		throw new Error(message)
-	}
+  try {
+    const { data } = await client.get(`/permissions/${id}`)
+    return data
+  } catch (error) {
+    console.error('Error fetching permission by ID:', error);
+    throw error;
+  }
 }
 
-/**
- * Fetches permissions by module.
- * @param module The module to filter by.
- * @returns A promise that resolves to an array of permissions.
- */
-export const getPermissionsByModule = async (module: string): Promise<Permission[]> => {
-	try {
-		const response = await httpsAPI.get(`/Permissions/by-module/${module}`)
-		return response.data
-	} catch (error: unknown) {
-		console.error('Error fetching permissions by module:', error)
-		const message = error instanceof Error ? error.message : 'Không thể tải danh sách permission theo module'
-		throw new Error(message)
-	}
+export const createPermission = async (permissionData: PermissionMutationData): Promise<Permission> => {
+  try {
+    const { data } = await client.post('/permissions', permissionData)
+    return data
+  } catch (error) {
+    console.error('Error creating permission:', error);
+    throw error;
+  }
 }
 
-/**
- * Fetches all available modules.
- * @returns A promise that resolves to an array of module names.
- */
+export const updatePermission = async (
+  id: number,
+  permissionData: Partial<PermissionMutationData>,
+): Promise<Permission> => {
+  try {
+    const updateData = { id, ...permissionData };
+    const { data } = await client.put(`/permissions/${id}`, updateData)
+    return data
+  } catch (error) {
+    console.error('Error updating permission:', error);
+    throw error;
+  }
+}
+
+export const softDeletePermission = async (id: number): Promise<void> => {
+  try {
+    await client.post(`/permissions/soft-delete/${id}`)
+  } catch (error) {
+    console.error('Error soft deleting permission:', error);
+    throw error;
+  }
+}
+
+export const bulkSoftDeletePermissions = async (ids: (number|string)[]): Promise<void> => {
+  try {
+    await client.post('/permissions/bulk-soft-delete', ids)
+  } catch (error) {
+    console.error('Error bulk soft deleting permissions:', error);
+    throw error;
+  }
+}
+
+export const restorePermission = async (id: number): Promise<void> => {
+  try {
+    await client.post(`/permissions/restore/${id}`)
+  } catch (error) {
+    console.error('Error restoring permission:', error);
+    throw error;
+  }
+}
+
+export const bulkRestorePermissions = async (ids: (number|string)[]): Promise<Permission[]> => {
+  try {
+    const { data } = await client.post('/permissions/bulk-restore', ids);
+    return data;
+  } catch (error) {
+    console.error('Error bulk restoring permissions:', error);
+    throw error;
+  }
+}
+
+export const permanentDeletePermission = async (id: number): Promise<void> => {
+  try {
+    await client.delete(`/permissions/permanent-delete/${id}`);
+  } catch (error) {
+    console.error('Error permanently deleting permission:', error);
+    throw error;
+  }
+}
+
+export const bulkPermanentDeletePermissions = async (ids: (number|string)[]): Promise<void> => {
+  try {
+    await client.post('/permissions/bulk-permanent-delete', ids);
+  } catch (error) {
+    console.error('Error bulk permanently deleting permissions:', error);
+    throw error;
+  }
+}
+
 export const getPermissionModules = async (): Promise<string[]> => {
-	try {
-		const response = await httpsAPI.get('/Permissions/modules')
-		return response.data
-	} catch (error: unknown) {
-		console.error('Error fetching modules:', error)
-		const message = error instanceof Error ? error.message : 'Không thể tải danh sách module'
-		throw new Error(message)
-	}
-}
-
-// Alias for backward compatibility
-export const getModules = getPermissionModules
-
-/**
- * Creates a new permission.
- * @param data The data for creating the permission.
- * @returns A promise that resolves to the newly created permission object.
- */
-export const createPermission = async (data: CreatePermissionData): Promise<Permission> => {
-	try {
-		const response = await httpsAPI.post('/Permissions', data)
-		return response.data
-	} catch (error: unknown) {
-		console.error('Error creating permission:', error)
-		const message = error instanceof Error ? error.message : 'Không thể tạo permission mới'
-		throw new Error(message)
-	}
-}
-
-/**
- * Updates an existing permission.
- * @param id The ID of the permission to update.
- * @param data The data to update the permission with.
- * @returns A promise that resolves to the updated permission object.
- */
-export const updatePermission = async (id: number, data: UpdatePermissionData): Promise<Permission> => {
-	try {
-		const response = await httpsAPI.put(`/Permissions/${id}`, data)
-		return response.data
-	} catch (error: unknown) {
-		console.error('Error updating permission:', error)
-		const message = error instanceof Error ? error.message : 'Không thể cập nhật permission'
-		throw new Error(message)
-	}
-}
-
-/**
- * Deletes a permission by ID.
- * @param id The ID of the permission to delete.
- * @returns A promise that resolves when the permission is deleted.
- */
-export const deletePermission = async (id: number): Promise<void> => {
-	try {
-		await httpsAPI.delete(`/Permissions/${id}`)
-	} catch (error: unknown) {
-		console.error('Error deleting permission:', error)
-		const message = error instanceof Error ? error.message : 'Không thể xóa permission'
-		throw new Error(message)
-	}
-}
-
-export const PermissionsApi = {
-	getAll: getPermissions,
-	getById: getPermissionById,
-	getByModule: getPermissionsByModule,
-	getModules: getModules,
-	create: createPermission,
-	update: updatePermission,
-	delete: deletePermission,
+  try {
+    const { data } = await client.get('/permissions/modules');
+    return data;
+  } catch (error) {
+    console.error('Error fetching permission modules:', error);
+    throw error;
+  }
 }
