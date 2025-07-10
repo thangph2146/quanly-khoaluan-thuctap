@@ -36,7 +36,13 @@ export interface DepartmentListProps {
   onEdit: (department: Department) => void
   onDelete: (department: Department) => void
   onView: (department: Department) => void
-  onDeleteMany?: (ids: (string | number)[]) => void
+  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void
+  filterBar?: React.ReactNode
+  page?: number
+  totalPages?: number
+  onPageChange?: (page: number) => void
+  limit?: number
+  onLimitChange?: (limit: number) => void
 }
 
 export interface DepartmentFormProps {
@@ -59,7 +65,13 @@ export interface DepartmentDetailsProps {
 export interface DepartmentDeletedListProps {
   departments: Department[]
   isLoading: boolean
-  onRestore: (ids: number[]) => void
-  onPermanentDelete: (ids: (string | number)[]) => void
+  onRestore: (ids: (string | number)[], onSuccess: () => void) => void
+  onPermanentDelete: (ids: (string | number)[], onSuccess: () => void) => void
   deleteButtonText?: string
+  filterBar?: React.ReactNode
+  page?: number
+  totalPages?: number
+  onPageChange?: (page: number) => void
+  limit?: number
+  onLimitChange?: (limit: number) => void
 }

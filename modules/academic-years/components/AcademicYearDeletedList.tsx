@@ -1,6 +1,9 @@
-import React from "react";
-import { DataTable } from "@/components/common/data-table";
-import type { AcademicYear, AcademicYearDeletedListProps } from "../types";
+/**
+ * Component to display a list of deleted academic years
+ */
+import React from 'react'
+import { DataTable } from '@/components/common/data-table'
+import type { AcademicYear, AcademicYearDeletedListProps } from '../types'
 import { type ColumnDef, type Row } from '@tanstack/react-table'
 
 export function AcademicYearDeletedList({
@@ -9,49 +12,49 @@ export function AcademicYearDeletedList({
   onRestore,
   onPermanentDelete,
   deleteButtonText,
-  ...props
+  filterBar,
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
 }: AcademicYearDeletedListProps) {
-
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  }
-
   const columns: ColumnDef<AcademicYear>[] = [
     {
-      accessorKey: "name",
-      header: "Tên năm học",
+      accessorKey: 'name',
+      header: 'Tên năm học',
       cell: ({ row }: { row: Row<AcademicYear> }) => (
-        <div>{row.original.name}</div>
+        <div className="font-medium">{row.getValue('name')}</div>
       ),
     },
     {
-      accessorKey: "deletedAt",
-      header: "Ngày xóa",
-      cell: ({ row }: { row: Row<AcademicYear> }) => (
-        <div>{formatDate(row.original.deletedAt)}</div>
-      ),
+      accessorKey: 'deletedAt',
+      header: 'Ngày xóa',
+      cell: ({ row }: { row: Row<AcademicYear> }) => {
+        const date = row.getValue('deletedAt')
+        return date
+          ? new Date(date as string).toLocaleDateString('vi-VN')
+          : 'Không rõ'
+      },
     },
-  ];
-
-  const handleRestore = (ids: (string | number)[]) => {
-    onRestore(ids as number[]);
-  };
-
-  const handlePermanentDelete = (ids: (string | number)[]) => {
-    onPermanentDelete(ids as number[]);
-  };
+  ]
 
   return (
-    <DataTable
-      columns={columns}
-      data={academicYears}
-      isLoading={isLoading}
-      onRestoreMany={handleRestore}
-      onDeleteMany={handlePermanentDelete}
-      deleteButtonText={deleteButtonText}
-      getId={(row) => row.id}
-      {...props}
-    />
-  );
+    <div className="space-y-4 p-4">
+      <DataTable
+        columns={columns}
+        data={academicYears}
+        isLoading={isLoading}
+        filterBar={filterBar}
+        onDeleteMany={onPermanentDelete}
+        onRestoreMany={onRestore}
+        deleteButtonText={deleteButtonText}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        limit={limit}
+        onLimitChange={onLimitChange}
+      />
+    </div>
+  )
 } 

@@ -67,8 +67,8 @@ export interface DataTableProps<TData, TValue> {
 	getId?: (row: TData) => string | number;
 	getParentId?: (row: TData) => string | number | null;
 	getChildren?: (row: TData) => TData[];
-	onDeleteMany?: (ids: (string | number)[]) => void;
-	onRestoreMany?: (ids: (string | number)[]) => void;
+	onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void;
+	onRestoreMany?: (ids: (string | number)[], onSuccess: () => void) => void;
   deleteButtonText?: string;
 }
 
@@ -265,15 +265,19 @@ export function DataTable<TData, TValue>({
 	const selectedIds = Array.from(selectedRowIds);
 	const showBulkActions = selectedIds.length > 0 && (onDeleteMany || onRestoreMany);
 	
+	const handleSuccess = () => {
+		setSelectedRowIds(new Set());
+	};
+
 	const handleDeleteManyTrigger = () => {
 		if (onDeleteMany) {
-			onDeleteMany(selectedIds);
+			onDeleteMany(selectedIds, handleSuccess);
 		}
 	};
 
 	const handleRestoreManyTrigger = () => {
 		if (onRestoreMany) {
-			onRestoreMany(selectedIds);
+			onRestoreMany(selectedIds, handleSuccess);
 		}
 	};
 

@@ -19,15 +19,13 @@ export function DepartmentList({
   onDelete,
   onView,
   onDeleteMany,
-  ...props
-}: DepartmentListProps & {
-  page?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-  limit?: number;
-  onLimitChange?: (limit: number) => void;
-  filterBar?: React.ReactNode;
-}) {
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
+  filterBar,
+}: DepartmentListProps) {
 
   const columns = [
     {
@@ -111,7 +109,12 @@ export function DepartmentList({
         getParentId={(dept: Department) => dept.parentDepartmentId || null}
         getChildren={(dept: Department) => dept.childDepartments || []}
         onDeleteMany={onDeleteMany}
-        {...props}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        limit={limit}
+        onLimitChange={onLimitChange}
+        filterBar={filterBar}
       />
   )
 }

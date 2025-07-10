@@ -26,8 +26,8 @@ type ModalState =
   | { type: 'create' }
   | { type: 'edit', year: AcademicYear }
   | { type: 'delete', year: AcademicYear }
-  | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
-  | { type: 'restore-many', ids: number[] }
+  | { type: 'delete-many', ids: (string | number)[], onSuccess: () => void, permanent?: boolean }
+  | { type: 'restore-many', ids: number[], onSuccess: () => void }
   | { type: 'view', year: AcademicYear }
   | { type: 'idle' };
 
@@ -94,52 +94,16 @@ export function AcademicYearsContainer() {
     if (success) handleCancel();
   }
 
-  const handleDeleteMany = (ids: (string | number)[]) => {
-    return new Promise<void>((resolve, reject) => {
-      if (window.confirm(`Bạn có chắc muốn xóa ${ids.length} năm học đã chọn?`)) {
-        softDeleteAcademicYears(ids as number[]).then((success) => {
-          if (success) {
-            resolve();
-          } else {
-            reject(new Error("Xóa nhiều năm học thất bại"));
-          }
-        });
-      } else {
-        reject(new Error("Hủy bỏ hành động"));
-      }
-    });
+  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess });
   };
   
-  const handleRestoreMany = (ids: (string | number)[]) => {
-    return new Promise<void>((resolve, reject) => {
-      if (window.confirm(`Bạn có chắc muốn khôi phục ${ids.length} năm học đã chọn?`)) {
-        restoreAcademicYears(ids as number[]).then((success) => {
-          if (success) {
-            resolve();
-          } else {
-            reject(new Error("Khôi phục nhiều năm học thất bại"));
-          }
-        });
-      } else {
-        reject(new Error("Hủy bỏ hành động"));
-      }
-    });
+  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'restore-many', ids: ids as number[], onSuccess });
   };
   
-  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
-    return new Promise<void>((resolve, reject) => {
-      if (window.confirm(`Bạn có chắc muốn xóa vĩnh viễn ${ids.length} năm học đã chọn? Hành động này không thể hoàn tác.`)) {
-        permanentDeleteAcademicYears(ids as number[]).then((success) => {
-          if (success) {
-            resolve();
-          } else {
-            reject(new Error("Xóa vĩnh viễn nhiều năm học thất bại"));
-          }
-        });
-      } else {
-        reject(new Error("Hủy bỏ hành động"));
-      }
-    });
+  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
   };
   
   const handleConfirmBulkAction = async () => {
@@ -156,7 +120,10 @@ export function AcademicYearsContainer() {
         success = await restoreAcademicYears(modalState.ids);
     }
 
-    if (success) handleCancel();
+    if (success) {
+      modalState.onSuccess();
+      handleCancel();
+    }
   }
   
   const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10))
@@ -284,10 +251,9 @@ export function AcademicYearsContainer() {
       </Modal>
 
        {/* Bulk Actions Confirmation */}
-       {/* This modal can now be removed if we are using window.confirm */}
       <Modal
         isOpen={
-          (modalState.type === 'delete-many' || modalState.type === 'restore-many') && false // Keep it disabled
+          modalState.type === 'delete-many' || modalState.type === 'restore-many'
         }
         onOpenChange={(open) => !open && handleCancel()}
         title="Xác nhận hàng loạt"

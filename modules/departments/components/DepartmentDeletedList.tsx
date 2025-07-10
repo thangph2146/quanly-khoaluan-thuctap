@@ -8,15 +8,13 @@ export function DepartmentDeletedList({
   onRestore,
   onPermanentDelete,
   deleteButtonText,
-  ...props
-}: DepartmentDeletedListProps & {
-  filterBar?: React.ReactNode;
-  page?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-  limit?: number;
-  onLimitChange?: (limit: number) => void;
-}) {
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
+  filterBar,
+}: DepartmentDeletedListProps) {
   const columns = [
     {
       accessorKey: "name",
@@ -34,24 +32,21 @@ export function DepartmentDeletedList({
     },
   ];
 
-  const handleRestore = (ids: (string | number)[]) => {
-    onRestore(ids as number[]);
-  };
-
-  const handlePermanentDelete = (ids: (string | number)[]) => {
-    onPermanentDelete(ids as number[]);
-  };
-
   return (
     <DataTable
       columns={columns}
       data={departments}
       isLoading={isLoading}
-      onRestoreMany={handleRestore}
-      onDeleteMany={handlePermanentDelete}
+      onRestoreMany={onRestore}
+      onDeleteMany={onPermanentDelete}
       deleteButtonText={deleteButtonText}
       getId={(row) => row.id}
-      {...props}
+      page={page}
+      totalPages={totalPages}
+      onPageChange={onPageChange}
+      limit={limit}
+      onLimitChange={onLimitChange}
+      filterBar={filterBar}
     />
   );
 }

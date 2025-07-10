@@ -22,8 +22,8 @@ type ModalState =
   | { type: 'create' }
   | { type: 'edit', department: Department }
   | { type: 'delete', department: Department }
-  | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
-  | { type: 'restore-many', ids: number[] }
+  | { type: 'delete-many', ids: (string | number)[], onSuccess: () => void, permanent?: boolean }
+  | { type: 'restore-many', ids: number[], onSuccess: () => void }
   | { type: 'view', department: Department }
   | { type: 'idle' };
 
@@ -112,12 +112,12 @@ export function DepartmentsContainer() {
   const handleView = (department: Department) => setModalState({ type: 'view', department });
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
-  const handleDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids });
+  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess });
   };
   
-  const handleRestoreMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'restore-many', ids: ids as number[] });
+  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'restore-many', ids: ids as number[], onSuccess });
   };
 
   const handleCreateSubmit = useCallback(async (data: DepartmentMutationData) => {
@@ -156,6 +156,7 @@ export function DepartmentsContainer() {
     const success = await softDeleteDepartments(modalState.ids as number[]);
     if (success) {
       // Let the hook handle refetching
+      modalState.onSuccess();
       handleCancel();
     }
   }
@@ -164,12 +165,13 @@ export function DepartmentsContainer() {
     if (modalState.type !== 'restore-many') return;
     const success = await restoreDepartments(modalState.ids);
     if (success) {
+      modalState.onSuccess();
       handleCancel();
     }
   }
 
-  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
-    setModalState({ type: 'delete-many', ids, permanent: true });
+  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
+    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
   };
   
   const handleConfirmPermanentDeleteMany = async () => {
@@ -177,6 +179,7 @@ export function DepartmentsContainer() {
     const success = await permanentDeleteDepartments(modalState.ids as number[]);
     if (success) {
       // Let the hook handle refetching instead of optimistic update
+      modalState.onSuccess();
       handleCancel();
     }
   }
