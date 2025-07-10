@@ -13,17 +13,21 @@ import {
 } from "@/components/ui/popover"
 
 export interface DatePickerProps {
+  id?: string;
   value?: string | Date | undefined;
   onChange?: (date: string | undefined) => void;
   placeholder?: string;
   label?: string;
+  disabled?: boolean;
 }
 
 export function DatePicker({
+  id = "date-picker",
   value,
   onChange,
   placeholder = "Select date",
   label = "Date",
+  disabled = false,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   // Accept value as string (yyyy-MM-dd) or Date
@@ -62,15 +66,16 @@ export function DatePicker({
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <Label htmlFor="date-picker" className="px-1">
+      <Label htmlFor={id} className="px-1">
         {label}
       </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            id="date-picker"
+            id={id}
             className="w-full justify-between font-normal"
+            disabled={disabled}
           >
             {date ? date.toLocaleDateString() : placeholder}
             <ChevronDownIcon />

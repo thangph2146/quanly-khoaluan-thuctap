@@ -3,42 +3,25 @@
  * Display and manage academic years in table format
  */
 import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Edit, Eye, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
-import { Badge } from '@/components/ui/badge'
-import type { AcademicYear } from '../types'
+import type { AcademicYear, AcademicYearListProps } from '../types'
+import { type ColumnDef, type Row } from '@tanstack/react-table'
 
-interface AcademicYearListProps {
-  academicYears: AcademicYear[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (academicYear: AcademicYear) => void
-  onDelete: (academicYear: AcademicYear) => void
-  onView?: (academicYear: AcademicYear) => void
-  // Added for standardization with ThesisContainer
-  filterBar?: React.ReactNode
-  page: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  limit: number
-  onLimitChange: (limit: number) => void
-}
-
-export function AcademicYearList({ 
-  academicYears, 
-  isLoading, 
-  onCreate, 
-  onEdit, 
-  onDelete, 
-  onView, 
-  // Added for standardization with ThesisContainer
-  filterBar, 
-  page, 
-  totalPages, 
-  onPageChange, 
-  limit, 
-  onLimitChange 
+export function AcademicYearList({
+  academicYears,
+  isLoading,
+  onEdit,
+  onView,
+  onDelete,
+  onDeleteMany,
+  filterBar,
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
 }: AcademicYearListProps) {
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -55,45 +38,47 @@ export function AcademicYearList({
     return now >= start && now <= end
   }
 
-  const columns = [
+  const columns: ColumnDef<AcademicYear>[] = [
     {
       accessorKey: 'name',
       header: 'Tên năm học',
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: Row<AcademicYear> }) => (
         <div className="font-medium">{row.getValue('name')}</div>
       ),
     },
     {
       accessorKey: 'startDate',
       header: 'Ngày bắt đầu',
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: Row<AcademicYear> }) => (
         <div className="text-sm">{formatDate(row.getValue('startDate'))}</div>
       ),
     },
     {
       accessorKey: 'endDate',
       header: 'Ngày kết thúc',
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: Row<AcademicYear> }) => (
         <div className="text-sm">{formatDate(row.getValue('endDate'))}</div>
       ),
     },
     {
       accessorKey: 'status',
       header: 'Trạng thái',
-      cell: ({ row }: { row: any }) => {
+      cell: ({ row }: { row: Row<AcademicYear> }) => {
         const academicYear = row.original
         const isCurrent = isCurrentAcademicYear(academicYear.startDate, academicYear.endDate)
         return (
-          <Badge variant={isCurrent ? 'default' : 'secondary'}>
-            {isCurrent ? 'Hiện tại' : 'Không hoạt động'}
-          </Badge>
+          <div className="flex items-center">
+            <span className="text-sm font-medium">
+              {isCurrent ? 'Hiện tại' : 'Không hoạt động'}
+            </span>
+          </div>
         )
       },
     },
     {
       id: 'actions',
       header: 'Thao tác',
-      cell: ({ row }: { row: { original: AcademicYear } }) => {
+      cell: ({ row }: { row: Row<AcademicYear> }) => {
         const academicYear = row.original
         return (
           <div className="flex space-x-2">
@@ -132,24 +117,13 @@ export function AcademicYearList({
   return (
     <div className="space-y-4 p-4">
       {/* Render filterBar above the table */}
-      {filterBar}
-
-      {/* Original Add button - keep for now, might move to container */}
-      {/* <div className="flex justify-end items-center">
-        <Button onClick={onCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm năm học
-        </Button>
-      </div> */}
-
+      {/* {filterBar} */}
       <DataTable
         columns={columns}
         data={academicYears}
         isLoading={isLoading}
-        // Removed searchableColumn and searchPlaceholder as filtering is handled by filterBar
-        // searchableColumn="name"
-        // searchPlaceholder="Tìm theo tên năm học..."
-        // Added pagination props
+        filterBar={filterBar}
+        onDeleteMany={onDeleteMany}
         page={page}
         totalPages={totalPages}
         onPageChange={onPageChange}

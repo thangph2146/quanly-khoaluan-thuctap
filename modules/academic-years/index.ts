@@ -1,11 +1,7 @@
-// Export all types
-export * from './types'
-
-// Export all components
+/**
+ * Academic Years Module
+ */
 export * from './components'
-
-// Export all hooks
 export * from './hooks'
-
-// Export all services
+export * from './types'
 export * from './services'

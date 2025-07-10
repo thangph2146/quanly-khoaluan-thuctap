@@ -4,243 +4,278 @@
  */
 'use client'
 
-import React, { useState } from 'react'
-import { AcademicYearList } from './AcademicYearList'
-import { AcademicYearForm } from './AcademicYearForm'
-import { AcademicYearDetail } from './AcademicYearDetail'
-import { useAcademicYears, useAcademicYearActions } from '../hooks'
+import React, { useState, useCallback } from 'react'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+  AcademicYearList,
+  AcademicYearForm,
+  AcademicYearDetail,
+  AcademicYearDeletedList,
+} from './'
+import { 
+    useAcademicYears, 
+    useDeletedAcademicYears,
+    useAcademicYearActions 
+} from '../hooks'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/ui/date-picker';
-import { PageHeader } from '@/components/common/page-header';
-import { Terminal } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData } from '../types'
+import { PageHeader, Modal } from '@/components/common';
+import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData, AcademicYearFilters } from '../types'
 import { Button } from '@/components/ui/button'
 
+type ModalState = 
+  | { type: 'create' }
+  | { type: 'edit', year: AcademicYear }
+  | { type: 'delete', year: AcademicYear }
+  | { type: 'delete-many', ids: (string | number)[], permanent?: boolean }
+  | { type: 'restore-many', ids: number[] }
+  | { type: 'view', year: AcademicYear }
+  | { type: 'idle' };
+
 export function AcademicYearsContainer() {
-  const { academicYears, isLoading, refetch } = useAcademicYears()
-  const { createAcademicYear, updateAcademicYear, deleteAcademicYear, isCreating, isUpdating, isDeleting } = useAcademicYearActions(refetch)
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [filters, setFilters] = useState<Omit<AcademicYearFilters, 'startDate' | 'endDate'>>({ page: 1, limit: 10, search: "" });
+  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const [isSheetOpen, setSheetOpen] = useState(false)
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<AcademicYear | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [academicYearToDelete, setAcademicYearToDelete] = useState<AcademicYear | null>(null)
-  const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState<string | undefined>(undefined);
-  const [endDate, setEndDate] = useState<string | undefined>(undefined);
-
-  // Build params for API (giả định hook hỗ trợ, nếu chưa có sẽ cần cập nhật hook)
-  const params = React.useMemo(() => {
-    const p: any = { page, limit };
-    if (searchTerm.trim()) p.search = searchTerm.trim();
-    if (startDate) p.startDate = startDate;
-    if (endDate) p.endDate = endDate;
-    return p;
-  }, [page, limit, searchTerm, startDate, endDate]);
-
-  const handleCreate = () => {
-    setSheetMode('create')
-    setSelectedAcademicYear(null)
-    setSheetOpen(true)
+  const handleRefetch = () => {
+    refetchActive();
+    refetchDeleted();
   }
 
-  const handleEdit = (academicYear: AcademicYear) => {
-    setSheetMode('edit')
-    setSelectedAcademicYear(academicYear)
-    setSheetOpen(true)
-  }
+  const {
+    data: activeYears, 
+    total: activeTotal, 
+    isLoading: isLoadingActive, 
+    refetch: refetchActive,
+  } = useAcademicYears(filters);
 
-  const handleView = (academicYear: AcademicYear) => {
-    setSelectedAcademicYear(academicYear)
-    setIsDetailDialogOpen(true)
-  }
+  const { 
+    deletedAcademicYears, 
+    total: deletedTotal, 
+    isLoading: isLoadingDeleted,
+    refetch: refetchDeleted,
+  } = useDeletedAcademicYears(filters);
 
-  const handleDelete = (academicYear: AcademicYear) => {
-    setAcademicYearToDelete(academicYear)
-    setIsDeleteDialogOpen(true)
-  }
+  const {
+    createAcademicYear,
+    updateAcademicYear,
+    softDeleteAcademicYear,
+    softDeleteAcademicYears,
+    restoreAcademicYears,
+    permanentDeleteAcademicYears,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isRestoring,
+  } = useAcademicYearActions(handleRefetch)
 
-  const handleFormSubmit = async (data: CreateAcademicYearData | UpdateAcademicYearData) => {
-    try {
-      if (sheetMode === 'create') {
-        await createAcademicYear(data as CreateAcademicYearData)
-      } else if (selectedAcademicYear) {
-        await updateAcademicYear(selectedAcademicYear.id, data as UpdateAcademicYearData)
-      }
-      setSheetOpen(false)
-      setSelectedAcademicYear(null)
-    } catch (error) {
-      // Error is handled in the hook
-      console.error('Form submission error:', error)
+  const handleCreate = () => setModalState({ type: 'create' });
+  const handleEdit = (year: AcademicYear) => setModalState({ type: 'edit', year });
+  const handleDelete = (year: AcademicYear) => setModalState({ type: 'delete', year });
+  const handleView = (year: AcademicYear) => setModalState({ type: 'view', year });
+  const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
+
+  const handleFormSubmit = async (
+    data: CreateAcademicYearData | UpdateAcademicYearData,
+  ) => {
+    let success = false;
+    if (modalState.type === 'create') {
+      await createAcademicYear(data as CreateAcademicYearData)
+      success = true;
+    } else if (modalState.type === 'edit') {
+      await updateAcademicYear(modalState.year.id, data as UpdateAcademicYearData)
+      success = true;
     }
+    if (success) handleCancel();
   }
 
   const handleConfirmDelete = async () => {
-    if (!academicYearToDelete) return
-
-    const success = await deleteAcademicYear(academicYearToDelete.id)
-    if (success) {
-      setIsDeleteDialogOpen(false)
-      setAcademicYearToDelete(null)
-    }
+    if (modalState.type !== 'delete') return
+    const success = await softDeleteAcademicYear(modalState.year.id)
+    if (success) handleCancel();
   }
 
-  const isFormLoading = isCreating || isUpdating
-  const totalPages = Math.ceil((academicYears?.length || 0) / (limit || 10));
+  const handleDeleteMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'delete-many', ids });
+  };
+  
+  const handleRestoreMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'restore-many', ids: ids as number[] });
+  };
+  
+  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'delete-many', ids, permanent: true });
+  };
+  
+  const handleConfirmBulkAction = async () => {
+    if (modalState.type !== 'delete-many' && modalState.type !== 'restore-many') return;
+    
+    let success = false;
+    if (modalState.type === 'delete-many') {
+        if(modalState.permanent) {
+            success = await permanentDeleteAcademicYears(modalState.ids as number[]);
+        } else {
+            success = await softDeleteAcademicYears(modalState.ids as number[]);
+        }
+    } else if (modalState.type === 'restore-many') {
+        success = await restoreAcademicYears(modalState.ids);
+    }
+
+    if (success) handleCancel();
+  }
+  
+  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10))
 
   const filterBar = (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-      <div className="flex flex-col space-y-2 justify-between">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-col space-y-2 sm:col-span-2">
         <Label htmlFor="search">Tìm kiếm</Label>
-        <Input
-          placeholder="Tìm kiếm năm học..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1);
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            id="search"
+            placeholder="Tìm kiếm năm học..."
+            value={filters.search || ''}
+            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+            className="flex-grow"
+          />
+        </div>
       </div>
-      <div className="flex flex-col space-y-2">
-        <DatePicker
-          label="Ngày bắt đầu"
-          value={startDate}
-          onChange={(date) => {
-            setStartDate(date);
-            setPage(1);
-          }}
-          placeholder="Chọn ngày bắt đầu"
-        />
-      </div>
-      <div className="flex flex-col space-y-2">
-        <DatePicker
-          label="Ngày kết thúc"
-          value={endDate}
-          onChange={(date) => {
-            setEndDate(date);
-            setPage(1);
-          }}
-          placeholder="Chọn ngày kết thúc"
-        />
-      </div>
+      
+       {filters.search && (
+        <div className="flex items-end">
+           <Button
+            onClick={() => setFilters({ page: 1, limit: 10, search: ''})}
+          >
+            Xóa filter
+          </Button>
+        </div>
+      )}
     </div>
-  );
+  )
+
+  const selectedYear = modalState.type === 'edit' || modalState.type === 'view' || modalState.type === 'delete' ? modalState.year : null;
 
   return (
     <PageHeader
       title="Quản lý Năm học"
       description="Quản lý các năm học trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Năm học", href: "/academic-years" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Năm học', href: '/academic-years' },
       ]}
       actions={
-        <Button onClick={handleCreate} disabled={isCreating}>
-          + Thêm năm học
-        </Button>
+        <div className="flex gap-2">
+            <Button onClick={handleCreate} disabled={isCreating}>
+                + Thêm năm học
+            </Button>
+            <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
+                {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
+            </Button>
+        </div>
       }
     >
-      {/* filterBar is now injected into AcademicYearList, not rendered here */}
-      {false && (
-        <Alert variant="destructive" className="mb-4">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Lỗi</AlertTitle>
-          <AlertDescription>{/* error */}</AlertDescription>
-        </Alert>
-      )}
-      <AcademicYearList
-        academicYears={academicYears}
-        isLoading={isLoading}
-        onCreate={handleCreate}
-        onEdit={handleEdit}
-        onView={handleView}
-        onDelete={handleDelete}
-        filterBar={filterBar}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        limit={limit}
-        onLimitChange={setLimit}
+        {showDeleted ? (
+            <AcademicYearDeletedList 
+                academicYears={deletedAcademicYears}
+                isLoading={isLoadingDeleted}
+                onRestore={handleRestoreMany}
+                onPermanentDelete={handlePermanentDeleteMany}
+                deleteButtonText="Xóa vĩnh viễn"
+                filterBar={filterBar}
+                page={filters.page}
+                totalPages={totalPages}
+                onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+                limit={filters.limit}
+                onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+            />
+        ) : (
+            <AcademicYearList
+                academicYears={activeYears}
+                isLoading={isLoadingActive}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDelete}
+                onDeleteMany={handleDeleteMany}
+                filterBar={filterBar}
+                page={filters.page}
+                totalPages={totalPages}
+                onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+                limit={filters.limit}
+                onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+            />
+        )}
+      
+      {/* Create/Edit Modal */}
+      <AcademicYearForm
+        isOpen={modalState.type === 'create' || modalState.type === 'edit'}
+        title={modalState.type === 'create' ? 'Tạo năm học mới' : 'Chỉnh sửa năm học'}
+        academicYear={modalState.type === 'edit' ? modalState.year : undefined}
+        onSubmit={handleFormSubmit}
+        onCancel={handleCancel}
+        isLoading={isCreating || isUpdating}
+        mode={modalState.type === 'create' ? 'create' : 'edit'}
       />
-      {/* Create/Edit Sheet */}
-      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create' ? 'Tạo năm học mới' : 'Chỉnh sửa năm học'}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
-                ? 'Điền thông tin để tạo năm học mới cho hệ thống'
-                : 'Cập nhật thông tin năm học'
-              }
-            </SheetDescription>
-          </SheetHeader>
-          <AcademicYearForm
-            academicYear={selectedAcademicYear}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setSheetOpen(false)}
-            isLoading={isFormLoading}
-            mode={sheetMode}
-          />
-        </SheetContent>
-      </Sheet>
 
       {/* Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Chi tiết năm học: {selectedAcademicYear?.name}</DialogTitle>
-          </DialogHeader>
-          {selectedAcademicYear && (
-            <div className="overflow-y-auto">
-              <AcademicYearDetail academicYear={selectedAcademicYear} />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AcademicYearDetail
+        isOpen={modalState.type === 'view'}
+        onClose={handleCancel}
+        academicYear={selectedYear}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa năm học "{academicYearToDelete?.name}"?
-              Hành động này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false)
-              setAcademicYearToDelete(null)
-            }}>
+
+      {/* Single Delete Confirmation */}
+      <Modal 
+        isOpen={modalState.type === 'delete'} 
+        onOpenChange={(open) => !open && handleCancel()}
+        title="Xác nhận xóa"
+      >
+        <div>
+            <p className="text-sm text-muted-foreground">
+              Bạn có chắc chắn muốn xóa năm học &quot;
+              {selectedYear?.name}&quot;? Hành động này sẽ chuyển mục này vào thùng rác.
+            </p>
+            <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={handleCancel}>Hủy</Button>
+                <Button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                variant="destructive"
+                >
+                {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+                </Button>
+            </div>
+        </div>
+      </Modal>
+
+       {/* Bulk Actions Confirmation */}
+      <Modal
+        isOpen={modalState.type === 'delete-many' || modalState.type === 'restore-many'}
+        onOpenChange={(open) => !open && handleCancel()}
+        title="Xác nhận hành động"
+      >
+        <div>
+            <p>
+                {modalState.type === 'restore-many' && `Bạn có chắc chắn muốn khôi phục ${modalState.ids.length} mục đã chọn?`}
+                {modalState.type === 'delete-many' && modalState.permanent && `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} mục đã chọn? Hành động này không thể hoàn tác.`}
+                {modalState.type === 'delete-many' && !modalState.permanent && `Bạn có chắc chắn muốn xóa ${modalState.ids.length} mục đã chọn?`}
+            </p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={handleCancel}>
               Hủy
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+            </Button>
+            <Button
+              variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
+              onClick={handleConfirmBulkAction}
+              disabled={isDeleting || isRestoring}
             >
-              {isDeleting ? 'Đang xóa...' : 'Xóa'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {isDeleting ? 'Đang xóa...' : isRestoring ? 'Đang khôi phục...' : 'Xác nhận'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </PageHeader>
   )
 }

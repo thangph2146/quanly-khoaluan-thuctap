@@ -2,43 +2,34 @@
  * Academic Years Hook
  * Custom hook for academic years management
  */
-import { useState, useEffect } from 'react'
-import type { AcademicYear } from '../types'
+import { useState, useEffect, useCallback } from 'react'
+import { useDebounce } from '@/hooks/use-debounce'
 import { AcademicYearService } from '../services'
+import type { AcademicYearFilters, PaginatedAcademicYears } from '../types'
 
-/**
- * Hook for managing academic years data
- */
-export function useAcademicYears() {
-  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+export function useAcademicYears(filters: AcademicYearFilters) {
+  const [data, setData] = useState<PaginatedAcademicYears>({ data: [], total: 0, page: 1, limit: 10 })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const debouncedSearch = useDebounce(filters.search || "", 500);
 
-  const fetchAcademicYears = async () => {
+  const fetchYears = useCallback(async (currentFilters: AcademicYearFilters) => {
+    setIsLoading(true)
+    setError(null)
     try {
-      setIsLoading(true)
-      setError(null)
-      const data = await AcademicYearService.getAll()
-      setAcademicYears(data)
+      const res = await AcademicYearService.getAll(currentFilters)
+      setData(res)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
     } finally {
       setIsLoading(false)
     }
-  }
+  }, []);
 
   useEffect(() => {
-    fetchAcademicYears()
-  }, [])
+    fetchYears({ ...filters, search: debouncedSearch })
+  }, [filters.page, filters.limit, debouncedSearch, filters.startDate, filters.endDate, fetchYears])
 
-  const refetch = () => {
-    fetchAcademicYears()
-  }
-
-  return {
-    academicYears,
-    isLoading,
-    error,
-    refetch,
-  }
+  return { ...data, isLoading, error, refetch: () => fetchYears({ ...filters, search: debouncedSearch }) }
 }
