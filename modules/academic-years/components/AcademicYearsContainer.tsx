@@ -19,7 +19,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
-import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData, AcademicYearFilters } from '../types'
+import type { 
+    AcademicYear, 
+    AcademicYearFilters, 
+    ApiCreateAcademicYearData, 
+    ApiUpdateAcademicYearData,
+    AcademicYearMutationData
+} from '../types'
 import { Button } from '@/components/ui/button'
 
 type ModalState = 
@@ -75,14 +81,14 @@ export function AcademicYearsContainer() {
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
   const handleFormSubmit = async (
-    data: CreateAcademicYearData | UpdateAcademicYearData,
+    data: AcademicYearMutationData,
   ) => {
     let success = false;
     if (modalState.type === 'create') {
-      await createAcademicYear(data as CreateAcademicYearData)
+        await createAcademicYear(data as ApiCreateAcademicYearData)
       success = true;
     } else if (modalState.type === 'edit') {
-      await updateAcademicYear(modalState.year.id, data as UpdateAcademicYearData)
+      await updateAcademicYear(modalState.year.id, data as ApiUpdateAcademicYearData)
       success = true;
     }
     if (success) handleCancel();
@@ -223,6 +229,8 @@ export function AcademicYearsContainer() {
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
         academicYear={selectedYear}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
 

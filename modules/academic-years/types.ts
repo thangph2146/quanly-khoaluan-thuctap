@@ -1,11 +1,13 @@
 import type { 
   AcademicYear as ApiAcademicYear, 
-  CreateAcademicYearData as ApiCreateAcademicYearData,
+  CreateAcademicYearData,
+  UpdateAcademicYearData,
   AcademicYearFilters as ApiAcademicYearFilters 
 } from '@/lib/api/academic-years.api'
 
 export type AcademicYear = ApiAcademicYear;
-export type AcademicYearMutationData = ApiCreateAcademicYearData;
+export type AcademicYearMutationData = CreateAcademicYearData | UpdateAcademicYearData;
+export type { CreateAcademicYearData as ApiCreateAcademicYearData, UpdateAcademicYearData as ApiUpdateAcademicYearData };
 export type AcademicYearFilters = Omit<ApiAcademicYearFilters, 'startDate' | 'endDate'>;
 export type PaginatedAcademicYears = {
   data: AcademicYear[];
