@@ -1,26 +1,19 @@
-/**
- * Lecturer Form Component
- * Form for creating and editing lecturers
- */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/common";
 import type { LecturerFormProps } from "../types";
 import { Switch } from "@/components/ui/switch";
+import { Combobox } from "@/components/common/combobox";
 import { ACADEMIC_RANKS, DEGREES } from "../constants";
-import { useDepartments } from "../hooks";
+import { getDepartmentOptions } from "@/lib/api/selections.api";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const lecturerFormSchema = z.object({
   name: z.string().min(1, { message: "Tên không được để trống." }),
@@ -36,6 +29,9 @@ const lecturerFormSchema = z.object({
 
 type LecturerFormData = z.infer<typeof lecturerFormSchema>;
 
+const rankOptions = ACADEMIC_RANKS.map(rank => ({ value: rank, label: rank }));
+const degreeOptions = DEGREES.map(degree => ({ value: degree, label: degree }));
+
 export function LecturerForm({
   lecturer,
   onSubmit,
@@ -45,8 +41,15 @@ export function LecturerForm({
   isOpen,
   title,
 }: LecturerFormProps) {
-  const { departments, isLoading: isLoadingDepartments } = useDepartments();
+  const [departmentSearch, setDepartmentSearch] = useState('');
+  const debouncedDepartmentSearch = useDebounce(departmentSearch, 300);
 
+  const { data: departments, isLoading: isLoadingDepartments } = useQuery({
+    queryKey: ['departmentOptions', debouncedDepartmentSearch],
+    queryFn: () => getDepartmentOptions(debouncedDepartmentSearch),
+    initialData: [],
+  });
+  
   const form = useForm<LecturerFormData>({
     resolver: zodResolver(lecturerFormSchema),
     defaultValues: {
@@ -93,9 +96,7 @@ export function LecturerForm({
   function handleFormSubmit(data: LecturerFormData) {
     const submissionData = {
         ...data,
-        departmentId: data.departmentId && data.departmentId !== 'none' ? Number(data.departmentId) : null,
-        academicRank: data.academicRank && data.academicRank !== 'none' ? data.academicRank : null,
-        degree: data.degree && data.degree !== 'none' ? data.degree : null,
+        departmentId: data.departmentId ? Number(data.departmentId) : null,
     };
     onSubmit(submissionData);
   }
@@ -139,23 +140,16 @@ export function LecturerForm({
                 name="departmentId"
                 control={form.control}
                 render={({ field }) => (
-                    <Select
-                        value={field.value !== null && field.value !== undefined ? String(field.value) : "none"}
-                        onValueChange={field.onChange}
-                        disabled={isLoadingDepartments || isLoading}
-                    >
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder={isLoadingDepartments ? 'Đang tải...' : 'Chọn khoa/đơn vị'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">Không chọn</SelectItem>
-                            {departments.map(dept => (
-                                <SelectItem key={dept.id} value={dept.id.toString()}>
-                                    {dept.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Combobox
+                      options={(departments || []).map(d => ({ value: d.id, label: d.name }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onInputChange={setDepartmentSearch}
+                      isLoading={isLoadingDepartments}
+                      disabled={isLoading}
+                      placeholder="Chọn khoa/đơn vị"
+                      allowClear
+                    />
                 )}
             />
         </div>
@@ -168,13 +162,14 @@ export function LecturerForm({
                     name="academicRank"
                     control={form.control}
                     render={({ field }) => (
-                        <Select value={field.value || "none"} onValueChange={field.onChange} disabled={isLoading}>
-                            <SelectTrigger className="w-full"><SelectValue placeholder="Chọn học hàm" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Không chọn</SelectItem>
-                                {ACADEMIC_RANKS.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Combobox
+                          options={rankOptions}
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isLoading}
+                          placeholder="Chọn học hàm"
+                          allowClear
+                        />
                     )}
                 />
             </div>
@@ -185,13 +180,14 @@ export function LecturerForm({
                     name="degree"
                     control={form.control}
                     render={({ field }) => (
-                         <Select value={field.value || "none"} onValueChange={field.onChange} disabled={isLoading}>
-                            <SelectTrigger className="w-full"><SelectValue placeholder="Chọn học vị" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Không chọn</SelectItem>
-                                {DEGREES.map(degree => <SelectItem key={degree} value={degree}>{degree}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                         <Combobox
+                          options={degreeOptions}
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isLoading}
+                          placeholder="Chọn học vị"
+                          allowClear
+                        />
                     )}
                 />
             </div>
@@ -240,4 +236,4 @@ export function LecturerForm({
       </form>
     </Modal>
   );
-}
+} 

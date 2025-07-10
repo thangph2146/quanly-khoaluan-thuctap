@@ -1,16 +1,9 @@
 /**
  * Department Form Component
  */
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,7 +14,10 @@ import type {
   DepartmentMutationData,
   DepartmentFormProps,
 } from "../types";
-import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { getDepartmentOptions } from "@/lib/api/selections.api";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Combobox } from "@/components/common/combobox";
 
 const createDepartmentFormSchema = (
   allDepartments: Department[],
@@ -74,6 +70,15 @@ export const DepartmentForm = React.memo(function DepartmentForm({
       code: "",
       parentDepartmentId: null,
     },
+  });
+
+  const [departmentSearch, setDepartmentSearch] = useState('');
+  const debouncedDepartmentSearch = useDebounce(departmentSearch, 300);
+
+  const { data: departmentOptions, isLoading: isLoadingDepartments } = useQuery({
+    queryKey: ['departmentOptions', debouncedDepartmentSearch],
+    queryFn: () => getDepartmentOptions(debouncedDepartmentSearch),
+    initialData: [],
   });
 
   useEffect(() => {
@@ -156,33 +161,17 @@ export const DepartmentForm = React.memo(function DepartmentForm({
             name="parentDepartmentId"
             control={form.control}
             render={({ field }) => (
-              <Select
-                value={field.value !== null ? String(field.value) : "none"}
-                onValueChange={field.onChange}
+              <Combobox
+                options={(departmentOptions || []).map(d => ({ value: d.id, label: d.name }))}
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value === 'none' ? null : value);
+                }}
+                onInputChange={setDepartmentSearch}
+                isLoading={isLoadingDepartments}
                 disabled={isLoading}
-              >
-                <SelectTrigger
-                  id="parentDepartmentId"
-                  className={cn(
-                    form.formState.errors.parentDepartmentId
-                      ? "border-destructive"
-                      : "",
-                    "w-full"
-                  )}
-                >
-                  <SelectValue placeholder="Chọn đơn vị cha (nếu có)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Không có</SelectItem>
-                  {allDepartments
-                    .filter((d) => d.id !== department?.id)
-                    .map((d) => (
-                      <SelectItem key={d.id} value={d.id.toString()}>
-                        {d.name} ({d.code})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                placeholder="Tìm kiếm đơn vị cha..."
+              />
             )}
           />
           {form.formState.errors.parentDepartmentId && (

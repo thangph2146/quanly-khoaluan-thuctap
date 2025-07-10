@@ -2,85 +2,93 @@
  * User Form Component
  * Form for creating and editing users
  */
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { User, CreateUserData, UpdateUserData, Role } from '../types'
-import { Modal } from '@/components/common'
+import React, { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Modal } from '@/components/common';
+import { MultipleCombobox } from '@/components/common/multiple-combobox';
+import { getRoleOptions } from '@/lib/api/selections.api';
+import { useDebounce } from '@/hooks/use-debounce';
+import type { User, CreateUserData, UpdateUserData } from '../types';
 
 interface UserFormProps {
-  isOpen: boolean
-  user?: User | null
-  roles: Role[]
-  onSubmit: (data: CreateUserData | UpdateUserData) => void
-  onCancel: () => void
-  isLoading: boolean
-  mode: 'create' | 'edit'
+  isOpen: boolean;
+  user?: User | null;
+  onSubmit: (data: CreateUserData | UpdateUserData) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+  mode: 'create' | 'edit';
 }
 
-export function UserForm({ isOpen, user, roles, onSubmit, onCancel, isLoading, mode }: UserFormProps) {
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    avatarUrl: user?.avatarUrl || '',
-    isActive: user?.isActive ?? true,
-    keycloakUserId: user?.keycloakUserId || crypto.randomUUID(),
-  })
-  
-  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>(
-    user?.userRoles ? 
-      roles.filter(role => user.userRoles?.includes(role.name)).map(role => role.id) : 
-      []
-  )
+const userFormSchema = z.object({
+  name: z.string().min(1, 'Họ và tên là bắt buộc'),
+  email: z.string().email('Email không hợp lệ'),
+  avatarUrl: z.string().url('URL ảnh đại diện không hợp lệ').optional().or(z.literal('')),
+  isActive: z.boolean(),
+  keycloakUserId: z.string(),
+  roleIds: z.array(z.number()).min(1, 'Vui lòng chọn ít nhất một vai trò'),
+});
 
-  // Sync form state when user prop changes (for editing)
-  React.useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl || '',
-        isActive: user.isActive,
-        keycloakUserId: user.keycloakUserId,
-      });
-      setSelectedRoleIds(roles.filter(role => user.userRoles?.includes(role.name)).map(role => role.id));
-    } else {
-      // Reset for create mode
-       setFormData({
-        name: '',
-        email: '',
-        avatarUrl: '',
-        isActive: true,
-        keycloakUserId: crypto.randomUUID(),
-      });
-      setSelectedRoleIds([]);
+type UserFormData = z.infer<typeof userFormSchema>;
+
+export function UserForm({ isOpen, user, onSubmit, onCancel, isLoading, mode }: UserFormProps) {
+  const [roleSearch, setRoleSearch] = useState('');
+  const debouncedRoleSearch = useDebounce(roleSearch, 300);
+
+  const { data: roleOptions, isLoading: isLoadingRoles } = useQuery({
+    queryKey: ['roleOptions', debouncedRoleSearch],
+    queryFn: () => getRoleOptions(debouncedRoleSearch),
+    initialData: [],
+  });
+
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      avatarUrl: '',
+      isActive: true,
+      keycloakUserId: '',
+      roleIds: [],
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (user) {
+        form.reset({
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl || '',
+          isActive: user.isActive,
+          keycloakUserId: user.keycloakUserId,
+          roleIds: user.roles?.map(r => r.id) || [],
+        });
+      } else {
+        form.reset({
+          name: '',
+          email: '',
+          avatarUrl: '',
+          isActive: true,
+          keycloakUserId: crypto.randomUUID(),
+          roleIds: [],
+        });
+      }
     }
-  }, [user, roles, isOpen]);
+  }, [user, isOpen, form]);
 
+  const handleSubmit = (data: UserFormData) => {
+    onSubmit(data);
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, isActive: checked }))
-  }
-
-  const handleRoleChange = (roleId: string) => {
-    const id = parseInt(roleId, 10)
-    setSelectedRoleIds([id])
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit({ ...formData, roleIds: selectedRoleIds })
-  }
-
-  const title = mode === 'create' ? 'Tạo người dùng mới' : 'Cập nhật người dùng'
+  const title = mode === 'create' ? 'Tạo người dùng mới' : 'Cập nhật người dùng';
 
   return (
     <Modal
@@ -89,86 +97,89 @@ export function UserForm({ isOpen, user, roles, onSubmit, onCancel, isLoading, m
       title={title}
       className="sm:max-w-lg"
     >
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="space-y-2">
-            <Label htmlFor="name">Họ và tên</Label>
-            <Input
+          <Label htmlFor="name">Họ và tên</Label>
+          <Input
             id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
+            {...form.register('name')}
             placeholder="Nhập họ và tên"
-            required
-            />
+            disabled={isLoading}
+          />
+          {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
+          <Label htmlFor="email">Email</Label>
+          <Input
             id="email"
-            name="email"
             type="email"
-            value={formData.email}
-            onChange={handleChange}
+            {...form.register('email')}
             placeholder="Nhập email"
-            required
-            />
+            disabled={isLoading}
+          />
+          {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="avatarUrl">URL Ảnh đại diện</Label>
-            <Input
+          <Label htmlFor="avatarUrl">URL Ảnh đại diện</Label>
+          <Input
             id="avatarUrl"
-            name="avatarUrl"
-            value={formData.avatarUrl}
-            onChange={handleChange}
+            {...form.register('avatarUrl')}
             placeholder="https://example.com/avatar.jpg"
-            />
+            disabled={isLoading}
+          />
+          {form.formState.errors.avatarUrl && <p className="text-sm text-destructive">{form.formState.errors.avatarUrl.message}</p>}
         </div>
 
-        <input type="hidden" name="keycloakUserId" value={formData.keycloakUserId} />
+        <input type="hidden" {...form.register('keycloakUserId')} />
 
         <div className="space-y-2">
-            <Label htmlFor="role">Vai trò</Label>
-            <Select
-            value={selectedRoleIds[0]?.toString() || ''}
-            onValueChange={handleRoleChange}
-            >
-            <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn một vai trò" />
-            </SelectTrigger>
-            <SelectContent>
-                {roles.map(role => (
-                <SelectItem key={role.id} value={role.id.toString()}>
-                    {role.name}
-                </SelectItem>
-                ))}
-            </SelectContent>
-            </Select>
+          <Label htmlFor="roleIds">Vai trò</Label>
+          <Controller
+            name="roleIds"
+            control={form.control}
+            render={({ field }) => (
+              <MultipleCombobox
+                options={(roleOptions || []).map(r => ({ value: r.id, label: r.name }))}
+                value={field.value}
+                onChange={field.onChange}
+                onInputChange={setRoleSearch}
+                isLoading={isLoadingRoles}
+                disabled={isLoading}
+                placeholder="Chọn vai trò"
+              />
+            )}
+          />
+          {form.formState.errors.roleIds && <p className="text-sm text-destructive">{form.formState.errors.roleIds.message}</p>}
         </div>
 
         <div className="flex items-center space-x-2">
-            <Switch
-            id="isActive"
-            checked={formData.isActive}
-            onCheckedChange={handleSwitchChange}
-            />
-            <Label htmlFor="isActive">Kích hoạt tài khoản</Label>
+          <Controller
+            name="isActive"
+            control={form.control}
+            render={({ field }) => (
+              <Switch
+                id="isActive"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={isLoading}
+              />
+            )}
+          />
+          <Label htmlFor="isActive">Kích hoạt tài khoản</Label>
         </div>
-        
+
         {/* Form Actions */}
-        <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Hủy
-            </Button>
-            <Button 
-            type="submit" 
-            disabled={isLoading}
-            >
+          </Button>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Đang lưu...' : mode === 'create' ? 'Tạo người dùng' : 'Cập nhật'}
-            </Button>
+          </Button>
         </div>
-        </form>
+      </form>
     </Modal>
-  )
+  );
 }

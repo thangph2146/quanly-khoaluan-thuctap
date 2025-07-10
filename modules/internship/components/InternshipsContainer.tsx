@@ -9,10 +9,6 @@ import { InternshipList } from './InternshipList'
 import { InternshipForm } from './InternshipForm'
 import { InternshipDetails } from './InternshipDetails'
 import { useInternships, useInternshipActions } from '../hooks'
-import { useUsers } from '@/modules/users/hooks'
-import { usePartners } from '@/modules/partners/hooks'
-import { useAcademicYears } from '@/modules/academic-years/hooks'
-import { useSemesters } from '@/modules/semesters/hooks'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -27,10 +23,6 @@ export function InternshipsContainer() {
 
   const { internships, isLoading, refetch } = useInternships()
   const { createInternship, updateInternship, deleteInternship, isCreating, isUpdating, isDeleting } = useInternshipActions(refetch)
-  const { users } = useUsers()
-  const { partners } = usePartners()
-  const { academicYears } = useAcademicYears()
-  const { semesters } = useSemesters()
 
   const handleCreate = () => {
     setSheetMode('create')
@@ -81,28 +73,6 @@ export function InternshipsContainer() {
 
   const isFormLoading = isCreating || isUpdating
 
-  // Transform data for form
-  const formStudents = users?.map(user => ({
-    id: user.id?.toString() || '',
-    name: user.name || '',
-    studentId: user.email || '',
-  })) || []
-
-  const formPartners = partners?.map(partner => ({
-    id: partner.id?.toString() || '',
-    name: partner.name || '',
-  })) || []
-
-  const formAcademicYears = academicYears?.map(year => ({
-    id: year.id?.toString() || '',
-    name: year.name || '',
-  })) || []
-
-  const formSemesters = semesters?.map(semester => ({
-    id: semester.id?.toString() || '',
-    name: semester.name || '',
-  })) || []
-
   return (
     <>
       <InternshipList
@@ -129,10 +99,6 @@ export function InternshipsContainer() {
           </SheetHeader>
           <InternshipForm
             internship={selectedInternship}
-            students={formStudents}
-            partners={formPartners}
-            academicYears={formAcademicYears}
-            semesters={formSemesters}
             onSubmit={handleFormSubmit}
             onCancel={() => setSheetOpen(false)}
             isLoading={isFormLoading}

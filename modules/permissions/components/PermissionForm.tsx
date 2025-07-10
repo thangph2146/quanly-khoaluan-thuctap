@@ -25,6 +25,8 @@ const permissionFormSchema = z.object({
   description: z.string().optional(),
 });
 
+type PermissionFormData = z.infer<typeof permissionFormSchema>;
+
 export const PermissionForm = React.memo(function PermissionForm({
   permission,
   onSubmit,
@@ -34,7 +36,7 @@ export const PermissionForm = React.memo(function PermissionForm({
   isOpen,
   title,
 }: PermissionFormProps) {
-  const form = useForm<z.infer<typeof permissionFormSchema>>({
+  const form = useForm<PermissionFormData>({
     resolver: zodResolver(permissionFormSchema),
     defaultValues: {
       name: "",
@@ -59,7 +61,7 @@ export const PermissionForm = React.memo(function PermissionForm({
     }
   }, [permission, mode, form.reset]);
 
-  function handleFormSubmit(data: z.infer<typeof permissionFormSchema>) {
+  function handleFormSubmit(data: PermissionFormData) {
     onSubmit(data as PermissionMutationData);
   }
 
@@ -74,16 +76,13 @@ export const PermissionForm = React.memo(function PermissionForm({
         onSubmit={form.handleSubmit(handleFormSubmit)}
         className="space-y-4 p-2"
       >
-        {/* Name Field */}
         <div className="space-y-2">
           <Label htmlFor="name">Tên quyền *</Label>
           <Input
             id="name"
             {...form.register("name")}
             placeholder="Ví dụ: Read, Write,..."
-            required
             disabled={isLoading}
-            className={form.formState.errors.name ? "border-destructive" : ""}
           />
           {form.formState.errors.name && (
             <p className="text-sm text-destructive">
@@ -92,16 +91,13 @@ export const PermissionForm = React.memo(function PermissionForm({
           )}
         </div>
 
-        {/* Module Field */}
         <div className="space-y-2">
           <Label htmlFor="module">Module *</Label>
           <Input
             id="module"
             {...form.register("module")}
             placeholder="Ví dụ: Users, Roles,..."
-            required
             disabled={isLoading}
-            className={form.formState.errors.module ? "border-destructive" : ""}
           />
           {form.formState.errors.module && (
             <p className="text-sm text-destructive">
@@ -110,7 +106,6 @@ export const PermissionForm = React.memo(function PermissionForm({
           )}
         </div>
         
-        {/* Description Field */}
         <div className="space-y-2">
             <Label htmlFor="description">Mô tả</Label>
             <Textarea
@@ -118,7 +113,6 @@ export const PermissionForm = React.memo(function PermissionForm({
                 {...form.register("description")}
                 placeholder="Nhập mô tả cho quyền..."
                 disabled={isLoading}
-                className={form.formState.errors.description ? "border-destructive" : ""}
             />
             {form.formState.errors.description && (
                 <p className="text-sm text-destructive">
@@ -127,7 +121,6 @@ export const PermissionForm = React.memo(function PermissionForm({
             )}
         </div>
 
-        {/* Buttons */}
         <div className="flex justify-end space-x-2 pt-4 border-t">
           <Button
             type="button"

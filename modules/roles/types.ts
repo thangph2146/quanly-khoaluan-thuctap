@@ -1,5 +1,5 @@
 import { RoleMenu } from '@/modules/menu/types'
-import { RolePermission } from '@/modules/permission/types'
+import { Permission } from '@/modules/permissions/types'
 
 export type RoleName = 'ADMIN' | 'LECTURER' | 'STUDENT' | 'BUSINESS_REP'
 
@@ -9,10 +9,10 @@ export interface Role {
 	name: RoleName
 	description?: string
     deletedAt?: string
+    permissions?: Permission[]
 
 	// Navigation properties
 	userRoles?: UserRole[]
-	rolePermissions?: RolePermission[]
 	roleMenus?: RoleMenu[]
 }
 

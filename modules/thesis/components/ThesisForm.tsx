@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
@@ -7,12 +7,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Combobox } from '@/components/common/combobox';
 import { Modal } from '@/components/common';
 import type { ThesisFormProps, ThesisMutationData } from '../types';
 import { getAcademicYearOptions, getLecturerOptions, getSemesterOptions, getStudentOptions } from '@/lib/api/selections.api';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Label } from '@/components/ui/label';
 
 const thesisStatusOptions = [
   { value: 'Draft', label: 'Bản nháp' },
@@ -143,175 +143,185 @@ export function ThesisForm({
       title={title}
       className="sm:max-w-2xl"
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 p-2">
-          <FormField
-            control={form.control}
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 p-2">
+        <div className="space-y-2">
+          <Label htmlFor="title">Tên khóa luận *</Label>
+          <Controller
             name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tên khóa luận *</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
             control={form.control}
-            name="description"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mô tả</FormLabel>
-                <FormControl>
-                  <Textarea {...field} value={field.value ?? ''} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <Input {...field} id="title" disabled={isLoading} />
             )}
           />
+          {form.formState.errors.title && (
+            <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
+        <div className="space-y-2">
+          <Label htmlFor="description">Mô tả</Label>
+          <Controller
+            name="description"
+            control={form.control}
+            render={({ field }) => (
+              <Textarea {...field} id="description" value={field.value ?? ''} disabled={isLoading} />
+            )}
+          />
+          {form.formState.errors.description && (
+            <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Sinh viên *</Label>
+            <Controller
               name="studentId"
+              control={form.control}
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Sinh viên *</FormLabel>
-                  <Combobox
-                    options={(students || []).map(s => ({ value: s.id, label: s.name }))}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onInputChange={setStudentSearch}
-                    isLoading={isLoadingStudents}
-                    disabled={isLoading}
-                    placeholder="Tìm kiếm sinh viên..."
-                  />
-                  <FormMessage />
-                </FormItem>
+                <Combobox
+                  options={(students || []).map(s => ({ value: s.id, label: s.name }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onInputChange={setStudentSearch}
+                  isLoading={isLoadingStudents}
+                  disabled={isLoading}
+                  placeholder="Tìm kiếm sinh viên..."
+                />
               )}
             />
-            <FormField
-              control={form.control}
+            {form.formState.errors.studentId && (
+              <p className="text-sm text-destructive">{form.formState.errors.studentId.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>GV Hướng dẫn *</Label>
+            <Controller
               name="supervisorId"
+              control={form.control}
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>GV Hướng dẫn *</FormLabel>
-                  <Combobox
-                    options={(supervisors || []).map(l => ({ value: l.id, label: l.name }))}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onInputChange={setSupervisorSearch}
-                    isLoading={isLoadingSupervisors}
-                    disabled={isLoading}
-                    placeholder="Tìm kiếm GVHD..."
-                  />
-                  <FormMessage />
-                </FormItem>
+                <Combobox
+                  options={(supervisors || []).map(l => ({ value: l.id, label: l.name }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onInputChange={setSupervisorSearch}
+                  isLoading={isLoadingSupervisors}
+                  disabled={isLoading}
+                  placeholder="Tìm kiếm GVHD..."
+                />
               )}
             />
-             <FormField
-              control={form.control}
+            {form.formState.errors.supervisorId && (
+              <p className="text-sm text-destructive">{form.formState.errors.supervisorId.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>GV Phản biện</Label>
+            <Controller
               name="examinerId"
+              control={form.control}
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>GV Phản biện</FormLabel>
-                   <Combobox
-                    options={(examiners || []).map(l => ({ value: l.id, label: l.name }))}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onInputChange={setExaminerSearch}
-                    isLoading={isLoadingExaminers}
-                    disabled={isLoading}
-                    placeholder="Tìm kiếm GVPB..."
-                  />
-                  <FormMessage />
-                </FormItem>
+                <Combobox
+                  options={(examiners || []).map(l => ({ value: l.id, label: l.name }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onInputChange={setExaminerSearch}
+                  isLoading={isLoadingExaminers}
+                  disabled={isLoading}
+                  placeholder="Tìm kiếm GVPB..."
+                />
               )}
             />
-            <FormField
-              control={form.control}
+            {form.formState.errors.examinerId && (
+              <p className="text-sm text-destructive">{form.formState.errors.examinerId.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Năm học *</Label>
+            <Controller
               name="academicYearId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Năm học *</FormLabel>
-                  <Combobox
-                    options={(academicYears || []).map(ay => ({ value: ay.id, label: ay.name }))}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onInputChange={setAcademicYearSearch}
-                    isLoading={isLoadingAcademicYears}
-                    disabled={isLoading}
-                    placeholder="Tìm kiếm năm học..."
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
               control={form.control}
-              name="semesterId"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Học kỳ *</FormLabel>
-                  <Combobox
-                    options={(semesters || []).map(s => ({ value: s.id, label: s.name }))}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onInputChange={setSemesterSearch}
-                    isLoading={isLoadingSemesters}
-                    disabled={isLoading}
-                    placeholder="Tìm kiếm học kỳ..."
-                  />
-                  <FormMessage />
-                </FormItem>
+                <Combobox
+                  options={(academicYears || []).map(ay => ({ value: ay.id, label: ay.name }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onInputChange={setAcademicYearSearch}
+                  isLoading={isLoadingAcademicYears}
+                  disabled={isLoading}
+                  placeholder="Tìm kiếm năm học..."
+                />
               )}
             />
+            {form.formState.errors.academicYearId && (
+              <p className="text-sm text-destructive">{form.formState.errors.academicYearId.message}</p>
+            )}
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
+          <div className="space-y-2">
+            <Label>Học kỳ *</Label>
+            <Controller
+              name="semesterId"
+              control={form.control}
+              render={({ field }) => (
+                <Combobox
+                  options={(semesters || []).map(s => ({ value: s.id, label: s.name }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onInputChange={setSemesterSearch}
+                  isLoading={isLoadingSemesters}
+                  disabled={isLoading}
+                  placeholder="Tìm kiếm học kỳ..."
+                />
+              )}
+            />
+            {form.formState.errors.semesterId && (
+              <p className="text-sm text-destructive">{form.formState.errors.semesterId.message}</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="submissionDate">Ngày nộp *</Label>
+              <Controller
                 name="submissionDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ngày nộp *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} disabled={isLoading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
                 control={form.control}
-                name="status"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Trạng thái</FormLabel>
-                    <Combobox
-                      options={thesisStatusOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      disabled={isLoading}
-                      placeholder="Chọn trạng thái"
-                    />
-                    <FormMessage />
-                  </FormItem>
+                  <Input type="date" {...field} id="submissionDate" disabled={isLoading} />
                 )}
               />
-          </div>
+              {form.formState.errors.submissionDate && (
+                <p className="text-sm text-destructive">{form.formState.errors.submissionDate.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Trạng thái</Label>
+              <Controller
+                name="status"
+                control={form.control}
+                render={({ field }) => (
+                  <Combobox
+                    options={thesisStatusOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isLoading}
+                    placeholder="Chọn trạng thái"
+                  />
+                )}
+              />
+              {form.formState.errors.status && (
+                <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>
+              )}
+            </div>
+        </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Hủy</Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
-            </Button>
-          </div>
-        </form>
-      </Form>
+        <div className="flex justify-end space-x-2 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>Hủy</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Đang xử lý...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 } 

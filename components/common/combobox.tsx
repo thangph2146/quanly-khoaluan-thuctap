@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -27,30 +27,50 @@ export interface ComboboxOption {
 interface ComboboxProps {
     options: ComboboxOption[];
     value?: string | number | null;
-    onChange: (value: string | number) => void;
+    onChange: (value: string | number | null) => void;
     onInputChange?: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
     isLoading?: boolean;
+    allowClear?: boolean;
 }
 
-export function Combobox({ options, value, onChange, onInputChange, placeholder, disabled, isLoading }: ComboboxProps) {
+export function Combobox({ options, value, onChange, onInputChange, placeholder, disabled, isLoading, allowClear }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const selectedOption = options.find((option) => option.value === value)
+
+  const handleClear = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
+    onChange(null);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-          disabled={disabled}
-        >
-          {selectedOption?.label ?? placeholder ?? "Chọn..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+        <div className="relative w-full">
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
+              disabled={disabled}
+              type="button"
+            >
+              {selectedOption?.label ?? placeholder ?? "Chọn..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+            {allowClear && value && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-8 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                    onClick={handleClear}
+                    type="button"
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
+        </div>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command filter={() => 1}>

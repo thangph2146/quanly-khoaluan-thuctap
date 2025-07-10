@@ -14,6 +14,8 @@ export interface Partner {
 // Based on Internship.cs - updated to use User instead of Student
 export interface Internship {
   id: number;
+  title: string;
+  description?: string;
   studentId: number;
   student: User;
   partnerId: number;
@@ -22,6 +24,9 @@ export interface Internship {
   academicYear: AcademicYear;
   semesterId: number;
   semester: Semester;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
   reportUrl?: string | null;
   grade?: number | null;
 }
