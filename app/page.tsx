@@ -28,7 +28,7 @@ export default function HomePage() {
                 Quản lý Khóa luận & Thực tập
               </h1>
             </div>
-            <Link href="/dashboard">
+            <Link href="/admin/users">
               <Button>
                 Vào hệ thống
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -312,7 +312,7 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center">
-                <Link href="/academic/academic-years">
+                <Link href="/academic/years">
                   <Button variant="outline" className="w-full">
                     Xem chi tiết
                     <ArrowRight className="ml-2 h-4 w-4" />

@@ -11,7 +11,7 @@ const AcademicPage: FC = () => {
 		{
 			title: 'Quản lý Năm học',
 			description: 'Tạo và quản lý thông tin các năm học',
-			href: '/academic/academic-years',
+			href: '/academic/years',
 			icon: Calendar,
 			color: 'bg-blue-50 hover:bg-blue-100',
 			iconColor: 'text-blue-600',

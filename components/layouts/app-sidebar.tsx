@@ -14,6 +14,7 @@ import { Menu, AlertTriangle } from "lucide-react"
 import { useMenus } from "@/hooks/useMenus"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { NavUser } from "./nav-user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isLoading, error } = useMenus()
@@ -47,6 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <Separator className="my-2" />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )
