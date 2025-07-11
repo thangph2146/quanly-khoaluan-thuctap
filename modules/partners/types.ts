@@ -1,22 +1,27 @@
-// Based on Partner.cs
 export interface Partner {
-	id: number
-	name: string
-	address: string
-	phoneNumber: string
-	email: string
+  id: number;
+  name: string;
+  description?: string;
+  address: string;
+  website?: string;
+  phoneNumber: string;
+  contactPerson?: string;
+  email: string;
+  isActive: boolean;
+  deletedAt?: string;
 }
 
-export interface CreatePartnerData {
-	name: string
-	address: string
-	phoneNumber: string
-	email: string
+export type PartnerMutationData = Omit<Partner, 'id' | 'deletedAt'>;
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-export interface UpdatePartnerData {
-	name: string
-	address: string
-	phoneNumber: string
-	email: string
-}
+export interface PartnerFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+} 

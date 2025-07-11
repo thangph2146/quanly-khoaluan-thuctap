@@ -1,11 +1,4 @@
-// Export types
-export * from './types'
-
-// Export components
-export * from './components'
-
-// Export services
-export * from './services'
-
-// Export hooks
-export * from './hooks'
+export * from './components';
+export * from './hooks';
+export * from './services/partner.service';
+export * from './types'; 

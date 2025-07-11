@@ -1,4 +1,5 @@
-export { PartnerList } from './PartnerList'
-export { PartnerForm } from './PartnerForm'
-export { PartnerDetails } from './PartnerDetails'
-export * from './PartnersContainer'
+export * from './PartnersContainer';
+export * from './PartnerList';
+export * from './PartnerDeletedList';
+export * from './PartnerForm';
+export * from './PartnerDetails'; 

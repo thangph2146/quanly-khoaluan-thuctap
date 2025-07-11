@@ -45,40 +45,43 @@ export const RoleForm = React.memo(function RoleForm({
 
   const [permissionSearch, setPermissionSearch] = useState('');
   const debouncedPermissionSearch = useDebounce(permissionSearch, 300);
-  const [knownPermissionOptions, setKnownPermissionOptions] = useState<ComboboxOption[]>([]);
+  const [allPermissionOptions, setAllPermissionOptions] = useState<ComboboxOption[]>([]);
 
-  const { data: permissions, isLoading: isLoadingPermissions, refetch } = useQuery({
+  const { data: groupedPermissions, isLoading: isLoadingPermissions } = useQuery({
     queryKey: ['permissionOptions', debouncedPermissionSearch],
     queryFn: () => getPermissionOptions(debouncedPermissionSearch),
     initialData: [],
   });
 
-  const handlePermissionsPopoverOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
-      refetch();
-    } else {
-      setPermissionSearch('');
-    }
-  };
-
   const dropdownOptions = useMemo(() => {
-    if (!permissions) return [];
-    return permissions.map(p => ({ value: p.id, label: p.name }));
-  }, [permissions]);
+    if (!groupedPermissions) return [];
+    return groupedPermissions.map(group => ({
+        label: group.moduleName,
+        options: group.permissions.map(p => ({ value: p.id, label: p.name }))
+    }));
+  }, [groupedPermissions]);
 
+  // Effect to populate allPermissionOptions for label lookup
   useEffect(() => {
-    const newOptions = dropdownOptions.filter(
-      (opt) => !knownPermissionOptions.some((known) => known.value === opt.value)
-    );
-    if (newOptions.length > 0) {
-      setKnownPermissionOptions((prev) => [...prev, ...newOptions]);
+    if (groupedPermissions) {
+        const flattened = groupedPermissions.flatMap(g => g.permissions).map(p => ({ value: p.id, label: p.name}));
+        setAllPermissionOptions(prev => {
+            const newOptions = flattened.filter(opt => !prev.some(p => p.value === opt.value));
+            return [...prev, ...newOptions];
+        });
     }
-  }, [dropdownOptions, knownPermissionOptions]);
+  }, [groupedPermissions]);
+
 
   useEffect(() => {
     if (role && mode === 'edit') {
       const initialOptions = role.rolePermissions?.map(rp => ({ value: rp.permission.id, label: rp.permission.name })) || [];
-      setKnownPermissionOptions(initialOptions);
+      const existingIds = allPermissionOptions.map(o => o.value);
+      const newOptions = initialOptions.filter(opt => !existingIds.includes(opt.value));
+      if (newOptions.length > 0) {
+        setAllPermissionOptions(prev => [...prev, ...newOptions]);
+      }
+      
       form.reset({
         name: role.name || '',
         description: role.description || '',
@@ -90,14 +93,13 @@ export const RoleForm = React.memo(function RoleForm({
         description: '',
         permissionIds: [],
       });
-      setKnownPermissionOptions([]);
     }
   }, [role, mode, form.reset]);
 
     const selectedIds = form.watch('permissionIds') || [];
     const selectedPermissionOptions = useMemo(
-        () => knownPermissionOptions.filter((opt) => selectedIds.includes(opt.value as number)),
-        [knownPermissionOptions, selectedIds]
+        () => allPermissionOptions.filter((opt) => selectedIds.includes(opt.value as number)),
+        [allPermissionOptions, selectedIds]
     );
 
   function handleFormSubmit(data: z.infer<typeof roleFormSchema>) {
@@ -171,7 +173,6 @@ export const RoleForm = React.memo(function RoleForm({
                 onInputChange={setPermissionSearch}
                 isLoading={isLoadingPermissions}
                 placeholder="Chọn các quyền..."
-                onOpenChange={handlePermissionsPopoverOpenChange}
               />
             )}
           />

@@ -1,69 +1,83 @@
-/**
- * Partner List Component
- * Display and manage partners in table format
- */
-import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/common/data-table'
-import type { Partner } from '../types'
+import React from "react";
+import { Edit, Trash2, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/common/data-table";
+import type { Partner } from "../types";
+import { Badge } from "@/components/ui/badge";
 
 interface PartnerListProps {
-  partners: Partner[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (partner: Partner) => void
-  onDelete: (partner: Partner) => void
-  onView?: (partner: Partner) => void
+  partners: Partner[];
+  isLoading: boolean;
+  onEdit: (partner: Partner) => void;
+  onView: (partner: Partner) => void;
+  onDelete: (partner: Partner) => void;
+  onDeleteMany: (ids: (string | number)[]) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  filterBar?: React.ReactNode;
 }
 
-export function PartnerList({ partners, isLoading, onCreate, onEdit, onDelete, onView }: PartnerListProps) {
+export const PartnerList: React.FC<PartnerListProps> = ({
+  partners,
+  isLoading,
+  onEdit,
+  onView,
+  onDelete,
+  onDeleteMany,
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
+  filterBar,
+}) => {
   const columns = [
     {
-      accessorKey: 'name',
-      header: 'Tên đối tác',
-      cell: ({ row }: { row: any }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
+      accessorKey: "name",
+      header: "Tên đối tác",
+      cell: ({ row }: { row: { original: Partner } }) => (
+        <div className="font-medium">{row.original.name}</div>
       ),
     },
     {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm text-muted-foreground">{row.getValue('email')}</div>
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "phoneNumber",
+      header: "Số điện thoại",
+    },
+    {
+      accessorKey: "address",
+      header: "Địa chỉ",
+    },
+    {
+      accessorKey: "isActive",
+      header: "Trạng thái",
+      cell: ({ row }: { row: { original: Partner } }) => (
+        <Badge variant={row.original.isActive ? "default" : "destructive"}>
+          {row.original.isActive ? "Hoạt động" : "Không hoạt động"}
+        </Badge>
       ),
     },
     {
-      accessorKey: 'phoneNumber',
-      header: 'Số điện thoại',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('phoneNumber')}</div>
-      ),
-    },
-    {
-      accessorKey: 'address',
-      header: 'Địa chỉ',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm max-w-[200px] truncate">{row.getValue('address')}</div>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Thao tác',
+      id: "actions",
+      header: "Thao tác",
       cell: ({ row }: { row: { original: Partner } }) => {
-        const partner = row.original
+        const partner = row.original;
         return (
           <div className="flex space-x-2">
-            {onView && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => onView(partner)}
-                title="Xem chi tiết"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onView(partner)}
+              title="Xem chi tiết"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -81,27 +95,26 @@ export function PartnerList({ partners, isLoading, onCreate, onEdit, onDelete, o
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-        )
+        );
       },
     },
-  ]
+  ];
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-end items-center">
-        <Button onClick={onCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm đối tác
-        </Button>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={partners}
-        isLoading={isLoading}
-        searchableColumn="name"
-        searchPlaceholder="Tìm theo tên đối tác..."
-      />
-    </div>
-  )
-}
+    <DataTable
+      columns={columns}
+      data={partners || []}
+      isLoading={isLoading}
+      onDeleteMany={(ids, onSuccess) => {
+        onDeleteMany(ids);
+        onSuccess();
+      }}
+      page={page}
+      totalPages={totalPages}
+      onPageChange={onPageChange}
+      limit={limit}
+      onLimitChange={onLimitChange}
+      filterBar={filterBar}
+    />
+  );
+};

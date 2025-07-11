@@ -1,149 +1,239 @@
-/**
- * Partners Container Component
- * Manages state and actions for partners
- */
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { PartnerList } from './PartnerList'
-import { PartnerForm } from './PartnerForm'
-import { PartnerDetails } from './PartnerDetails'
-import { usePartners, usePartnerActions } from '../hooks'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import type { Partner, CreatePartnerData, UpdatePartnerData } from '../types'
+import React, { useState, useCallback, useEffect } from 'react';
+import { PartnerList } from './PartnerList';
+import { PartnerForm } from './PartnerForm';
+import { PartnerDeletedList } from './PartnerDeletedList';
+import { PartnerDetails } from './PartnerDetails';
+import { usePartners, usePartnerActions, useDeletedPartners } from '../hooks';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { PageHeader, Modal } from '@/components/common';
+import type { Partner, PartnerMutationData, PartnerFilters } from '../types';
+import { logger } from '@/lib/utils/logger';
+
+type ModalState =
+  | { type: 'create' }
+  | { type: 'edit'; partner: Partner }
+  | { type: 'view'; partner: Partner }
+  | { type: 'delete'; partner: Partner }
+  | { type: 'delete-many'; ids: (string | number)[] }
+  | { type: 'restore-many'; ids: (string | number)[] }
+  | { type: 'permanent-delete-many'; ids: (string | number)[] }
+  | { type: 'idle' };
 
 export function PartnersContainer() {
-  const [isSheetOpen, setSheetOpen] = useState(false)
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [isDetailsDialogOpen, setDetailsDialogOpen] = useState(false)
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
-  const [sheetMode, setSheetMode] = useState<'create' | 'edit'>('create')
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [filters, setFilters] = useState<PartnerFilters>({ page: 1, limit: 10, search: '' });
+  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const { partners, isLoading, refetch } = usePartners()
-  const { createPartner, updatePartner, deletePartner, isCreating, isUpdating, isDeleting } = usePartnerActions(refetch)
+  const {
+    partners: activePartners,
+    total: activeTotal,
+    isLoading: isLoadingActive,
+    refetch: refetchActive,
+  } = usePartners(filters);
 
-  const handleCreate = () => {
-    setSheetMode('create')
-    setSelectedPartner(null)
-    setSheetOpen(true)
-  }
+  const {
+    deletedPartners,
+    total: deletedTotal,
+    isLoading: isLoadingDeleted,
+    refetch: refetchDeleted,
+  } = useDeletedPartners(filters);
 
-  const handleEdit = (partner: Partner) => {
-    setSheetMode('edit')
-    setSelectedPartner(partner)
-    setSheetOpen(true)
-  }
+  useEffect(() => {
+    setFilters(f => ({ ...f, page: 1 }));
+  }, [showDeleted, filters.search]);
 
-  const handleDelete = (partner: Partner) => {
-    setSelectedPartner(partner)
-    setDeleteDialogOpen(true)
-  }
+  const {
+    createPartner,
+    updatePartner,
+    deletePartner,
+    softDeletePartners,
+    restorePartners,
+    permanentDeletePartners,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isRestoring,
+  } = usePartnerActions(() => {
+    refetchActive();
+    refetchDeleted();
+    setModalState({ type: 'idle' });
+  });
 
-  const handleView = (partner: Partner) => {
-    setSelectedPartner(partner)
-    setDetailsDialogOpen(true)
-  }
+  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
 
-  const handleFormSubmit = async (data: CreatePartnerData | UpdatePartnerData) => {
+  const handleCreate = () => setModalState({ type: 'create' });
+  const handleEdit = (partner: Partner) => setModalState({ type: 'edit', partner });
+  const handleView = (partner: Partner) => setModalState({ type: 'view', partner });
+  const handleDelete = (partner: Partner) => setModalState({ type: 'delete', partner });
+  const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
+  const handleSubmit = useCallback(async (data: PartnerMutationData) => {
     try {
-      if (sheetMode === 'create') {
-        await createPartner(data as CreatePartnerData)
-      } else if (selectedPartner) {
-        await updatePartner(selectedPartner.id, data as UpdatePartnerData)
+      if (modalState.type === 'edit') {
+        await updatePartner(modalState.partner.id, data);
+      } else {
+        await createPartner(data);
       }
-      setSheetOpen(false)
-      setSelectedPartner(null)
     } catch (error) {
-      // Error handling is done in the hook
-      console.error('Form submission error:', error)
+      logger.error('Failed to save partner', error);
+      // The hook will show a toast, no need to show another one here
     }
-  }
+  }, [modalState, createPartner, updatePartner]);
 
-  const handleDeleteConfirm = async () => {
-    if (selectedPartner) {
-      const success = await deletePartner(selectedPartner.id)
-      if (success) {
-        setDeleteDialogOpen(false)
-        setSelectedPartner(null)
-      }
-    }
-  }
+  const handleDeleteMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'delete-many', ids });
+  };
 
-  const isFormLoading = isCreating || isUpdating
+  const handleRestoreMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'restore-many', ids });
+  };
+
+  const handlePermanentDeleteMany = (ids: (string | number)[]) => {
+    setModalState({ type: 'permanent-delete-many', ids });
+  };
+  
+  const FilterBar = (
+    <div className="flex items-center justify-between">
+        <Input
+          placeholder="Tìm kiếm đối tác..."
+          value={filters.search || ''}
+          onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+          className="max-w-sm"
+        />
+    </div>
+  );
 
   return (
-    <>
-      <PartnerList
-        partners={partners || []}
-        isLoading={isLoading}
-        onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
+    <PageHeader
+      title="Quản lý Đối tác"
+      description="Quản lý thông tin các đối tác của khoa."
+      breadcrumbs={[{ label: 'Trang chủ', href: '/' }, { label: 'Đối tác', href: '/partners' }]}
+      actions={
+        <div className="flex gap-2">
+          <Button onClick={handleCreate}>+ Thêm đối tác</Button>
+          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
+            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
+          </Button>
+        </div>
+      }
+    >
+      {showDeleted ? (
+        <PartnerDeletedList
+          partners={deletedPartners}
+          isLoading={isLoadingDeleted}
+          onRestore={handleRestoreMany}
+          onPermanentDelete={handlePermanentDeleteMany}
+          page={filters.page || 1}
+          totalPages={totalPages}
+          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+          limit={filters.limit || 10}
+          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+          filterBar={FilterBar}
+        />
+      ) : (
+        <PartnerList
+          partners={activePartners}
+          isLoading={isLoadingActive}
+          onEdit={handleEdit}
+          onView={handleView}
+          onDelete={handleDelete}
+          onDeleteMany={handleDeleteMany}
+          page={filters.page || 1}
+          totalPages={totalPages}
+          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+          limit={filters.limit || 10}
+          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+          filterBar={FilterBar}
+        />
+      )}
+
+      <PartnerForm
+        isOpen={modalState.type === 'create' || modalState.type === 'edit'}
+        mode={modalState.type === 'create' ? 'create' : 'edit'}
+        partner={modalState.type === 'edit' ? modalState.partner : null}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isLoading={isCreating || isUpdating}
+      />
+      
+      <PartnerDetails 
+        isOpen={modalState.type === 'view'}
+        onClose={handleCancel}
+        partner={modalState.type === 'view' ? modalState.partner : null}
       />
 
-      {/* Create/Edit Sheet */}
-      <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {sheetMode === 'create' ? 'Tạo đối tác mới' : 'Chỉnh sửa đối tác'}
-            </SheetTitle>
-            <SheetDescription>
-              {sheetMode === 'create'
-                ? 'Điền thông tin để tạo đối tác mới'
-                : 'Cập nhật thông tin đối tác'}
-            </SheetDescription>
-          </SheetHeader>
-          <PartnerForm
-            partner={selectedPartner}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setSheetOpen(false)}
-            isLoading={isFormLoading}
-            mode={sheetMode}
-          />
-        </SheetContent>
-      </Sheet>
+      <Modal
+        isOpen={modalState.type === 'delete'}
+        onOpenChange={handleCancel}
+        title="Xác nhận xóa"
+        className="sm:max-w-md"
+      >
+        <div className="p-4">
+            <p>Bạn có chắc chắn muốn xóa đối tác <strong>{modalState.type === 'delete' && modalState.partner.name}</strong> không?</p>
+            <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={handleCancel} disabled={isDeleting}>Hủy</Button>
+                <Button variant="destructive" onClick={() => modalState.type === 'delete' && deletePartner(modalState.partner.id)} disabled={isDeleting}>
+                    {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+                </Button>
+            </div>
+        </div>
+      </Modal>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa đối tác này không?
-              Hành động này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Đang xóa...' : 'Xóa'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Soft Delete Confirmation */}
+      <Modal
+        isOpen={modalState.type === 'delete-many'}
+        onOpenChange={handleCancel}
+        title="Xác nhận xóa"
+        className="sm:max-w-md"
+      >
+        <div className="p-4">
+            <p>Bạn có chắc chắn muốn xóa <strong>{modalState.type === 'delete-many' && modalState.ids.length}</strong> đối tác này không?</p>
+            <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={handleCancel} disabled={isDeleting}>Hủy</Button>
+                <Button variant="destructive" onClick={() => modalState.type === 'delete-many' && softDeletePartners(modalState.ids as number[])} disabled={isDeleting}>
+                    {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+                </Button>
+            </div>
+        </div>
+      </Modal>
 
-      {/* Partner Details Dialog */}
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Chi tiết đối tác</DialogTitle>
-            <DialogDescription>
-              Thông tin chi tiết về đối tác được chọn
-            </DialogDescription>
-          </DialogHeader>
-          {selectedPartner && (
-            <PartnerDetails partner={selectedPartner} />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  )
-}
+      {/* Restore Confirmation */}
+      <Modal
+        isOpen={modalState.type === 'restore-many'}
+        onOpenChange={handleCancel}
+        title="Xác nhận khôi phục"
+        className="sm:max-w-md"
+      >
+        <div className="p-4">
+            <p>Bạn có chắc chắn muốn khôi phục <strong>{modalState.type === 'restore-many' && modalState.ids.length}</strong> đối tác này không?</p>
+            <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={handleCancel} disabled={isRestoring}>Hủy</Button>
+                <Button onClick={() => modalState.type === 'restore-many' && restorePartners(modalState.ids as number[])} disabled={isRestoring}>
+                    {isRestoring ? 'Đang khôi phục...' : 'Xác nhận'}
+                </Button>
+            </div>
+        </div>
+      </Modal>
+
+      {/* Permanent Delete Confirmation */}
+      <Modal
+        isOpen={modalState.type === 'permanent-delete-many'}
+        onOpenChange={handleCancel}
+        title="Xác nhận xóa vĩnh viễn"
+        className="sm:max-w-md"
+      >
+        <div className="p-4">
+            <p>Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa vĩnh viễn <strong>{modalState.type === 'permanent-delete-many' && modalState.ids.length}</strong> đối tác này không?</p>
+            <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={handleCancel} disabled={isDeleting}>Hủy</Button>
+                <Button variant="destructive" onClick={() => modalState.type === 'permanent-delete-many' && permanentDeletePartners(modalState.ids as number[])} disabled={isDeleting}>
+                    {isDeleting ? 'Đang xóa...' : 'Xác nhận xóa vĩnh viễn'}
+                </Button>
+            </div>
+        </div>
+      </Modal>
+    </PageHeader>
+  );
+} 

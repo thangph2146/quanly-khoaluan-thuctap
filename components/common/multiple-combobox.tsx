@@ -22,8 +22,15 @@ import {
 import { ComboboxOption } from "./combobox"
 import { Loader2 } from "lucide-react"
 
-interface MultipleComboboxProps {
+export interface GroupedComboboxOption {
+    label: string;
     options: ComboboxOption[];
+}
+
+type ComboboxOptions = (ComboboxOption | GroupedComboboxOption)[];
+
+interface MultipleComboboxProps {
+    options: ComboboxOptions;
     selectedOptions?: ComboboxOption[];
     value?: (string | number)[];
     onChange: (value: (string | number)[]) => void;
@@ -33,6 +40,10 @@ interface MultipleComboboxProps {
     disabled?: boolean;
     isLoading?: boolean;
     onOpenChange?: (open: boolean) => void;
+}
+
+const isGroupedOption = (option: ComboboxOption | GroupedComboboxOption): option is GroupedComboboxOption => {
+    return 'options' in option;
 }
 
 export function MultipleCombobox({ 
@@ -64,6 +75,25 @@ export function MultipleCombobox({
     onChange(newValues)
     // Keep focus in the input after selecting
     inputRef.current?.focus()
+  }
+
+  const renderOption = (option: ComboboxOption) => {
+    const isSelected = value.includes(option.value)
+    return (
+      <CommandItem
+        key={String(option.value)}
+        value={option.label}
+        onSelect={() => handleSelect(option.value)}
+      >
+        <Check
+          className={cn(
+            "mr-2 h-4 w-4",
+            isSelected ? "opacity-100" : "opacity-0",
+          )}
+        />
+        {option.label}
+      </CommandItem>
+    )
   }
 
   return (
@@ -112,26 +142,16 @@ export function MultipleCombobox({
             ) : (
               <>
                 <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup>
-                  {options.map(option => {
-                    const isSelected = value.includes(option.value)
-                    return (
-                      <CommandItem
-                        key={String(option.value)}
-                        value={option.label}
-                        onSelect={() => handleSelect(option.value)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            isSelected ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        {option.label}
-                      </CommandItem>
-                    )
-                  })}
-                </CommandGroup>
+                {options.map((option, index) => {
+                    if (isGroupedOption(option)) {
+                        return (
+                            <CommandGroup key={index} heading={option.label}>
+                                {option.options.map(renderOption)}
+                            </CommandGroup>
+                        )
+                    }
+                    return renderOption(option as ComboboxOption);
+                })}
               </>
             )}
           </CommandList>

@@ -1,94 +1,46 @@
-import httpsAPI from './client'
-import type { Partner } from '@/modules/partners/types'
+import apiClient from '@/lib/api/client';
+import type { Partner, PartnerMutationData, PaginatedResponse, PartnerFilters } from '@/modules/partners/types';
 
-// Define the structure for creating a partner, matching backend Partner model
-export interface CreatePartnerData {
-	name: string
-	address: string
-	phoneNumber: string
-	email: string
-}
+export const getPartners = async (filters: PartnerFilters): Promise<PaginatedResponse<Partner>> => {
+    const response = await apiClient.get('/partners', { params: filters });
+    return response.data;
+};
 
-// Define the structure for updating a partner
-export interface UpdatePartnerData {
-	name?: string
-	address?: string
-	phoneNumber?: string
-	email?: string
-}
+export const getDeletedPartners = async (filters: PartnerFilters): Promise<PaginatedResponse<Partner>> => {
+    const response = await apiClient.get('/partners/deleted', { params: filters });
+    return response.data;
+};
 
-/**
- * Fetches all partners from the API.
- * @returns A promise that resolves to an array of partners.
- */
-export const getPartners = async (): Promise<Partner[]> => {
-	try {
-		const response = await httpsAPI.get('/Partners')
-		return response.data
-	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
-	}
-}
-
-/**
- * Fetches a single partner by their ID.
- * @param id The ID of the partner to fetch.
- * @returns A promise that resolves to the partner object.
- */
 export const getPartnerById = async (id: number): Promise<Partner> => {
-	try {
-		const response = await httpsAPI.get(`/Partners/${id}`)
-		return response.data
-	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
-	}
-}
+    const response = await apiClient.get(`/partners/${id}`);
+    return response.data;
+};
 
-/**
- * Creates a new partner.
- * @param data The data for the new partner.
- * @returns A promise that resolves to the newly created partner object.
- */
-export const createPartner = async (data: CreatePartnerData): Promise<Partner> => {
-	try {
-		const response = await httpsAPI.post('/Partners', data)
-		return response.data
-	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
-	}
-}
+export const createPartner = async (data: PartnerMutationData): Promise<Partner> => {
+    const response = await apiClient.post('/partners', data);
+    return response.data;
+};
 
-/**
- * Updates an existing partner.
- * @param id The ID of the partner to update.
- * @param data The data to update the partner with.
- * @returns A promise that resolves when the partner is updated.
- */
-export const updatePartner = async (
-	id: number,
-	data: UpdatePartnerData,
-): Promise<void> => {
-	try {
-		await httpsAPI.put(`/Partners/${id}`, { id, ...data })
-	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
-	}
-}
+export const updatePartner = async (id: number, data: PartnerMutationData): Promise<Partner> => {
+    const response = await apiClient.put(`/partners/${id}`, data);
+    return response.data;
+};
 
-/**
- * Deletes a partner by their ID.
- * @param id The ID of the partner to delete.
- * @returns A promise that resolves when the partner is deleted.
- */
-export const deletePartner = async (id: number): Promise<void> => {
-	try {
-		await httpsAPI.delete(`/Partners/${id}`)
-	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
-		throw new Error(message)
-	}
-}
+export const softDeletePartner = async (id: number): Promise<void> => {
+    await apiClient.post(`/partners/soft-delete/${id}`);
+};
+
+export const bulkSoftDeletePartners = async (ids: number[]): Promise<{ message: string }> => {
+    const response = await apiClient.post('/partners/bulk-soft-delete', ids);
+    return response.data;
+};
+
+export const bulkRestorePartners = async (ids: number[]): Promise<{ message: string }> => {
+    const response = await apiClient.post('/partners/bulk-restore', ids);
+    return response.data;
+};
+
+export const bulkPermanentDeletePartners = async (ids: number[]): Promise<{ message: string }> => {
+    const response = await apiClient.post('/partners/bulk-permanent-delete', ids);
+    return response.data;
+};

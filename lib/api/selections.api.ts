@@ -5,6 +5,12 @@ export interface SelectionOption {
   name: string;
 }
 
+export interface GroupedPermissionOption {
+  moduleName: string;
+  permissions: { id: number; name: string; description: string }[];
+}
+
+
 export async function getAcademicYearOptions(search: string): Promise<SelectionOption[]> {
   const response = await apiClient.get('/selections/academic-years', { params: { search } });
   return response.data;
@@ -40,7 +46,7 @@ export async function getMenuOptions(search: string): Promise<SelectionOption[]>
   return response.data;
 }
 
-export async function getPermissionOptions(search: string): Promise<SelectionOption[]> {
+export async function getPermissionOptions(search: string): Promise<GroupedPermissionOption[]> {
   const response = await apiClient.get('/selections/permissions', { params: { search } });
   return response.data;
 }

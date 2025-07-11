@@ -1,91 +1,147 @@
-/**
- * Partner Actions Hook
- * Provides CRUD operations for partners
- */
-import { useState } from 'react'
-import { useToast } from '@/components/ui/use-toast'
-import { PartnerService } from '../services'
-import type { CreatePartnerData, UpdatePartnerData } from '../types'
+import { useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { PartnerService } from '../services/partner.service';
+import type { PartnerMutationData } from '../types';
 
-export function usePartnerActions(refetch: () => void) {
-  const [isCreating, setCreating] = useState(false)
-  const [isUpdating, setUpdating] = useState(false)
-  const [isDeleting, setDeleting] = useState(false)
-  const { toast } = useToast()
+export function usePartnerActions(onSuccess?: () => void) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const { toast } = useToast();
 
-  const createPartner = async (data: CreatePartnerData) => {
+  const createPartner = async (data: PartnerMutationData) => {
     try {
-      setCreating(true)
-      await PartnerService.create(data)
+      setIsCreating(true);
+      await PartnerService.create(data);
       toast({
         title: 'Thành công',
         description: 'Tạo đối tác mới thành công',
-      })
-      refetch()
+      });
+      onSuccess?.();
     } catch (error) {
-      console.error('Error creating partner:', error)
       toast({
         title: 'Lỗi',
-        description: 'Có lỗi xảy ra khi tạo đối tác',
+        description: error instanceof Error ? error.message : 'Không thể tạo đối tác mới',
         variant: 'destructive',
-      })
-      throw error
+      });
+      throw error;
     } finally {
-      setCreating(false)
+      setIsCreating(false);
     }
-  }
+  };
 
-  const updatePartner = async (id: number, data: UpdatePartnerData) => {
+  const updatePartner = async (id: number, data: PartnerMutationData) => {
     try {
-      setUpdating(true)
-      await PartnerService.update(id, data)
+      setIsUpdating(true);
+      await PartnerService.update(id, data);
       toast({
         title: 'Thành công',
         description: 'Cập nhật đối tác thành công',
-      })
-      refetch()
+      });
+      onSuccess?.();
     } catch (error) {
-      console.error('Error updating partner:', error)
       toast({
         title: 'Lỗi',
-        description: 'Có lỗi xảy ra khi cập nhật đối tác',
+        description: error instanceof Error ? error.message : 'Không thể cập nhật đối tác',
         variant: 'destructive',
-      })
-      throw error
+      });
+      throw error;
     } finally {
-      setUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const deletePartner = async (id: number) => {
     try {
-      setDeleting(true)
-      await PartnerService.remove(id)
+      setIsDeleting(true);
+      await PartnerService.softDelete(id);
       toast({
         title: 'Thành công',
-        description: 'Xóa đối tác thành công',
-      })
-      refetch()
-      return true
+        description: 'Xóa đối tác thành công.',
+      });
+      onSuccess?.();
     } catch (error) {
-      console.error('Error deleting partner:', error)
       toast({
         title: 'Lỗi',
-        description: 'Có lỗi xảy ra khi xóa đối tác',
+        description: error instanceof Error ? error.message : 'Không thể xóa đối tác',
         variant: 'destructive',
-      })
-      return false
+      });
     } finally {
-      setDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
+
+  const softDeletePartners = async (ids: number[]) => {
+    try {
+      setIsDeleting(true);
+      await PartnerService.bulkSoftDelete(ids);
+      toast({
+        title: 'Thành công',
+        description: 'Xóa tạm thời các đối tác thành công.',
+      });
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa tạm thời các đối tác',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const restorePartners = async (ids: number[]) => {
+    try {
+      setIsRestoring(true);
+      await PartnerService.bulkRestore(ids);
+      toast({
+        title: 'Thành công',
+        description: 'Khôi phục đối tác thành công',
+      });
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể khôi phục đối tác',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const permanentDeletePartners = async (ids: number[]) => {
+    try {
+      setIsDeleting(true);
+      await PartnerService.bulkPermanentDelete(ids);
+      toast({
+        title: 'Thành công',
+        description: 'Xóa vĩnh viễn đối tác thành công',
+      });
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa vĩnh viễn đối tác',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return {
     createPartner,
     updatePartner,
     deletePartner,
+    softDeletePartners,
+    restorePartners,
+    permanentDeletePartners,
     isCreating,
     isUpdating,
     isDeleting,
-  }
-}
+    isRestoring,
+  };
+} 
