@@ -1,17 +1,7 @@
-// Export types
-export * from './types'
-
-// Export components
+/**
+ * Internship Module
+ */
 export * from './components'
-
-// Export services
-export * from './services'
-
-// Export hooks
 export * from './hooks'
-
-// Export constants
-export * from './constants'
-
-// Export utilities
-export * from './utils'
+export * from './services/internship.service'
+export * from './types' 

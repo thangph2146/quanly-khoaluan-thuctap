@@ -1,4 +1,5 @@
-export { InternshipList } from './InternshipList'
-export { InternshipForm } from './InternshipForm'
-export { InternshipDetails } from './InternshipDetails'
 export * from './InternshipsContainer'
+export * from './InternshipList'
+export * from './InternshipDeletedList'
+export * from './InternshipDetails'
+export * from './InternshipForm' 

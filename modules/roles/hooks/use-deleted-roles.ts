@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { RoleService } from '../services';
 import type { Role, RoleFilters, PaginatedResponse } from '../types';
 
@@ -11,6 +11,8 @@ export function useDeletedRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const deletedRoles = useMemo(() => response.data, [response.data]);
 
   const fetchDeletedRoles = useCallback(async (currentFilters: RoleFilters) => {
     try {
@@ -29,12 +31,16 @@ export function useDeletedRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
     fetchDeletedRoles(filters);
   }, [filters, fetchDeletedRoles]);
 
+  const setDeletedRoles = useCallback((roles: Role[]) => {
+    setResponse(prev => ({ ...prev, data: roles }));
+  }, []);
+
   const refetch = () => {
     fetchDeletedRoles(filters);
   };
 
   return {
-    roles: response.data,
+    roles: deletedRoles,
     total: response.total,
     page: response.page,
     limit: response.limit,
@@ -42,5 +48,6 @@ export function useDeletedRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
     isLoading,
     error,
     refetch,
+    setDeletedRoles,
   };
 } 

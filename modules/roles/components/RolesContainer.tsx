@@ -6,7 +6,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { RoleList, RoleDeletedList, RoleForm, RoleDetails } from "./";
-import { useRoles, useRoleActions, useDeletedRoles } from "../hooks";
+import { useRoles, useRoleActions, useDeletedRoles, type SuccessPayload } from "../hooks";
 import { PageHeader, Modal } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,8 @@ export function RolesContainer() {
     page: rolePage,
     totalPages: roleTotalPages,
     limit: roleLimit,
-    refetch: refetchUsers,
+    refetch: refetchRoles,
+    setActiveRoles,
   } = useRoles(filters);
 
   const {
@@ -60,12 +61,50 @@ export function RolesContainer() {
     totalPages: deletedTotalPages,
     limit: deletedLimit,
     refetch: refetchDeleted,
+    setDeletedRoles,
   } = useDeletedRoles(filters);
 
-  const handleSuccess = useCallback(() => {
-    refetchUsers();
-    refetchDeleted();
-  }, [refetchUsers, refetchDeleted]);
+  const handleActionSuccess = useCallback((actionType: string, data: SuccessPayload) => {
+    switch (actionType) {
+      case 'create':
+        refetchRoles(); 
+        break;
+      case 'update': {
+        const updatedRole = data as Role;
+        setActiveRoles(roles.map(r => r.id === updatedRole.id ? updatedRole : r));
+        break;
+      }
+      case 'softDelete': {
+        const { id } = data as { id: number };
+        const roleToMove = roles.find(r => r.id === id);
+        if (roleToMove) {
+          setActiveRoles(roles.filter(r => r.id !== id));
+          setDeletedRoles([{ ...roleToMove, deletedAt: new Date().toISOString() }, ...deletedRoles]);
+        }
+        break;
+      }
+      case 'bulk': {
+        const { ids, action } = data as { ids: number[], action: 'softDelete' | 'restore' | 'permanentDelete' };
+        if (action === 'softDelete') {
+          const rolesToMove = roles.filter(r => ids.includes(r.id));
+          setActiveRoles(roles.filter(r => !ids.includes(r.id)));
+          setDeletedRoles([...rolesToMove.map(r => ({...r, deletedAt: new Date().toISOString()})), ...deletedRoles]);
+        } else if (action === 'restore') {
+          const rolesToMove = deletedRoles.filter(r => ids.includes(r.id));
+          setDeletedRoles(deletedRoles.filter(r => !ids.includes(r.id)));
+          setActiveRoles([...rolesToMove.map(r => ({...r, deletedAt: undefined})), ...roles]);
+        } else if (action === 'permanentDelete') {
+          setDeletedRoles(deletedRoles.filter(r => !ids.includes(r.id)));
+        }
+        break;
+      }
+      default:
+        refetchRoles();
+        refetchDeleted();
+        break;
+    }
+  }, [roles, deletedRoles, setActiveRoles, setDeletedRoles, refetchRoles, refetchDeleted]);
+
 
   const {
     createRole,
@@ -76,7 +115,7 @@ export function RolesContainer() {
     isUpdating,
     isDeleting,
     isBulkActionLoading,
-  } = useRoleActions(handleSuccess);
+  } = useRoleActions(handleActionSuccess);
 
   const handleCreate = () => setModalState({ type: "create" });
   const handleEdit = (role: Role) => setModalState({ type: "edit", role });

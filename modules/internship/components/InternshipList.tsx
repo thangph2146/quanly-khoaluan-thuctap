@@ -1,99 +1,65 @@
 /**
  * Internship List Component
- * Display and manage internships in table format
  */
 import React from 'react'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
+import type { Internship, InternshipListProps } from '../types'
 import { Badge } from '@/components/ui/badge'
-import type { Internship } from '../types'
 
-interface InternshipListProps {
-  internships: Internship[]
-  isLoading: boolean
-  onCreate: () => void
-  onEdit: (internship: Internship) => void
-  onDelete: (internship: Internship) => void
-  onView?: (internship: Internship) => void
-}
+export function InternshipList({
+  internships,
+  isLoading,
+  onEdit,
+  onDelete,
+  onView,
+  onDeleteMany,
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
+  filterBar,
+}: InternshipListProps) {
 
-export function InternshipList({ internships, isLoading, onCreate, onEdit, onDelete, onView }: InternshipListProps) {
   const columns = [
     {
-      accessorKey: 'title',
-      header: 'Tiêu đề',
-      cell: ({ row }: { row: any }) => (
-        <div className="font-medium max-w-[300px] truncate">{row.getValue('title')}</div>
-      ),
-    },
-    {
-      accessorKey: 'studentName',
+      accessorKey: 'student',
       header: 'Sinh viên',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('studentName')}</div>
+      cell: ({ row }: { row: { original: Internship } }) => (
+        <div className="font-medium">{row.original.student?.name || 'N/A'}</div>
       ),
     },
     {
-      accessorKey: 'partnerName',
-      header: 'Đối tác',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('partnerName')}</div>
+      accessorKey: 'partner',
+      header: 'Công ty',
+      cell: ({ row }: { row: { original: Internship } }) => (
+        <div>{row.original.partner?.name || 'N/A'}</div>
       ),
     },
     {
       accessorKey: 'academicYear',
       header: 'Năm học',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('academicYear')}</div>
+      cell: ({ row }: { row: { original: Internship } }) => (
+        <div>{row.original.academicYear?.name || 'N/A'}</div>
       ),
     },
     {
       accessorKey: 'semester',
       header: 'Học kỳ',
-      cell: ({ row }: { row: any }) => (
-        <div className="text-sm">{row.getValue('semester')}</div>
+      cell: ({ row }: { row: { original: Internship } }) => (
+        <div>{row.original.semester?.name || 'N/A'}</div>
       ),
     },
     {
-      accessorKey: 'status',
-      header: 'Trạng thái',
-      cell: ({ row }: { row: any }) => {
-        const status = row.getValue('status') as string
-        const getStatusVariant = (status: string) => {
-          switch (status) {
-            case 'completed':
-              return 'default'
-            case 'in_progress':
-              return 'secondary'
-            case 'pending':
-              return 'outline'
-            case 'cancelled':
-              return 'destructive'
-            default:
-              return 'outline'
-          }
-        }
-        const getStatusLabel = (status: string) => {
-          switch (status) {
-            case 'completed':
-              return 'Hoàn thành'
-            case 'in_progress':
-              return 'Đang thực hiện'
-            case 'pending':
-              return 'Chờ xử lý'
-            case 'cancelled':
-              return 'Đã hủy'
-            default:
-              return status
-          }
-        }
-        return (
-          <Badge variant={getStatusVariant(status)}>
-            {getStatusLabel(status)}
-          </Badge>
-        )
-      },
+      accessorKey: 'grade',
+      header: 'Điểm',
+      cell: ({ row }: { row: { original: Internship } }) => (
+        <Badge variant={row.original.grade ? (row.original.grade >= 5 ? 'default' : 'destructive') : 'outline'}>
+          {row.original.grade ?? 'Chưa có'}
+        </Badge>
+      ),
     },
     {
       id: 'actions',
@@ -135,21 +101,18 @@ export function InternshipList({ internships, isLoading, onCreate, onEdit, onDel
   ]
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-end items-center">
-        <Button onClick={onCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm thực tập
-        </Button>
-      </div>
-
       <DataTable
         columns={columns}
-        data={internships}
+        data={internships || []}
         isLoading={isLoading}
-        searchableColumn="title"
-        searchPlaceholder="Tìm theo tiêu đề..."
+        onDeleteMany={onDeleteMany}
+        getId={(row: Internship) => row.id}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        limit={limit}
+        onLimitChange={onLimitChange}
+        filterBar={filterBar}
       />
-    </div>
   )
-}
+} 

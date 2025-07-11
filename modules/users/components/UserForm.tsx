@@ -63,13 +63,17 @@ export function UserForm({ isOpen, user, onSubmit, onCancel, isLoading, mode }: 
   useEffect(() => {
     if (isOpen) {
       if (user) {
+        const selectedRoleIds = (roleOptions || [])
+          .filter(option => user.userRoles?.includes(option.name))
+          .map(option => option.id);
+        
         form.reset({
           name: user.name,
           email: user.email,
           avatarUrl: user.avatarUrl || '',
           isActive: user.isActive,
           keycloakUserId: user.keycloakUserId,
-          roleIds: user.roles?.map(r => r.id) || [],
+          roleIds: selectedRoleIds,
         });
       } else {
         form.reset({
@@ -82,7 +86,7 @@ export function UserForm({ isOpen, user, onSubmit, onCancel, isLoading, mode }: 
         });
       }
     }
-  }, [user, isOpen, form]);
+  }, [user, isOpen, form, roleOptions]);
 
   const handleSubmit = (data: UserFormData) => {
     onSubmit(data);
@@ -97,7 +101,7 @@ export function UserForm({ isOpen, user, onSubmit, onCancel, isLoading, mode }: 
       title={title}
       className="sm:max-w-lg"
     >
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-2">
         <div className="space-y-2">
           <Label htmlFor="name">Họ và tên</Label>
           <Input

@@ -1,54 +1,60 @@
-import { 
-  getInternships, 
-  getInternshipById, 
-  createInternship, 
-  updateInternship, 
-  deleteInternship,
-  type CreateInternshipData,
-  type UpdateInternshipData
-} from '@/lib/api/internships.api'
-import type { Internship } from '../types'
-
 /**
  * Internship Service
- * Business logic layer for internship operations
  */
+import * as api from '@/lib/api/internships.api'
+import type {
+  Internship,
+  CreateInternshipData,
+  UpdateInternshipData,
+  InternshipFilters,
+  PaginatedResponse,
+} from '../types'
+
 export class InternshipService {
-  /**
-   * Get all internships
-   */
-  static async getAll(): Promise<Internship[]> {
-    return await getInternships()
+  static async getAll(
+    filters: InternshipFilters,
+  ): Promise<PaginatedResponse<Internship>> {
+    return api.getInternships(filters)
   }
 
-  /**
-   * Get internship by ID
-   */
+  static async getDeleted(
+    filters: InternshipFilters,
+  ): Promise<PaginatedResponse<Internship>> {
+    return api.getDeletedInternships(filters)
+  }
+
   static async getById(id: number): Promise<Internship> {
-    return await getInternshipById(id)
+    return api.getInternshipById(id)
   }
 
-  /**
-   * Create new internship
-   */
   static async create(data: CreateInternshipData): Promise<Internship> {
-    return await createInternship(data)
+    return api.createInternship(data)
   }
 
-  /**
-   * Update internship
-   */
-  static async update(id: number, data: UpdateInternshipData): Promise<void> {
-    return await updateInternship(id, data)
+  static async update(
+    id: number,
+    data: UpdateInternshipData,
+  ): Promise<Internship> {
+    return api.updateInternship(id, data)
   }
 
-  /**
-   * Delete internship
-   */
-  static async remove(id: number): Promise<void> {
-    return await deleteInternship(id)
+  static async delete(id: number): Promise<void> {
+    return api.softDeleteInternship(id)
   }
-}
 
-// Export types
-export type { CreateInternshipData, UpdateInternshipData }
+  static async bulkSoftDelete(ids: number[]): Promise<void> {
+    await api.bulkSoftDeleteInternships(ids)
+  }
+
+  static async permanentDelete(id: number): Promise<void> {
+    return api.permanentDeleteInternship(id)
+  }
+
+  static async bulkPermanentDelete(ids: number[]): Promise<void> {
+    await api.bulkPermanentDeleteInternships(ids)
+  }
+
+  static async bulkRestore(ids: number[]): Promise<void> {
+    await api.bulkRestoreInternships(ids)
+  }
+} 

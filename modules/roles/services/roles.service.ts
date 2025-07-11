@@ -1,89 +1,72 @@
-﻿import { 
-  getRoles, 
+﻿import {
+  getRoles,
   getDeletedRoles,
-  getRoleById, 
-  createRole, 
-  updateRole, 
+  getRoleById,
+  createRole,
+  updateRole,
   softDeleteRole,
   permanentDeleteRole,
   bulkSoftDeleteRoles,
   bulkRestoreRoles,
-  bulkPermanentDeleteRoles
+  bulkPermanentDeleteRoles,
 } from '@/lib/api/roles.api'
-import type { Role, CreateRoleRequest, UpdateRoleRequest, RoleFilters, PaginatedResponse } from '../types'
+import type {
+  Role,
+  RoleMutationData,
+  RoleFilters,
+  PaginatedResponse,
+  UpdateRoleRequest,
+} from '../types'
 
 /**
  * Role Service
- * Business logic layer for role operations
+ * Abstraction layer for role-related business logic.
  */
 export class RoleService {
-  /**
-   * Get all roles
-   */
-  static async getAll(params: RoleFilters): Promise<PaginatedResponse<Role>> {
-    return await getRoles(params)
+  static async getAll(
+    filters: RoleFilters,
+  ): Promise<PaginatedResponse<Role>> {
+    return getRoles(filters)
   }
 
-  /**
-   * Get deleted roles
-   */
-  static async getDeleted(params: RoleFilters): Promise<PaginatedResponse<Role>> {
-    return await getDeletedRoles(params);
+  static async getDeleted(
+    filters: RoleFilters,
+  ): Promise<PaginatedResponse<Role>> {
+    return getDeletedRoles(filters)
   }
 
-  /**
-   * Get role by ID
-   */
   static async getById(id: number): Promise<Role> {
-    return await getRoleById(id)
+    return getRoleById(id)
   }
 
-  /**
-   * Create new role
-   */
-  static async create(data: CreateRoleRequest): Promise<Role> {
-    return await createRole(data)
+  static async create(data: RoleMutationData): Promise<Role> {
+    return createRole(data)
   }
 
-  /**
-   * Update role
-   */
-  static async update(id: number, data: UpdateRoleRequest): Promise<Role> {
-    return await updateRole(id, data)
+  static async update(
+    id: number,
+    data: UpdateRoleRequest,
+  ): Promise<Role> {
+    return updateRole(id, data)
   }
 
-  /**
-   * Soft delete role
-   */
   static async softDelete(id: number): Promise<void> {
-    return await softDeleteRole(id)
+    return softDeleteRole(id)
   }
 
-  /**
-   * Permanent delete role
-   */
   static async permanentDelete(id: number): Promise<void> {
-    return await permanentDeleteRole(id);
+    return permanentDeleteRole(id)
   }
 
-  /**
-   * Bulk soft delete roles
-   */
   static async bulkSoftDelete(ids: number[]): Promise<void> {
-    return await bulkSoftDeleteRoles(ids);
+    return bulkSoftDeleteRoles(ids)
   }
 
-  /**
-   * Bulk restore roles
-   */
   static async bulkRestore(ids: number[]): Promise<void> {
-    return await bulkRestoreRoles(ids);
+    return bulkRestoreRoles(ids)
   }
 
-  /**
-   * Bulk permanent delete roles
-   */
   static async bulkPermanentDelete(ids: number[]): Promise<void> {
-    return await bulkPermanentDeleteRoles(ids);
+    return bulkPermanentDeleteRoles(ids)
   }
 }

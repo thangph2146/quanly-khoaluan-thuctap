@@ -7,26 +7,34 @@ import { useCreateRole } from './use-create-role'
 import { useUpdateRole } from './use-update-role'
 import { useSoftDeleteRole } from './use-soft-delete-role'
 import { useBulkRoleActions } from './use-bulk-actions'
-import type { CreateRoleRequest, UpdateRoleRequest } from '../types'
+import type { CreateRoleRequest, Role, UpdateRoleRequest } from '../types'
+
+type BulkActionType = 'softDelete' | 'restore' | 'permanentDelete';
+
+export type SuccessPayload = { id: number } | { ids: number[]; action: BulkActionType } | Role;
 
 /**
  * Hook for role actions with error handling and notifications
  */
-export function useRoleActions(onSuccess?: () => void) {
+export function useRoleActions(onSuccess?: (actionType: string, data: SuccessPayload) => void) {
   const { toast } = useToast()
   const { createRole, isCreating } = useCreateRole()
   const { updateRole, isUpdating } = useUpdateRole()
   const { softDeleteRole, isDeleting } = useSoftDeleteRole()
-  const { executeBulkAction, isLoading: isBulkActionLoading } = useBulkRoleActions(onSuccess);
+  
+  const handleBulkSuccess = (ids: number[], action: BulkActionType) => {
+    onSuccess?.('bulk', { ids, action });
+  };
+  const { executeBulkAction, isLoading: isBulkActionLoading } = useBulkRoleActions(handleBulkSuccess);
 
   const handleCreateRole = async (data: CreateRoleRequest) => {
     try {
-      await createRole(data)
+      const newRole = await createRole(data)
       toast({
         title: 'Thành công',
         description: 'Vai trò đã được tạo thành công.',
       })
-      onSuccess?.()
+      onSuccess?.('create', newRole)
       return true
     } catch (error) {
       toast({
@@ -40,12 +48,12 @@ export function useRoleActions(onSuccess?: () => void) {
 
   const handleUpdateRole = async (id: number, data: UpdateRoleRequest) => {
     try {
-      await updateRole(id, data)
+      const updatedRole = await updateRole(id, data)
       toast({
         title: 'Thành công',
         description: 'Vai trò đã được cập nhật thành công.',
       })
-      onSuccess?.()
+      onSuccess?.('update', updatedRole)
       return true
     } catch (error) {
       toast({
@@ -64,7 +72,7 @@ export function useRoleActions(onSuccess?: () => void) {
         title: 'Thành công',
         description: 'Vai trò đã được xóa tạm thời.',
       })
-      onSuccess?.()
+      onSuccess?.('softDelete', { id })
       return true
     } catch (error) {
       toast({

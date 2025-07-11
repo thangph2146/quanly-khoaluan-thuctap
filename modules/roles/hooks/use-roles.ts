@@ -2,7 +2,7 @@
  * Roles Hooks
  * Custom hooks for roles management
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Role, PaginatedResponse, RoleFilters } from '../types'
 import { RoleService } from '../services'
 
@@ -18,6 +18,8 @@ export function useRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const activeRoles = useMemo(() => response.data, [response.data]);
 
   const fetchRoles = useCallback(async (currentFilters: RoleFilters) => {
     try {
@@ -36,13 +38,17 @@ export function useRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
     fetchRoles(filters);
   }, [filters, fetchRoles]);
 
+  const setActiveRoles = useCallback((roles: Role[]) => {
+    setResponse(prev => ({ ...prev, data: roles }));
+  }, []);
+
 
   const refetch = () => {
     fetchRoles(filters)
   }
 
   return {
-    roles: response.data,
+    roles: activeRoles,
     total: response.total,
     page: response.page,
     limit: response.limit,
@@ -50,6 +56,7 @@ export function useRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
     isLoading,
     error,
     refetch,
+    setActiveRoles,
   }
 }
 

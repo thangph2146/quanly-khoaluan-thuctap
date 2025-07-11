@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 type BulkAction = 'softDelete' | 'restore' | 'permanentDelete';
 
-export function useBulkRoleActions(onSuccess?: () => void) {
+export function useBulkRoleActions(onSuccess?: (ids: number[], action: BulkAction) => void) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     
@@ -33,7 +33,7 @@ export function useBulkRoleActions(onSuccess?: () => void) {
                 title: 'Thành công',
                 description: successMessage,
             });
-            onSuccess?.();
+            onSuccess?.(ids, action);
         } catch (error) {
             toast({
                 title: 'Lỗi',
