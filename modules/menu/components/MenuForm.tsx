@@ -105,7 +105,7 @@ export function MenuForm({
   );
 
   return (
-    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 p-1">
+    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 p-4">
       <div className="space-y-2">
         <Label htmlFor="name">Tên menu *</Label>
         <Input id="name" {...form.register("name")} disabled={isLoading} />
