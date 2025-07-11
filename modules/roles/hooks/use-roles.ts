@@ -1,102 +1,55 @@
-﻿/**
- * Roles Hooks
- * Custom hooks for roles management
- */
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { Role, PaginatedResponse, RoleFilters } from '../types'
-import { RoleService } from '../services'
-
 /**
- * Hook for managing roles data
+ * Roles Hook
  */
-export function useRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
-  const [response, setResponse] = useState<PaginatedResponse<Role>>({
-    data: [],
-    total: 0,
-    page: filters.page || 1,
-    limit: filters.limit || 10,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+import { useState, useEffect, useCallback } from 'react'
+import { RoleService } from '../services/role.service'
+import type { Role, RoleFilters } from '../types'
+import { useDebounce } from '@/hooks/use-debounce'
 
-  const activeRoles = useMemo(() => response.data, [response.data]);
+export function useRoles(filters: RoleFilters) {
+  const [roles, setRoles] = useState<Role[]>([])
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  const debouncedSearch = useDebounce(filters.search || "", 500);
 
   const fetchRoles = useCallback(async (currentFilters: RoleFilters) => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await RoleService.getAll(currentFilters);
-      setResponse(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRoles(filters);
-  }, [filters, fetchRoles]);
-
-  const setActiveRoles = useCallback((roles: Role[]) => {
-    setResponse(prev => ({ ...prev, data: roles }));
-  }, []);
-
-
-  const refetch = () => {
-    fetchRoles(filters)
-  }
-
-  return {
-    roles: activeRoles,
-    total: response.total,
-    page: response.page,
-    limit: response.limit,
-    totalPages: Math.ceil(response.total / response.limit),
-    isLoading,
-    error,
-    refetch,
-    setActiveRoles,
-  }
-}
-
-/**
- * Hook for managing single role operations
- */
-export function useRole(id?: number) {
-  const [role, setRole] = useState<Role | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchRole = async (roleId: number) => {
-    try {
       setIsLoading(true)
       setError(null)
-      const data = await RoleService.getById(roleId)
-      setRole(data)
+      const response = await RoleService.getAll(currentFilters)
+
+      // The API now always returns paginated format
+      if (response && typeof response === 'object' && 'data' in response) {
+        setRoles(response.data)
+        setTotal(response.total)
+      } else {
+        // Fallback for unexpected format
+        console.error("Received unexpected data format for roles:", response);
+        setRoles([]);
+        setTotal(0);
+      }
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      setError(err instanceof Error ? err.message : 'Lỗi khi tải danh sách vai trò')
+      setRoles([]); // Clear data on error
+      setTotal(0);
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    if (id) {
-      fetchRole(id)
-    }
-  }, [id])
-
-  const refetch = () => {
-    if (id) {
-      fetchRole(id)
-    }
-  }
+    fetchRoles({ ...filters, search: debouncedSearch })
+  }, [fetchRoles, filters.page, filters.limit, debouncedSearch])
 
   return {
-    role,
+    roles,
+    setRoles, // Keep for optimistic updates
+    total,
     isLoading,
     error,
-    refetch,
+    refetch: () => fetchRoles({ ...filters, search: debouncedSearch }),
   }
-}
+} 

@@ -17,15 +17,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "./table-skeleton";
+import { SafePagination } from "./safe-pagination";
 import { Label } from "../ui/label";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationLink,
-} from "../ui/pagination";
 import {
   Select,
   SelectTrigger,
@@ -406,7 +399,7 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 {columnsWithSelect.map((_, j) => (
                   <TableCell key={j}>
-                    <TableSkeleton columns={1} />
+                    <TableSkeleton columns={Math.max(1, columnsWithSelect.length)} rows={1} />
                   </TableCell>
                 ))}
               </TableRow>
@@ -470,48 +463,11 @@ export function DataTable<TData, TValue>({
             </Select>
           </div>
         )}
-        {typeof page === "number" &&
-          typeof totalPages === "number" &&
-          onPageChange && (
-            <Pagination className="flex items-end justify-end gap-2">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() =>
-                      onPageChange &&
-                      page &&
-                      onPageChange(Math.max(1, page - 1))
-                    }
-                    aria-disabled={page === 1}
-                    tabIndex={page === 1 ? -1 : 0}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages || 0 }, (_, i) => (
-                  <PaginationItem key={i + 1}>
-                    <PaginationLink
-                      isActive={page === i + 1}
-                      onClick={() => onPageChange && onPageChange(i + 1)}
-                      tabIndex={0}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      onPageChange &&
-                      page &&
-                      totalPages &&
-                      onPageChange(Math.min(totalPages, page + 1))
-                    }
-                    aria-disabled={page >= totalPages}
-                    tabIndex={page >= totalPages ? -1 : 0}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+        <SafePagination
+          page={page}
+          totalPages={Math.max(0, totalPages || 0)}
+          onPageChange={onPageChange}
+        />
       </div>
     </div>
   );

@@ -1,14 +1,7 @@
-﻿// Export types
-export * from './types'
-
-// Export services
-export * from './services'
-
-// Export hooks
-export * from './hooks'
-
-// Export components
+/**
+ * Roles Module
+ */
 export * from './components'
-
-// Export utilities
-export * from './utils'
+export * from './hooks'
+export * from './types'
+export { RoleService } from './services/role.service' 

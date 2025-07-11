@@ -1,97 +1,158 @@
 /**
  * Role Actions Hook
- * Custom hook for role CRUD operations with toast notifications
  */
+import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
-import { useCreateRole } from './use-create-role'
-import { useUpdateRole } from './use-update-role'
-import { useSoftDeleteRole } from './use-soft-delete-role'
-import { useBulkRoleActions } from './use-bulk-actions'
-import type { CreateRoleRequest, Role, UpdateRoleRequest } from '../types'
+import { RoleService } from '../services/role.service'
+import type { RoleMutationData } from '../types'
 
-type BulkActionType = 'softDelete' | 'restore' | 'permanentDelete';
-
-export type SuccessPayload = { id: number } | { ids: number[]; action: BulkActionType } | Role;
-
-/**
- * Hook for role actions with error handling and notifications
- */
-export function useRoleActions(onSuccess?: (actionType: string, data: SuccessPayload) => void) {
+export function useRoleActions(onSuccess?: () => void) {
+  const [isCreating, setIsCreating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
   const { toast } = useToast()
-  const { createRole, isCreating } = useCreateRole()
-  const { updateRole, isUpdating } = useUpdateRole()
-  const { softDeleteRole, isDeleting } = useSoftDeleteRole()
-  
-  const handleBulkSuccess = (ids: number[], action: BulkActionType) => {
-    onSuccess?.('bulk', { ids, action });
-  };
-  const { executeBulkAction, isLoading: isBulkActionLoading } = useBulkRoleActions(handleBulkSuccess);
 
-  const handleCreateRole = async (data: CreateRoleRequest) => {
+  const createRole = async (data: RoleMutationData) => {
     try {
-      const newRole = await createRole(data)
+      setIsCreating(true)
+      await RoleService.create(data)
       toast({
         title: 'Thành công',
-        description: 'Vai trò đã được tạo thành công.',
+        description: 'Tạo vai trò mới thành công',
       })
-      onSuccess?.('create', newRole)
-      return true
+      onSuccess?.()
     } catch (error) {
       toast({
         title: 'Lỗi',
-        description: error instanceof Error ? error.message : 'Không thể tạo vai trò.',
+        description: error instanceof Error ? error.message : 'Không thể tạo vai trò mới',
         variant: 'destructive',
       })
-      return false
+      throw error
+    } finally {
+      setIsCreating(false)
     }
   }
 
-  const handleUpdateRole = async (id: number, data: UpdateRoleRequest) => {
+  const updateRole = async (id: number, data: RoleMutationData) => {
     try {
-      const updatedRole = await updateRole(id, data)
+      setIsUpdating(true)
+      await RoleService.update(id, data)
       toast({
         title: 'Thành công',
-        description: 'Vai trò đã được cập nhật thành công.',
+        description: 'Cập nhật vai trò thành công',
       })
-      onSuccess?.('update', updatedRole)
-      return true
+      onSuccess?.()
     } catch (error) {
       toast({
         title: 'Lỗi',
-        description: error instanceof Error ? error.message : 'Không thể cập nhật vai trò.',
+        description: error instanceof Error ? error.message : 'Không thể cập nhật vai trò',
         variant: 'destructive',
       })
-      return false
+      throw error
+    } finally {
+      setIsUpdating(false)
     }
   }
 
-  const handleSoftDeleteRole = async (id: number) => {
+  const deleteRole = async (id: number): Promise<boolean> => {
     try {
-      await softDeleteRole(id)
+      setIsDeleting(true)
+      await RoleService.delete(id)
       toast({
         title: 'Thành công',
-        description: 'Vai trò đã được xóa tạm thời.',
+        description: 'Xóa vai trò thành công',
       })
-      onSuccess?.('softDelete', { id })
+      onSuccess?.()
       return true
     } catch (error) {
       toast({
         title: 'Lỗi',
-        description: error instanceof Error ? error.message : 'Không thể xóa vai trò.',
+        description: error instanceof Error ? error.message : 'Không thể xóa vai trò',
         variant: 'destructive',
       })
       return false
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const softDeleteRoles = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsDeleting(true)
+      await RoleService.bulkSoftDelete(ids);
+      toast({
+        title: 'Thành công',
+        description: 'Xóa tạm thời các vai trò thành công.',
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa tạm thời các vai trò',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const restoreRoles = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsRestoring(true)
+      await RoleService.bulkRestore(ids)
+      toast({
+        title: 'Thành công',
+        description: 'Khôi phục vai trò thành công',
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể khôi phục vai trò',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsRestoring(false)
+    }
+  }
+
+  const permanentDeleteRoles = async (ids: number[]): Promise<boolean> => {
+    try {
+      setIsDeleting(true)
+      await RoleService.bulkPermanentDelete(ids)
+      toast({
+        title: 'Thành công',
+        description: 'Xóa vĩnh viễn vai trò thành công',
+      })
+      onSuccess?.()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: error instanceof Error ? error.message : 'Không thể xóa vĩnh viễn vai trò',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return {
-    createRole: handleCreateRole,
-    updateRole: handleUpdateRole,
-    softDeleteRole: handleSoftDeleteRole,
-    bulkAction: executeBulkAction,
+    createRole,
+    updateRole,
+    deleteRole,
+    softDeleteRoles,
+    restoreRoles,
+    permanentDeleteRoles,
     isCreating,
     isUpdating,
     isDeleting,
-    isBulkActionLoading,
+    isRestoring,
   }
-}
+} 

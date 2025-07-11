@@ -1,51 +1,45 @@
 /**
  * Role List Component
- * Display and manage roles in table format
  */
 import React from 'react'
 import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
-import type { Role } from '../types'
-import { Row } from '@tanstack/react-table'
+import type { Role, RoleListProps } from '../types'
 
-interface RoleListProps {
-  roles: Role[]
-  isLoading: boolean
-  onEdit: (role: Role) => void
-  onDelete: (role: Role) => void
-  onView?: (role: Role) => void
-  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void
-  filterBar?: React.ReactNode;
-  page?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-  limit?: number;
-  onLimitChange?: (limit: number) => void;
-}
-
-export function RoleList({ 
-  roles, 
-  isLoading, 
-  onEdit, 
-  onDelete, 
+/**
+ * Role List Table
+ * - Displays roles in a table format.
+ * - Supports pagination for server-side pagination.
+ */
+export function RoleList({
+  roles,
+  isLoading,
+  onEdit,
+  onDelete,
   onView,
   onDeleteMany,
-  ...props
+  page,
+  totalPages,
+  onPageChange,
+  limit,
+  onLimitChange,
+  filterBar,
 }: RoleListProps) {
+
   const columns = [
     {
       accessorKey: 'name',
       header: 'Tên vai trò',
-      cell: ({ row }: { row: Row<Role> }) => (
+      cell: ({ row }: { row: { original: Role } }) => (
         <div className="font-medium">{row.original.name}</div>
       ),
     },
     {
       accessorKey: 'description',
       header: 'Mô tả',
-      cell: ({ row }: { row: Row<Role> }) => (
-        <div className="text-sm text-muted-foreground">
+      cell: ({ row }: { row: { original: Role } }) => (
+        <div className="text-sm text-gray-600">
           {row.original.description || 'Không có mô tả'}
         </div>
       ),
@@ -79,7 +73,7 @@ export function RoleList({
               variant="destructive"
               size="icon"
               onClick={() => onDelete(role)}
-              title="Xóa tạm thời"
+              title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -90,13 +84,18 @@ export function RoleList({
   ]
 
   return (
-    <DataTable
-      columns={columns}
-      data={roles}
-      isLoading={isLoading}
-      onDeleteMany={onDeleteMany}
-      getId={(row) => row.id}
-      {...props}
-    />
+      <DataTable
+        columns={columns}
+        data={roles || []}
+        isLoading={isLoading}
+        getId={(role: Role) => role.id}
+        onDeleteMany={onDeleteMany}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        limit={limit}
+        onLimitChange={onLimitChange}
+        filterBar={filterBar}
+      />
   )
-}
+} 

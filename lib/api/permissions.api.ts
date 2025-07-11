@@ -1,5 +1,6 @@
 import client from './client'
-import type { Permission, PermissionFilters, PermissionMutationData } from '@/modules/permissions/types'
+import type { PermissionFilters, PermissionMutationData } from '@/modules/permissions/types'
+import apiClient from '@/lib/api/client';
 
 // The backend returns a different structure for paginated responses, so we define a specific one here.
 export interface PaginatedPermissions {
@@ -9,6 +10,25 @@ export interface PaginatedPermissions {
   limit: number
 }
 
+export interface Permission {
+  id: number;
+  name: string;
+  module: string;
+  description?: string;
+}
+
+/**
+ * Get all permissions (flat list for dropdowns)
+ */
+export const getAllPermissions = async (): Promise<Permission[]> => {
+  try {
+    const response = await apiClient.get('/permissions/all');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all permissions:', error);
+    throw error;
+  }
+};
 
 export const getPermissions = async (
   filters: PermissionFilters = {},

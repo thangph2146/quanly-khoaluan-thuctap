@@ -30,7 +30,7 @@ export function Modal({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[80vh] pr-6">{children}</ScrollArea>
+        <ScrollArea className="max-h-[80vh]">{children}</ScrollArea>
       </DialogContent>
     </Dialog>
   );

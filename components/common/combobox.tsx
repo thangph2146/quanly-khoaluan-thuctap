@@ -33,9 +33,10 @@ interface ComboboxProps {
     disabled?: boolean;
     isLoading?: boolean;
     allowClear?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
-export function Combobox({ options, value, onChange, onInputChange, placeholder, disabled, isLoading, allowClear }: ComboboxProps) {
+export function Combobox({ options, value, onChange, onInputChange, placeholder, disabled, isLoading, allowClear, onOpenChange }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const selectedOption = options.find((option) => option.value === value)
 
@@ -44,8 +45,15 @@ export function Combobox({ options, value, onChange, onInputChange, placeholder,
     onChange(null);
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (onOpenChange) {
+      onOpenChange(isOpen);
+    }
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <div className="relative w-full">
             <Button
@@ -72,8 +80,8 @@ export function Combobox({ options, value, onChange, onInputChange, placeholder,
             )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command filter={() => 1}>
+      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[200px] p-0">
+        <Command>
           <CommandInput 
             placeholder={placeholder ?? "Tìm kiếm..."} 
             onValueChange={onInputChange}

@@ -1,5 +1,8 @@
-export { RoleList } from './RoleList'
-export { RoleForm } from './RoleForm'
-export { RoleDetails } from './RoleDetails'
-export { RoleDeletedList } from './RoleDeletedList'
-export * from './RolesContainer'
+/**
+ * Roles Components
+ */
+export * from './RoleList'
+export * from './RoleDeletedList'
+export * from './RoleDetails'
+export * from './RoleForm'
+export * from './RolesContainer' 

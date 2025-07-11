@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { UserList, UserDeletedList, UserForm, UserDetails } from "./";
-import { useUsers, useRoles, useUserActions, useDeletedUsers } from "../hooks";
+import { useUsers, useUserActions, useDeletedUsers } from "../hooks";
 import { PageHeader, Modal } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import type { User, CreateUserData, UpdateUserData, UserFilters } from "../types";
@@ -57,8 +57,6 @@ export function UsersContainer() {
     limit: deletedLimit,
     refetch: refetchDeleted,
   } = useDeletedUsers(filters);
-
-  const { roles } = useRoles();
 
   const handleSuccess = () => {
     refetchUsers();
@@ -178,6 +176,9 @@ export function UsersContainer() {
     return null;
   }, [modalState, isDeleting, isBulkActionLoading]);
 
+  const safeUserTotalPages = useMemo(() => Math.max(userTotalPages || 0, 0), [userTotalPages]);
+  const safeDeletedTotalPages = useMemo(() => Math.max(deletedTotalPages || 0, 0), [deletedTotalPages]);
+
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <div className="flex flex-col space-y-2 justify-between">
@@ -231,7 +232,7 @@ export function UsersContainer() {
             onRestore={handleRestoreMany}
             onPermanentDelete={handlePermanentDeleteMany}
             page={deletedPage}
-            totalPages={deletedTotalPages}
+            totalPages={safeDeletedTotalPages}
             onPageChange={handlePageChange}
             limit={deletedLimit}
             onLimitChange={handleLimitChange}
@@ -246,7 +247,7 @@ export function UsersContainer() {
             onView={handleView}
             onDeleteMany={handleDeleteMany}
             page={userPage}
-            totalPages={userTotalPages}
+            totalPages={safeUserTotalPages}
             onPageChange={handlePageChange}
             limit={userLimit}
             onLimitChange={handleLimitChange}
@@ -259,7 +260,6 @@ export function UsersContainer() {
         isOpen={modalState.type === "create" || modalState.type === "edit"}
         onCancel={handleCancel}
         user={modalState.type === "edit" ? modalState.user : null}
-        roles={roles}
         onSubmit={handleFormSubmit}
         isLoading={isFormLoading}
         mode={modalState.type === "create" ? "create" : "edit"}

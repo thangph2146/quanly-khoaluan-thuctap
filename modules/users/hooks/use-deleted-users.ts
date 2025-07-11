@@ -38,7 +38,7 @@ export function useDeletedUsers(filters: UserFilters = { page: 1, limit: 10 }) {
     total: response.total,
     page: response.page,
     limit: response.limit,
-    totalPages: Math.ceil(response.total / response.limit),
+    totalPages: Math.ceil(Math.max(0, response.total) / (response.limit || 10)),
     isLoading,
     error,
     refetch,

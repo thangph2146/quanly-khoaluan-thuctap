@@ -1,53 +1,55 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RoleService } from '../services';
-import type { Role, RoleFilters, PaginatedResponse } from '../types';
+/**
+ * Deleted Roles Hook
+ */
+import { useState, useEffect, useCallback } from 'react'
+import { RoleService } from '../services/role.service'
+import type { Role, RoleFilters } from '../types'
+import { useDebounce } from '@/hooks/use-debounce'
 
-export function useDeletedRoles(filters: RoleFilters = { page: 1, limit: 10 }) {
-  const [response, setResponse] = useState<PaginatedResponse<Role>>({
-    data: [],
-    total: 0,
-    page: filters.page || 1,
-    limit: filters.limit || 10,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useDeletedRoles(filters: RoleFilters) {
+  const [roles, setRoles] = useState<Role[]>([])
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const deletedRoles = useMemo(() => response.data, [response.data]);
+  const debouncedSearch = useDebounce(filters.search || "", 500);
 
-  const fetchDeletedRoles = useCallback(async (currentFilters: RoleFilters) => {
+  const fetchRoles = useCallback(async (currentFilters: RoleFilters) => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await RoleService.getDeleted(currentFilters);
-      setResponse(data);
+      setIsLoading(true)
+      setError(null)
+      const response = await RoleService.getDeleted(currentFilters)
+
+      // The API now always returns paginated format
+      if (response && typeof response === 'object' && 'data' in response) {
+        setRoles(response.data)
+        setTotal(response.total)
+      } else {
+        // Fallback for unexpected format
+        console.error("Received unexpected data format for deleted roles:", response);
+        setRoles([]);
+        setTotal(0);
+      }
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setError(err instanceof Error ? err.message : 'Lỗi khi tải danh sách vai trò đã xóa')
+      setRoles([]); // Clear data on error
+      setTotal(0);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    fetchDeletedRoles(filters);
-  }, [filters, fetchDeletedRoles]);
-
-  const setDeletedRoles = useCallback((roles: Role[]) => {
-    setResponse(prev => ({ ...prev, data: roles }));
-  }, []);
-
-  const refetch = () => {
-    fetchDeletedRoles(filters);
-  };
+    fetchRoles({ ...filters, search: debouncedSearch })
+  }, [fetchRoles, filters.page, filters.limit, debouncedSearch])
 
   return {
-    roles: deletedRoles,
-    total: response.total,
-    page: response.page,
-    limit: response.limit,
-    totalPages: Math.ceil(response.total / response.limit),
+    deletedRoles: roles,
+    setDeletedRoles: setRoles, // Keep for optimistic updates
+    total,
     isLoading,
     error,
-    refetch,
-    setDeletedRoles,
-  };
+    refetch: () => fetchRoles({ ...filters, search: debouncedSearch }),
+  }
 } 

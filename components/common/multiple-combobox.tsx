@@ -20,96 +20,120 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { ComboboxOption } from "./combobox"
+import { Loader2 } from "lucide-react"
 
 interface MultipleComboboxProps {
     options: ComboboxOption[];
+    selectedOptions?: ComboboxOption[];
     value?: (string | number)[];
     onChange: (value: (string | number)[]) => void;
+    inputValue?: string;
     onInputChange?: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
     isLoading?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 export function MultipleCombobox({ 
     options, 
+    selectedOptions, 
     value = [], 
     onChange, 
+    inputValue, 
     onInputChange, 
     placeholder, 
     disabled, 
-    isLoading 
+    isLoading,
+    onOpenChange
 }: MultipleComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+  };
 
   const handleSelect = (selectedValue: string | number) => {
     const newValues = value.includes(selectedValue)
       ? value.filter((v) => v !== selectedValue)
       : [...value, selectedValue]
     onChange(newValues)
+    // Keep focus in the input after selecting
+    inputRef.current?.focus()
   }
 
-  const selectedOptions = options.filter((option) => value.includes(option.value));
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-            <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between h-auto"
-                disabled={disabled}
-                onClick={() => setOpen(!open)}
-                type="button"
-            >
-                <div className="flex gap-1 flex-wrap">
-                    {selectedOptions.length > 0 ? (
-                        selectedOptions.map(option => (
-                            <Badge
-                                key={option.value}
-                                variant="secondary"
-                                className="mr-1"
-                            >
-                                {option.label}
-                            </Badge>
-                        ))
-                    ) : (
-                        <span className="text-muted-foreground">{placeholder ?? "Chọn..."}</span>
-                    )}
-                </div>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-        </div>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild disabled={disabled}>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between min-h-10 h-auto"
+        >
+          <div className="flex gap-1 flex-wrap">
+            {selectedOptions && selectedOptions.length > 0 ? (
+              selectedOptions.map(option => (
+                <Badge
+                  variant="secondary"
+                  key={String(option.value)}
+                  className="mr-1"
+                >
+                  {option.label}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-muted-foreground font-normal">
+                {placeholder || "Select options"}
+              </span>
+            )}
+          </div>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command filter={() => 1}>
-          <CommandInput 
-            placeholder={placeholder ?? "Tìm kiếm..."} 
+      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[200px] p-0">
+        <Command shouldFilter={false}>
+          <CommandInput
+            ref={inputRef}
+            value={inputValue}
             onValueChange={onInputChange}
-            disabled={disabled}
+            placeholder={"Search..."}
+            disabled={isLoading}
           />
           <CommandList>
-            {isLoading && <div className="p-2 text-center text-sm">Đang tải...</div>}
-            {!isLoading && <CommandEmpty>Không tìm thấy.</CommandEmpty>}
-            <CommandGroup>
-              {!isLoading && options.map((option) => (
-                <CommandItem
-                  key={String(option.value)}
-                  value={String(option.value)}
-                  onSelect={() => handleSelect(option.value)}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value.includes(option.value) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {isLoading ? (
+              <div className="p-2 flex justify-center items-center">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup>
+                  {options.map(option => {
+                    const isSelected = value.includes(option.value)
+                    return (
+                      <CommandItem
+                        key={String(option.value)}
+                        value={option.label}
+                        onSelect={() => handleSelect(option.value)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            isSelected ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        {option.label}
+                      </CommandItem>
+                    )
+                  })}
+                </CommandGroup>
+              </>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

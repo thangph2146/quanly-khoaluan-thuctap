@@ -73,9 +73,9 @@ export const createRole = async (data: RoleMutationData): Promise<Role> => {
 /**
  * Update role
  */
-export const updateRole = async (id: number, data: Partial<RoleMutationData>): Promise<Role> => {
+export const updateRole = async (id: number, data: RoleMutationData): Promise<Role> => {
   try {
-    const response = await apiClient.put(`/roles/${id}`, data)
+    const response = await apiClient.put(`/roles/${id}`, { ...data, id })
     return response.data
   } catch (error) {
     console.error(`Error updating role ${id}:`, error)

@@ -15,11 +15,14 @@ export function TableSkeleton({
   columns: number;
   rows?: number;
 }) {
+  const safeRows = Math.max(0, rows || 0);
+  const safeCols = Math.max(0, columns || 0);
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {[...Array(columns)].map((_, i) => (
+          {[...Array(safeCols)].map((_, i) => (
             <TableHead key={i}>
               <Skeleton className="h-5 w-24" />
             </TableHead>
@@ -27,9 +30,9 @@ export function TableSkeleton({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {[...Array(rows)].map((_, i) => (
+        {[...Array(safeRows)].map((_, i) => (
           <TableRow key={i}>
-            {[...Array(columns)].map((_, j) => (
+            {[...Array(safeCols)].map((_, j) => (
               <TableCell key={j}>
                 <Skeleton className="h-5 w-full" />
               </TableCell>

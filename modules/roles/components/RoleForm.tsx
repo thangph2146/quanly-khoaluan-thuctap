@@ -1,163 +1,183 @@
 /**
  * Role Form Component
- * Form for creating and editing roles
  */
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Modal } from "@/components/common";
+import type { RoleMutationData, RoleFormProps, ComboboxOption } from "../types";
+import { useQuery } from "@tanstack/react-query";
+import { getPermissionOptions } from "@/lib/api/selections.api";
 import { MultipleCombobox } from "@/components/common/multiple-combobox";
-import { getPermissionOptions, getMenuOptions } from "@/lib/api/selections.api";
+import { useState, useEffect, useMemo } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { Role, CreateRoleRequest, UpdateRoleRequest } from "../types";
-
-interface RoleFormProps {
-  isOpen: boolean;
-  role?: Role | null;
-  onSubmit: (data: CreateRoleRequest | UpdateRoleRequest) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-  mode: "create" | "edit";
-}
 
 const roleFormSchema = z.object({
-  name: z.string().min(1, { message: "Tên vai trò không được để trống." }),
+  name: z.string().min(1, {
+    message: "Tên vai trò không được để trống.",
+  }),
   description: z.string().optional(),
   permissionIds: z.array(z.number()).optional(),
-  menuIds: z.array(z.number()).optional(),
 });
 
-type RoleFormData = z.infer<typeof roleFormSchema>;
-
-export function RoleForm({
-  isOpen,
+export const RoleForm = React.memo(function RoleForm({
   role,
   onSubmit,
   onCancel,
   isLoading,
   mode,
+  isOpen,
+  title,
 }: RoleFormProps) {
-  const [permissionSearch, setPermissionSearch] = useState('');
-  const debouncedPermissionSearch = useDebounce(permissionSearch, 300);
-
-  const { data: permissions, isLoading: isLoadingPermissions } = useQuery({
-    queryKey: ['permissionOptions', debouncedPermissionSearch],
-    queryFn: () => getPermissionOptions(debouncedPermissionSearch),
-    initialData: [],
-  });
-
-  const [menuSearch, setMenuSearch] = useState('');
-  const debouncedMenuSearch = useDebounce(menuSearch, 300);
-
-  const { data: menus, isLoading: isLoadingMenus } = useQuery({
-    queryKey: ['menuOptions', debouncedMenuSearch],
-    queryFn: () => getMenuOptions(debouncedMenuSearch),
-    initialData: [],
-  });
-
-  const form = useForm<RoleFormData>({
+  const form = useForm<z.infer<typeof roleFormSchema>>({
     resolver: zodResolver(roleFormSchema),
     defaultValues: {
       name: "",
       description: "",
       permissionIds: [],
-      menuIds: [],
     },
   });
 
-  useEffect(() => {
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const debouncedPermissionSearch = useDebounce(permissionSearch, 300);
+  const [knownPermissionOptions, setKnownPermissionOptions] = useState<ComboboxOption[]>([]);
+
+  const { data: permissions, isLoading: isLoadingPermissions, refetch } = useQuery({
+    queryKey: ['permissionOptions', debouncedPermissionSearch],
+    queryFn: () => getPermissionOptions(debouncedPermissionSearch),
+    initialData: [],
+  });
+
+  const handlePermissionsPopoverOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-      form.reset({
-        name: role?.name || "",
-        description: role?.description || "",
-        permissionIds: role?.permissions?.map(p => p.id) || [],
-        menuIds: role?.roleMenus?.map(rm => rm.menuId) || [],
-      });
+      refetch();
+    } else {
+      setPermissionSearch('');
     }
-  }, [isOpen, role, form.reset]);
-
-
-  const handleSubmit = (data: RoleFormData) => {
-    onSubmit(data);
   };
 
-  const title = mode === "create" ? "Tạo vai trò mới" : "Chỉnh sửa vai trò";
+  const dropdownOptions = useMemo(() => {
+    if (!permissions) return [];
+    return permissions.map(p => ({ value: p.id, label: p.name }));
+  }, [permissions]);
+
+  useEffect(() => {
+    const newOptions = dropdownOptions.filter(
+      (opt) => !knownPermissionOptions.some((known) => known.value === opt.value)
+    );
+    if (newOptions.length > 0) {
+      setKnownPermissionOptions((prev) => [...prev, ...newOptions]);
+    }
+  }, [dropdownOptions, knownPermissionOptions]);
+
+  useEffect(() => {
+    if (role && mode === 'edit') {
+      const initialOptions = role.rolePermissions?.map(rp => ({ value: rp.permission.id, label: rp.permission.name })) || [];
+      setKnownPermissionOptions(initialOptions);
+      form.reset({
+        name: role.name || '',
+        description: role.description || '',
+        permissionIds: role.rolePermissions?.map(rp => rp.permission.id) || [],
+      });
+    } else {
+      form.reset({
+        name: '',
+        description: '',
+        permissionIds: [],
+      });
+      setKnownPermissionOptions([]);
+    }
+  }, [role, mode, form.reset]);
+
+    const selectedIds = form.watch('permissionIds') || [];
+    const selectedPermissionOptions = useMemo(
+        () => knownPermissionOptions.filter((opt) => selectedIds.includes(opt.value as number)),
+        [knownPermissionOptions, selectedIds]
+    );
+
+  function handleFormSubmit(data: z.infer<typeof roleFormSchema>) {
+    const submissionData: RoleMutationData = {
+      name: data.name,
+      description: data.description || null,
+      permissionIds: data.permissionIds || [],
+    };
+    onSubmit(submissionData);
+  }
 
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onCancel}
+      onOpenChange={(open) => !open && onCancel()}
       title={title}
       className="sm:max-w-lg"
     >
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(handleFormSubmit)}
+        className="space-y-4 p-2"
+      >
+        {/* Name Field */}
         <div className="space-y-2">
-          <Label htmlFor="name">Tên vai trò</Label>
+          <Label htmlFor="name">Tên vai trò *</Label>
           <Input
             id="name"
             {...form.register("name")}
-            placeholder="Nhập tên vai trò"
+            placeholder="Ví dụ: Quản trị viên"
+            required
             disabled={isLoading}
+            className={form.formState.errors.name ? "border-destructive" : ""}
           />
-          {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
+          {form.formState.errors.name && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.name.message}
+            </p>
+          )}
         </div>
 
+        {/* Description Field */}
         <div className="space-y-2">
           <Label htmlFor="description">Mô tả</Label>
           <Textarea
             id="description"
             {...form.register("description")}
-            placeholder="Nhập mô tả vai trò"
-            rows={3}
+            placeholder="Mô tả vai trò..."
             disabled={isLoading}
+            className={form.formState.errors.description ? "border-destructive" : ""}
           />
+          {form.formState.errors.description && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.description.message}
+            </p>
+          )}
         </div>
 
+        {/* Permissions Field */}
         <div className="space-y-2">
-          <Label>Quyền</Label>
+          <Label htmlFor="permissionIds">Quyền hạn</Label>
           <Controller
             name="permissionIds"
             control={form.control}
             render={({ field }) => (
               <MultipleCombobox
-                options={(permissions || []).map(p => ({ value: p.id, label: p.name }))}
-                value={field.value}
+                options={dropdownOptions}
+                selectedOptions={selectedPermissionOptions}
+                value={field.value || []}
                 onChange={field.onChange}
+                inputValue={permissionSearch}
                 onInputChange={setPermissionSearch}
                 isLoading={isLoadingPermissions}
-                disabled={isLoading}
-                placeholder="Chọn quyền"
+                placeholder="Chọn các quyền..."
+                onOpenChange={handlePermissionsPopoverOpenChange}
               />
             )}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Menus</Label>
-          <Controller
-            name="menuIds"
-            control={form.control}
-            render={({ field }) => (
-              <MultipleCombobox
-                options={(menus || []).map(m => ({ value: m.id, label: m.name }))}
-                value={field.value}
-                onChange={field.onChange}
-                onInputChange={setMenuSearch}
-                isLoading={isLoadingMenus}
-                disabled={isLoading}
-                placeholder="Chọn menus"
-              />
-            )}
-          />
-        </div>
-
+        {/* Buttons */}
         <div className="flex justify-end space-x-2 pt-4 border-t">
           <Button
             type="button"
@@ -169,13 +189,13 @@ export function RoleForm({
           </Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading
-              ? "Đang lưu..."
+              ? "Đang xử lý..."
               : mode === "create"
-              ? "Tạo vai trò"
+              ? "Tạo mới"
               : "Cập nhật"}
           </Button>
         </div>
       </form>
     </Modal>
   );
-}
+}); 
