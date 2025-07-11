@@ -18,7 +18,7 @@ const defaultMenuItems: Menu[] = [
 	{
 		id: -1,
 		name: 'Menu',
-		path: '/menu',
+		path: '/admin/menu',
 		icon: 'menu',
 		displayOrder: 999,
 		parentId: null
@@ -38,7 +38,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 			const menusArray = Array.isArray(menusData) ? menusData : []
 			
 			// Ensure menu page is always available
-			const hasMenuPage = menusArray.some(menu => menu.path === '/menu')
+			const hasMenuPage = menusArray.some(menu => menu.path === '/admin/menu')
 			
 			if (!hasMenuPage) {
 				// Add default menu items if not present
