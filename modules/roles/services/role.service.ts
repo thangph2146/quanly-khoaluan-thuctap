@@ -32,6 +32,7 @@ export class RoleService {
     return createRole({
       name: data.name,
       description: data.description || null,
+      permissionIds: data.permissionIds || [],
     })
   }
 
@@ -39,6 +40,7 @@ export class RoleService {
     return updateRole(id, {
       name: data.name,
       description: data.description || null,
+      permissionIds: data.permissionIds || [],
     })
   }
 

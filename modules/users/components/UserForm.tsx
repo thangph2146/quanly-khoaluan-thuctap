@@ -100,11 +100,11 @@ export function UserForm({
 
   useEffect(() => {
     if (isOpen) {
-      if (user) {
+      if (user && roleOptions.length > 0) {
         // Since we get role names, we need to map them to available options
-        const initialRoleOptions = (roleOptions || [])
-        .filter(opt => user.userRoles.includes(opt.name))
-        .map(opt => ({ value: opt.id, label: opt.name }));
+        const initialRoleOptions = roleOptions
+          .filter(opt => user.userRoles.includes(opt.name))
+          .map(opt => ({ value: opt.id, label: opt.name }));
 
         setKnownRoleOptions(prev => {
           const newOpts = initialRoleOptions.filter(
@@ -123,7 +123,7 @@ export function UserForm({
           keycloakUserId: user.keycloakUserId,
           roleIds: selectedRoleIds,
         });
-      } else {
+      } else if (!user) {
         form.reset({
           name: "",
           email: "",

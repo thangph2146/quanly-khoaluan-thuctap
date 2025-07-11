@@ -6,6 +6,8 @@ import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
 import type { Role, RoleListProps } from '../types'
+import { Badge } from '@/components/ui/badge'
+import { Row } from '@tanstack/react-table'
 
 /**
  * Role List Table
@@ -31,23 +33,42 @@ export function RoleList({
     {
       accessorKey: 'name',
       header: 'Tên vai trò',
-      cell: ({ row }: { row: { original: Role } }) => (
+      cell: ({ row }: { row: Row<Role> }) => (
         <div className="font-medium">{row.original.name}</div>
       ),
     },
     {
       accessorKey: 'description',
       header: 'Mô tả',
-      cell: ({ row }: { row: { original: Role } }) => (
-        <div className="text-sm text-gray-600">
+      cell: ({ row }: { row: Row<Role> }) => (
+        <div className="text-sm text-gray-600 max-w-[600px] whitespace-normal">
           {row.original.description || 'Không có mô tả'}
         </div>
       ),
     },
     {
+      accessorKey: 'rolePermissions',
+      header: 'Quyền hạn',
+      cell: ({ row }: { row: Row<Role> }) => {
+        const permissions = row.original.rolePermissions;
+        if (!permissions || permissions.length === 0) {
+          return <span className="text-xs text-muted-foreground">Chưa có quyền</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[400px]">
+            {permissions.map(({ permission }) => (
+              <Badge key={permission.id} variant="secondary" className="text-xs">
+                {permission.name}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
       id: 'actions',
       header: 'Thao tác',
-      cell: ({ row }: { row: { original: Role } }) => {
+      cell: ({ row }: { row: Row<Role> }) => {
         const role = row.original
         return (
           <div className="flex space-x-2">
