@@ -43,7 +43,7 @@ const AcademicPage: FC = () => {
 	]
 
 	return (
-		<div className="container mx-auto py-6 space-y-6 p-4">
+		<div className="mx-auto py-6 space-y-6 p-4">
 			{/* Page Header */}
 			<PageHeader
 				title="Quản lý Học vụ"
