@@ -1,8 +1,8 @@
 /**
  * API service for lecturers
  */
-import client from './client'
-import type { Department } from './departments.api' // Assuming you might want this type
+import client from '../../../lib/api/client'
+import type { Department } from '../../departments/api/departments.api' // Assuming you might want this type
 
 // Base Lecturer type from the backend
 export interface Lecturer {

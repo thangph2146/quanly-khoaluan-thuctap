@@ -2,7 +2,7 @@
  * Departments API
  * API functions for department management
  */
-import apiClient from './client'
+import apiClient from '../../../lib/api/client'
 
 export interface Department {
   id: number

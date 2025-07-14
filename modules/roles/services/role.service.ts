@@ -12,7 +12,7 @@ import {
   bulkPermanentDeleteRoles,
   bulkRestoreRoles,
   bulkSoftDeleteRoles,
-} from '@/lib/api/roles.api'
+} from '@/modules/roles/api/roles.api'
 import type { Role, RoleFilters, PaginatedResponse, RoleMutationData } from '../types'
 
 export class RoleService {

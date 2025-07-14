@@ -1,4 +1,4 @@
-import client from './client';
+import client from '../../../lib/api/client';
 
 // Re-defining interfaces here to avoid circular dependencies
 // A more robust solution might involve a shared types package.

@@ -1,4 +1,4 @@
-import client from './client'
+import client from '../../../lib/api/client'
 import type { PermissionFilters, PermissionMutationData } from '@/modules/permissions/types'
 import apiClient from '@/lib/api/client';
 

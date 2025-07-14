@@ -10,7 +10,7 @@ import {
   bulkSoftDeleteUsers,
   type CreateUserData,
   type UpdateUserData
-} from '@/lib/api/users.api'
+} from '@/modules/users/api/users.api'
 import type { User, PaginatedResponse, UserFilters } from '../types'
 
 /**

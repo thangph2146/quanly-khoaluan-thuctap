@@ -3,7 +3,7 @@ import type {
   CreateAcademicYearData,
   UpdateAcademicYearData,
   AcademicYearFilters as ApiAcademicYearFilters 
-} from '@/lib/api/academic-years.api'
+} from '@/modules/academic-years/api/academic-years.api'
 
 export type AcademicYear = ApiAcademicYear;
 export type AcademicYearMutationData = CreateAcademicYearData | UpdateAcademicYearData;

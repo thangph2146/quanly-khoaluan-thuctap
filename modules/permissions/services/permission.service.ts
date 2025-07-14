@@ -14,7 +14,7 @@ import {
   bulkSoftDeletePermissions,
   getPermissionModules,
   type PaginatedPermissions,
-} from '@/lib/api/permissions.api'
+} from '@/modules/permissions/api/permissions.api'
 import type { Permission, PermissionMutationData, PermissionFilters } from '../types'
 
 export class PermissionService {

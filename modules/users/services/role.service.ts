@@ -2,7 +2,7 @@
  * Role Service
  * Service for role management
  */
-import { getAllRoles } from '@/lib/api/roles.api'
+import { getAllRoles } from '@/modules/roles/api/roles.api'
 import type { Role as UserModuleRole } from '../types'
 import type { Role as RolesModuleRole } from '@/modules/roles/types'
 

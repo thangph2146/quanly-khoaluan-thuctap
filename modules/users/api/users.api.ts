@@ -1,4 +1,4 @@
-import httpsAPI from './client'
+import httpsAPI from '../../../lib/api/client'
 import type { Role, User, PaginatedResponse, UserFilters } from '@/modules/users/types'
 
 // Define the structure for creating a user, matching backend CreateUserRequest

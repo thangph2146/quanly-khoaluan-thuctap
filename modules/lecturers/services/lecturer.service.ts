@@ -18,7 +18,7 @@ import {
   type UpdateLecturerData,
   type PaginatedLecturers,
   type LecturerFilters
-} from '@/lib/api/lecturers.api'
+} from '@/modules/lecturers/api/lecturers.api'
 
 export class LecturerService {
   static async getAll(filters: LecturerFilters): Promise<PaginatedLecturers> {

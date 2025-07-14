@@ -13,7 +13,7 @@ import {
   bulkRestoreStudents,
   bulkSoftDeleteStudents,
   type PaginatedStudents,
-} from '@/lib/api/students.api';
+} from '@/modules/students/api/students.api';
 import type { Student, StudentFilters, StudentMutationData } from '../types';
 
 export class StudentService {

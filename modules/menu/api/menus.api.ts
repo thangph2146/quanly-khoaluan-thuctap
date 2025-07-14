@@ -1,4 +1,4 @@
-import httpsAPI from './client'
+import httpsAPI from '../../../lib/api/client'
 import type { Menu, CreateMenuData, UpdateMenuData } from '@/modules/menu/types'
 
 /**

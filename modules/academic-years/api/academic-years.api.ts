@@ -1,7 +1,7 @@
 /**
  * API functions for Academic Years
  */
-import client from './client';
+import client from '../../../lib/api/client';
 
 // Keep in sync with backend
 export interface AcademicYear {

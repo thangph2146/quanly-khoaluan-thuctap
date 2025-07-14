@@ -15,7 +15,7 @@ import {
   type Department,
   type DepartmentFilters,
   type PaginatedDepartments
-} from '@/lib/api/departments.api'
+} from '@/modules/departments/api/departments.api'
 import type { DepartmentMutationData } from '../types'
 
 export class DepartmentService {

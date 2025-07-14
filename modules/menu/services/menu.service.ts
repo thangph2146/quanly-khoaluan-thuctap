@@ -5,7 +5,7 @@ import {
   createMenu, 
   updateMenu, 
   deleteMenu
-} from '@/lib/api/menus.api'
+} from '@/modules/menu/api/menus.api'
 import type { Menu, CreateMenuData, UpdateMenuData, MenuTreeItem } from '../types'
 
 /**

@@ -3,7 +3,7 @@
  * API functions for role management
  */
 import type { PaginatedResponse, Role, RoleFilters, RoleMutationData } from '@/modules/roles/types'
-import apiClient from './client'
+import apiClient from '../../../lib/api/client'
 
 /**
  * Get all roles (paginated)

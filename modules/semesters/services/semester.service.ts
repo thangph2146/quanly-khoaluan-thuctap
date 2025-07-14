@@ -1,4 +1,4 @@
-import { SemestersApi } from "@/lib/api/semesters.api";
+import { SemestersApi } from "@/modules/semesters/api/semesters.api";
 import type {
   Semester,
   SemesterFilters,

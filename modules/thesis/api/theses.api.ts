@@ -2,7 +2,7 @@
  * Theses API
  * API functions for thesis management
  */
-import apiClient from './client'
+import apiClient from '../../../lib/api/client'
 
 export interface Thesis {
   id: number;

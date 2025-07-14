@@ -19,7 +19,7 @@ import {
   type UpdateAcademicYearData,
   type PaginatedAcademicYears,
   type AcademicYearFilters
-} from '@/lib/api/academic-years.api'
+} from '@/modules/academic-years/api/academic-years.api'
 
 export class AcademicYearService {
   static async getAll(filters: AcademicYearFilters): Promise<PaginatedAcademicYears> {

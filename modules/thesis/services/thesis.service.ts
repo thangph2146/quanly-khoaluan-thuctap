@@ -15,7 +15,7 @@ import {
   type ThesisFilters,
   type PaginatedTheses,
   type ThesisMutationData
-} from '@/lib/api/theses.api'
+} from '@/modules/thesis/api/theses.api'
 
 export class ThesisService {
   static async getAll(filters: ThesisFilters): Promise<PaginatedTheses> {

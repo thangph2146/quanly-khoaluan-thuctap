@@ -3,7 +3,7 @@
  * Custom hook for managing departments data
  */
 import { useState, useEffect } from 'react'
-import { getAllDepartments, type Department } from '@/lib/api/departments.api'
+import { getAllDepartments, type Department } from '@/modules/departments/api/departments.api'
 
 /**
  * Hook for managing departments data (flat list for dropdown)

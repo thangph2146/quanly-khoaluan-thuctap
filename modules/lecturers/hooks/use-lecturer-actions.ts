@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { LecturerService } from '../services'
 import type { LecturerMutationData } from '../types'
-import type { UpdateLecturerData } from '@/lib/api/lecturers.api'
+import type { UpdateLecturerData } from '@/modules/lecturers/api/lecturers.api'
 
 export function useLecturerActions(onSuccess?: () => void) {
   const [isCreating, setIsCreating] = useState(false)

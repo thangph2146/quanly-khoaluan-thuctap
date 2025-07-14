@@ -2,8 +2,8 @@ import type {
   Lecturer as ApiLecturer, 
   CreateLecturerData as ApiCreateLecturerData,
   LecturerFilters as ApiLecturerFilters 
-} from '@/lib/api/lecturers.api'
-import type { Department } from '@/lib/api/departments.api'
+} from '@/modules/lecturers/api/lecturers.api'
+import type { Department } from '@/modules/departments/api/departments.api'
 
 export type Lecturer = ApiLecturer & {
   department?: Department | null

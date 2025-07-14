@@ -1,4 +1,4 @@
-import httpsAPI from './client';
+import httpsAPI from '../../../lib/api/client';
 import type { Semester, SemesterMutationData, SemesterFilters, PaginatedResponse } from '@/modules/semesters/types';
 
 /**

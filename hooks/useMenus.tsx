@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Menu } from '@/modules/menu/types'
-import { getMenus } from '@/lib/api/menus.api'
+import { getMenus } from '@/modules/menu/api/menus.api'
 
 interface MenuContextType {
 	menus: Menu[]
