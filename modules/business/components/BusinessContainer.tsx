@@ -1,83 +1,89 @@
 /**
- * Departments Container Component
- * Manages state and actions for departments
+ * Business Container Component
+ * Manages state and actions for businesses
  */
-'use-client'
-
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
-import { DepartmentList } from './DepartmentList'
-import { DepartmentForm } from './DepartmentForm'
-import { DepartmentDetails } from './DepartmentDetails'
-import { DepartmentDeletedList } from './DepartmentDeletedList'
-import { useDepartments, useDepartmentActions, useDeletedDepartments } from '../hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input';
+'use client';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useBusinesses, useBusinessActions, useDeletedBusinesses } from '../hooks';
+import { flattenBusinesses } from '../utils/business-tree.utils';
+import { BusinessList } from './BusinessList';
+import { BusinessForm } from './BusinessForm';
+import { BusinessDetails } from './BusinessDetails';
+import { BusinessDeletedList } from './BusinessDeletedList';
+import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/common';
+import type { Business, BusinessFilters, BusinessMutationData } from '../types';
+import { logger } from '@/lib/utils/logger';
 import { Label } from '@/components/ui/label';
-import { PageHeader, Modal } from '@/components/common';
-import type { Department, DepartmentMutationData, DepartmentFilters } from '../types'
-import { logger } from '@/lib/utils/logger'
-import { flattenDepartments, removeDepartmentFromTree } from '../utils/department-tree.utils'
+import { Input } from '@/components/ui/input';
 
-type ModalState = 
+// Định nghĩa ModalState giống departments
+export type ModalState =
   | { type: 'create' }
-  | { type: 'edit', department: Department }
-  | { type: 'delete', department: Department }
+  | { type: 'edit', business: Business }
+  | { type: 'delete', business: Business }
   | { type: 'delete-many', ids: (string | number)[], onSuccess: () => void, permanent?: boolean }
   | { type: 'restore-many', ids: number[], onSuccess: () => void }
-  | { type: 'view', department: Department }
+  | { type: 'view', business: Business }
   | { type: 'idle' };
 
-
-export function DepartmentsContainer() {
+export function BusinessContainer() {
   const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<DepartmentFilters>({ page: 1, limit: 10, search: "" });
-  
-  // Active departments state
-  const { 
-    departments: activeDepartments, 
-    setDepartments: setActiveDepartments, 
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
-    refetch: refetchActive,
-  } = useDepartments(filters);
+  const [filters, setFilters] = useState<BusinessFilters>({ page: 1, limit: 10, search: '' });
 
-  // Deleted departments state
-  const { 
-    deletedDepartments, 
-    total: deletedTotal, 
+  // Active businesses state
+  const {
+    businesses: activeBusinesses,
+    total: activeTotal,
+    isLoading: isLoadingActive,
+    refetch: refetchActive,
+  } = useBusinesses(filters);
+
+  // Deleted businesses state
+  const {
+    deletedBusinesses,
+    total: deletedTotal,
     isLoading: isLoadingDeleted,
     refetch: refetchDeleted,
-  } = useDeletedDepartments(filters);
-  
-  // Reset page to 1 when switching tabs
+  } = useDeletedBusinesses(filters);
+
   useEffect(() => {
     setFilters(f => ({ ...f, page: 1 }));
   }, [showDeleted]);
 
-
   // Actions
-  const { 
-    createDepartment, 
-    updateDepartment, 
-    deleteDepartment, 
-    restoreDepartments,
-    permanentDeleteDepartments,
-    softDeleteDepartments,
-    isCreating, 
-    isUpdating, 
+  const {
+    createBusiness,
+    updateBusiness,
+    deleteBusiness,
+    restoreBusinesses,
+    permanentDeleteBusinesses,
+    softDeleteBusinesses,
+    isCreating,
+    isUpdating,
     isDeleting,
     isRestoring,
-  } = useDepartmentActions(() => {
+  } = useBusinessActions(() => {
     refetchActive();
     refetchDeleted();
-  })
-  
+  });
+
+  // Modal state
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const allDepartmentsForForm = useMemo(() => flattenDepartments(activeDepartments), [activeDepartments]);
-
+  const allBusinessesForForm = useMemo(() => flattenBusinesses(activeBusinesses), [activeBusinesses]);
   const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
 
+  // Map lại dữ liệu để đảm bảo đủ trường cho FE
+  const safeActiveBusinesses = (activeBusinesses || []).map(b => ({
+    ...b
+  }));
+  const safeDeletedBusinesses = (deletedBusinesses || []).map(b => ({
+    ...b
+  }));
+
+  // filterBar giống departments
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <div className="flex flex-col space-y-2 justify-between">
@@ -85,7 +91,7 @@ export function DepartmentsContainer() {
         <div className="flex items-center gap-2">
           <Input
             id="search"
-            placeholder="Tìm kiếm đơn vị..."
+            placeholder="Tìm kiếm business..."
             value={filters.search || ''}
             onChange={(e) =>
               setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))
@@ -104,98 +110,94 @@ export function DepartmentsContainer() {
         </div>
       </div>
     </div>
-  )
+  );
 
+  // Handlers
   const handleCreate = () => setModalState({ type: 'create' });
-  const handleEdit = (department: Department) => setModalState({ type: 'edit', department });
-  const handleDelete = (department: Department) => setModalState({ type: 'delete', department });
-  const handleView = (department: Department) => setModalState({ type: 'view', department });
+  const handleEdit = (business: Business) => setModalState({ type: 'edit', business });
+  const handleDelete = (business: Business) => setModalState({ type: 'delete', business });
+  const handleView = (business: Business) => setModalState({ type: 'view', business });
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
   const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
     setModalState({ type: 'delete-many', ids, onSuccess });
   };
-  
   const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
-    setModalState({ type: 'restore-many', ids: ids as number[], onSuccess });
+    setModalState({ type: 'restore-many', ids: ids.map(Number), onSuccess });
   };
-
-  const handleCreateSubmit = useCallback(async (data: DepartmentMutationData) => {
-    try {
-      await createDepartment(data)
-      handleCancel()
-    } catch (error) {
-      logger.error('Failed to create department', error)
-    }
-  }, [createDepartment, handleCancel])
-
-  const handleEditSubmit = useCallback(async (data: DepartmentMutationData) => {
-    if (modalState.type !== 'edit') return
-    
-    try {
-      await updateDepartment(modalState.department.id, data)
-      handleCancel()
-    } catch (error) {
-      logger.error('Failed to update department', error)
-    }
-  }, [modalState, updateDepartment, handleCancel])
-
-  const handleConfirmDelete = async () => {
-    if (modalState.type !== 'delete') return
-    
-    const success = await deleteDepartment(modalState.department.id)
-    if (success) {
-      // Optimistic update
-      setActiveDepartments(prev => removeDepartmentFromTree(prev, modalState.department.id));
-      handleCancel()
-    }
-  }
-
-  const handleConfirmDeleteMany = async () => {
-    if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteDepartments(modalState.ids as number[]);
-    if (success) {
-      // Let the hook handle refetching
-      modalState.onSuccess();
-      handleCancel();
-    }
-  }
-
-  const handleConfirmRestoreMany = async () => {
-    if (modalState.type !== 'restore-many') return;
-    const success = await restoreDepartments(modalState.ids);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  }
-
   const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
     setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
   };
-  
-  const handleConfirmPermanentDeleteMany = async () => {
-    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteDepartments(modalState.ids as number[]);
-    if (success) {
-      // Let the hook handle refetching instead of optimistic update
+
+  // Submit handlers có try/catch giống departments
+  const handleCreateSubmit = useCallback(async (data: BusinessMutationData) => {
+    try {
+      await createBusiness(data);
+      handleCancel();
+    } catch (error) {
+      logger.error('Failed to create business', error);
+    }
+  }, [createBusiness, handleCancel]);
+
+  const handleEditSubmit = useCallback(async (data: BusinessMutationData) => {
+    if (modalState.type !== 'edit') return;
+    try {
+      await updateBusiness(modalState.business.id, data);
+      handleCancel();
+    } catch (error) {
+      logger.error('Failed to update business', error);
+    }
+  }, [modalState, updateBusiness, handleCancel]);
+
+  const handleConfirmDelete = async () => {
+    if (modalState.type !== 'delete') return;
+    try {
+      await deleteBusiness(modalState.business.id);
+      handleCancel();
+    } catch (error) {
+      logger.error('Failed to delete business', error);
+    }
+  };
+
+  const handleConfirmDeleteMany = async () => {
+    if (modalState.type !== 'delete-many') return;
+    try {
+      if (modalState.permanent) {
+        await permanentDeleteBusinesses(modalState.ids.map(Number));
+      } else {
+        await softDeleteBusinesses(modalState.ids.map(Number));
+      }
       modalState.onSuccess();
       handleCancel();
+    } catch (error) {
+      logger.error('Failed to delete many businesses', error);
     }
-  }
+  };
 
+  const handleConfirmRestoreMany = async () => {
+    if (modalState.type !== 'restore-many') return;
+    try {
+      await restoreBusinesses(modalState.ids.map(Number));
+      modalState.onSuccess();
+      handleCancel();
+    } catch (error) {
+      logger.error('Failed to restore many businesses', error);
+    }
+  };
+
+  // Render
   return (
     <PageHeader
-      title="Quản lý Đơn vị"
-      description="Quản lý các đơn vị trong hệ thống"
+      title="Quản lý Business"
+      description="Quản lý các business trong hệ thống"
       breadcrumbs={[
         { label: "Trang chủ", href: "/" },
-        { label: "Đơn vị", href: "/departments" },
+        { label: "Business", href: "/business" },
       ]}
       actions={
         <div className="flex gap-2">
           <Button onClick={handleCreate} disabled={isCreating}>
-            + Thêm đơn vị
+            + Thêm business
           </Button>
           <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
             {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
@@ -204,8 +206,8 @@ export function DepartmentsContainer() {
       }
     >
       {showDeleted ? (
-        <DepartmentDeletedList
-          departments={deletedDepartments}
+        <BusinessDeletedList
+          businesses={safeDeletedBusinesses}
           isLoading={isLoadingDeleted}
           onRestore={handleRestoreMany}
           onPermanentDelete={handlePermanentDeleteMany}
@@ -218,8 +220,8 @@ export function DepartmentsContainer() {
           onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
         />
       ) : (
-        <DepartmentList
-          departments={activeDepartments}
+        <BusinessList
+          businesses={safeActiveBusinesses}
           isLoading={isLoadingActive}
           onEdit={handleEdit}
           onView={handleView}
@@ -235,11 +237,11 @@ export function DepartmentsContainer() {
       )}
 
       {/* Create/Edit Modal */}
-      <DepartmentForm
+      <BusinessForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
-        title={modalState.type === 'create' ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}
-        department={modalState.type === 'edit' ? modalState.department : undefined}
-        allDepartments={allDepartmentsForForm}
+        title={modalState.type === 'create' ? 'Tạo business mới' : 'Chỉnh sửa business'}
+        business={modalState.type === 'edit' ? modalState.business : undefined}
+        allBusinesses={allBusinessesForForm}
         onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
         isLoading={isCreating || isUpdating}
@@ -247,10 +249,10 @@ export function DepartmentsContainer() {
       />
 
       {/* Details Modal */}
-      <DepartmentDetails
+      <BusinessDetails
         isOpen={modalState.type === 'view'}
         onClose={handleCancel}
-        department={modalState.type === 'view' ? modalState.department : null}
+        business={modalState.type === 'view' ? modalState.business : null}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -261,7 +263,7 @@ export function DepartmentsContainer() {
       >
         <div>
           <p className="text-sm text-muted-foreground">
-            Bạn có chắc chắn muốn xóa đơn vị &quot;{modalState.type === 'delete' ? modalState.department.name : ''}&quot;? 
+            Bạn có chắc chắn muốn xóa business &quot;{modalState.type === 'delete' ? modalState.business.name : ''}&quot;?
             Hành động này sẽ chuyển mục này vào thùng rác.
           </p>
           <div className="flex justify-end gap-2 mt-6">
@@ -273,7 +275,7 @@ export function DepartmentsContainer() {
               onClick={handleConfirmDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? 'Đang xóa...' : 'Xóa'}
+              Xóa
             </Button>
           </div>
         </div>
@@ -287,9 +289,11 @@ export function DepartmentsContainer() {
       >
         <div>
           <p className="text-sm text-muted-foreground">
-            {modalState.type === 'delete-many' && modalState.permanent
-              ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${Array.isArray(modalState.ids) ? modalState.ids.length : 0} mục đã chọn? Hành động này không thể hoàn tác.`
-              : `Bạn có chắc chắn muốn xóa ${modalState.type === 'delete-many' && Array.isArray(modalState.ids) ? modalState.ids.length : 0} mục đã chọn? Hành động này sẽ chuyển các mục vào thùng rác.`}
+            {modalState.type === 'delete-many' && Array.isArray(modalState.ids)
+              ? (modalState.permanent
+                ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} business?`
+                : `Bạn có chắc chắn muốn xóa ${modalState.ids.length} business?`)
+              : ''}
           </p>
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={handleCancel}>
@@ -297,10 +301,10 @@ export function DepartmentsContainer() {
             </Button>
             <Button
               variant="destructive"
-              onClick={modalState.type === 'delete-many' && modalState.permanent ? handleConfirmPermanentDeleteMany : handleConfirmDeleteMany}
+              onClick={handleConfirmDeleteMany}
               disabled={isDeleting}
             >
-              {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
+              Xóa
             </Button>
           </div>
         </div>
@@ -310,25 +314,26 @@ export function DepartmentsContainer() {
       <Modal
         isOpen={modalState.type === 'restore-many'}
         onOpenChange={(open) => !open && handleCancel()}
-        title="Xác nhận khôi phục nhiều mục"
+        title="Xác nhận khôi phục"
       >
         <div>
           <p className="text-sm text-muted-foreground">
-            Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' ? modalState.ids.length : 0} mục đã chọn?
+            Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' && Array.isArray(modalState.ids) ? modalState.ids.length : 0} business?
           </p>
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={handleCancel}>
               Hủy
             </Button>
             <Button
+              variant="default"
               onClick={handleConfirmRestoreMany}
               disabled={isRestoring}
             >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+              Khôi phục
             </Button>
           </div>
         </div>
       </Modal>
     </PageHeader>
-  )
+  );
 }
