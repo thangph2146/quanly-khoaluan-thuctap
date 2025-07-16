@@ -8,7 +8,7 @@ import {
   bulkSoftDeletePartners,
   bulkRestorePartners,
   bulkPermanentDeletePartners,
-} from '@/lib/api/partners.api';
+} from '@/modules/partners/api/partners.api';
 import type { Partner, PartnerMutationData, PartnerFilters, PaginatedResponse } from '../types';
 
 export class PartnerService {

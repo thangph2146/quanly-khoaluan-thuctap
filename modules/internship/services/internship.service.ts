@@ -1,7 +1,7 @@
 /**
  * Internship Service
  */
-import * as api from '@/lib/api/internships.api'
+import * as api from '@/modules/internship/api/internships.api'
 import type {
   Internship,
   CreateInternshipData,

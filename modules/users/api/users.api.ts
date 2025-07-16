@@ -111,8 +111,9 @@ export const bulkRestoreUsers = async (ids: number[]): Promise<void> => {
  * Bulk permanently deletes users by their IDs.
  * @param ids Array of user IDs to permanently delete.
  */
-export const bulkPermanentDeleteUsers = async (ids: number[]): Promise<void> => {
-    await httpsAPI.post('/users/bulk-permanent-delete', ids);
+export const bulkPermanentDeleteUsers = async (ids: number[]): Promise<string> => {
+    const response = await httpsAPI.post('/users/bulk-permanent-delete', ids);
+    return response.data?.message || '';
 };
 
 

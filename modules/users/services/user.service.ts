@@ -77,7 +77,7 @@ export class UserService {
   /**
    * Bulk permanent delete users
    */
-  static async bulkPermanentDelete(ids: number[]): Promise<void> {
+  static async bulkPermanentDelete(ids: number[]): Promise<string> {
     return await bulkPermanentDeleteUsers(ids);
   }
 }

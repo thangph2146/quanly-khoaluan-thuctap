@@ -22,8 +22,7 @@ export function useBulkUserActions(onSuccess?: () => void) {
                     successMessage = `Đã khôi phục ${ids.length} người dùng.`;
                     break;
                 case 'permanentDelete':
-                    await UserService.bulkPermanentDelete(ids);
-                    successMessage = `Đã xóa vĩnh viễn ${ids.length} người dùng.`;
+                    successMessage = await UserService.bulkPermanentDelete(ids);
                     break;
                 default:
                     throw new Error('Hành động không hợp lệ');
