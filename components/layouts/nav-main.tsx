@@ -36,15 +36,9 @@ export function NavMain() {
 		)
 	}
 
-	// Filter menus based on permissions and build navigation
+	// Build navigation from menus (already filtered by permissions in MenuProvider)
 	const buildNavigation = (menuItems: Menu[]): React.ReactNode[] => {
 		return menuItems
-			.filter(() => {
-				// Check if user has permission for this menu
-				// For now, we'll assume all menus are accessible
-				// You can implement permission checking here based on your requirements
-				return true
-			})
 			.sort((a, b) => a.displayOrder - b.displayOrder) // Sort by display order
 			.map((menu) => {
 				// Check if this menu has child menus
@@ -68,7 +62,6 @@ export function NavMain() {
 								</SidebarMenuButton>
 								<SidebarMenuSub>
 									{sortedChildren
-										.filter(() => true) // Add permission check here if needed
 										.map((child) => (
 											<SidebarMenuSubItem key={child.id}>
 												<SidebarMenuSubButton

@@ -15,4 +15,18 @@ export const {
     }),
   ],
   secret: process.env.AUTH_SECRET,
+  callbacks: {
+    async jwt({ token, account }) {
+      // Lưu access token vào JWT token khi đăng nhập lần đầu
+      if (account) {
+        token.accessToken = account.access_token
+      }
+      return token
+    },
+    async session({ session, token }) {
+      // Thêm access token vào session để có thể sử dụng ở client
+      session.accessToken = token.accessToken as string
+      return session
+    },
+  },
 }) 

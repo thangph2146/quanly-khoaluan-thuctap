@@ -3,6 +3,7 @@ import axios, {
 	type AxiosRequestConfig,
 	type AxiosResponse,
 } from 'axios'
+import { getSession } from 'next-auth/react'
 
 // Lấy base URL từ biến môi trường, với giá trị mặc định cho môi trường dev
 const API_BASE_URL =
@@ -21,13 +22,14 @@ const httpsAPI: AxiosInstance = axios.create(axiosConfig)
 
 // Thêm interceptor cho request
 httpsAPI.interceptors.request.use(
-	config => {
-		// Trong tương lai, đây là nơi để lấy token từ auth provider (ví dụ: Keycloak)
-		// và đính kèm vào header 'Authorization'
-		// const token = getKeycloakToken();
-		// if (token) {
-		//   config.headers.Authorization = `Bearer ${token}`;
-		// }
+	async config => {
+		// Lấy session và access token từ NextAuth.js
+		const session = await getSession()
+		
+		if (session?.accessToken) {
+			config.headers.Authorization = `Bearer ${session.accessToken}`
+		}
+		
 		return config
 	},
 	error => {
@@ -47,8 +49,10 @@ httpsAPI.interceptors.response.use(
 		// Bất kỳ status code nào ngoài khoảng 2xx sẽ đi vào đây
 		// Ví dụ: xử lý lỗi 401 Unauthorized để redirect về trang login
 		if (error.response?.status === 401) {
-			// Redirect to login page or refresh token
-			console.error('Unauthorized, redirecting to login...')
+			// Chỉ log 401 nếu không phải là endpoint me (để tránh spam logs khi chưa đăng nhập)
+			if (!error.config?.url?.includes('/users/me')) {
+				console.error('Unauthorized, redirecting to login...')
+			}
 		}
 
 		// Xử lý các lỗi khác
@@ -75,17 +79,19 @@ httpsAPI.interceptors.response.use(
 			errorMessage = error.message
 		}
 
-		// Log detailed information for debugging
-		console.error(
-			`API call failed: ${errorMessage}`,
-			{
-				url: error.config?.url,
-				method: error.config?.method,
-				status: error.response?.status,
-				statusText: error.response?.statusText,
-				data: error.response?.data,
-			},
-		)
+		// Log detailed information for debugging (chỉ log nếu không phải 401 từ user endpoints)
+		if (!(error.response?.status === 401 && error.config?.url?.includes('/users/me'))) {
+			console.error(
+				`API call failed: ${errorMessage}`,
+				{
+					url: error.config?.url,
+					method: error.config?.method,
+					status: error.response?.status,
+					statusText: error.response?.statusText,
+					data: error.response?.data,
+				},
+			)
+		}
 
 		return Promise.reject(error)
 	},

@@ -34,7 +34,6 @@ export function MenuDetails({ menu, allMenus = [] }: MenuDetailsProps) {
     // Debug log
     if (!found && parentId) {
       console.warn(`Parent menu với ID ${parentId} không tìm thấy trong danh sách menus`)
-      console.log('Available menus:', flatMenus.map(m => ({ id: m.id, name: m.name })))
     }
     
     return found || null

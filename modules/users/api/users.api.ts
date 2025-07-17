@@ -118,6 +118,24 @@ export const bulkPermanentDeleteUsers = async (ids: number[]): Promise<string> =
 
 
 /**
+ * Fetches current user information from JWT token.
+ * @returns A promise that resolves to the current user object.
+ */
+export const getCurrentUser = async (): Promise<User> => {
+	const response = await httpsAPI.get('/users/me')
+	return response.data
+}
+
+/**
+ * Fetches accessible menus for current user based on their roles.
+ * @returns A promise that resolves to an array of menus.
+ */
+export const getCurrentUserMenus = async (): Promise<any[]> => {
+	const response = await httpsAPI.get('/users/me/menus')
+	return response.data
+}
+
+/**
  * Fetches all roles from the API.
  * @returns A promise that resolves to an array of roles.
  */

@@ -7,7 +7,6 @@ export async function signInWithKeycloak() {
 }
 
 export async function signOutAction() {
-  console.log('Attempting to sign out...')
   try {
     await signOut({ redirectTo: '/', redirect: true })
   } catch (error) {

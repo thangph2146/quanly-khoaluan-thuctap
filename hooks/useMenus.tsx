@@ -1,8 +1,10 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { Menu } from '@/modules/menu/types'
 import { getMenus } from '@/modules/menu/api/menus.api'
+import { getCurrentUserMenus } from '@/modules/users/api/users.api'
 
 interface MenuContextType {
 	menus: Menu[]
@@ -26,18 +28,43 @@ const defaultMenuItems: Menu[] = [
 ]
 
 export function MenuProvider({ children }: { children: React.ReactNode }) {
+	const { data: session, status } = useSession()
 	const [menus, setMenus] = useState<Menu[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
-	const fetchMenus = async () => {
+	const fetchMenus = useCallback(async () => {
 		try {
 			setIsLoading(true)
 			setError(null)
-			const menusData = await getMenus()
+			
+			let menusData: any[] = []
+			
+			// Nếu user đã authenticated, lấy menu theo permissions
+			if (status === 'authenticated' && session?.accessToken) {
+				try {
+					menusData = await getCurrentUserMenus()
+				} catch (err) {
+					console.error('Failed to fetch user menus, falling back to all menus:', err)
+					// Fallback to all menus if user menu fetch fails
+					try {
+						menusData = await getMenus()
+					} catch (fallbackErr) {
+						console.error('Failed to fetch fallback menus:', fallbackErr)
+						menusData = []
+					}
+				}
+			} else if (status === 'unauthenticated') {
+				// User chưa đăng nhập, không show menu nào (trừ default)
+				menusData = []
+			} else {
+				// Status loading, không làm gì cả
+				return
+			}
+			
 			const menusArray = Array.isArray(menusData) ? menusData : []
 			
-			// Ensure menu page is always available
+			// Ensure menu page is always available for admin access
 			const hasMenuPage = menusArray.some(menu => menu.path === '/admin/menu')
 			
 			if (!hasMenuPage) {
@@ -55,7 +82,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 		} finally {
 			setIsLoading(false)
 		}
-	}
+	}, [status, session?.accessToken])
 
 	const refreshMenus = async () => {
 		await fetchMenus()
@@ -63,7 +90,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		fetchMenus()
-	}, [])
+	}, [status, session?.accessToken, fetchMenus])
 
 	const value: MenuContextType = {
 		menus,
