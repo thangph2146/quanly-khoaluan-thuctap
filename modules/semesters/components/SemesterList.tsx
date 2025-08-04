@@ -5,6 +5,7 @@
 import React from 'react'
 import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { DataTable } from '@/components/common/data-table'
 import type { Semester, SemesterListProps } from '../types'
 
@@ -58,22 +59,24 @@ export function SemesterList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button
+            <UpdateButton
+              module="Semester"
               variant="outline"
               size="icon"
               onClick={() => onEdit(semester)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="Semester"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(semester)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         )
       },

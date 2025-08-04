@@ -29,7 +29,7 @@ export function useAcademicYears(filters: AcademicYearFilters) {
 
   useEffect(() => {
     fetchYears({ ...filters, search: debouncedSearch })
-  }, [filters.page, filters.limit, debouncedSearch, filters.startDate, filters.endDate, fetchYears])
+  }, [filters.page, filters.limit, debouncedSearch, fetchYears])
 
   return { ...data, isLoading, error, refetch: () => fetchYears({ ...filters, search: debouncedSearch }) }
 }

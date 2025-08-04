@@ -9,7 +9,7 @@ export interface ThesisPeriod {
   startDate: string;
   endDate: string;
   academicYearId: number;
-  academicYearName: string;
+  academicYearName?: string;
   semesterId: number;
   createdAt: string;
   updatedAt?: string;

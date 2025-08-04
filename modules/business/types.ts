@@ -10,6 +10,9 @@ export interface Business {
   description?: string;
   updatedAt?: string;
   deletedAt?: string;
+  // Tree structure properties
+  parentBusinessId?: number | null;
+  childBusinesses?: Business[];
 }
 
 export interface PaginatedResponse<T> {

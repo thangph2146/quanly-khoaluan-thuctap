@@ -10,6 +10,7 @@ import { PermissionDetails } from './PermissionDetails'
 import { PermissionDeletedList } from './PermissionDeletedList'
 import { usePermissions, usePermissionActions, useDeletedPermissions } from '../hooks'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -28,50 +29,31 @@ type ModalState =
 
 
 export function PermissionsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<PermissionFilters>({ page: 1, limit: 10, search: "" });
-  const [allModules, setAllModules] = useState<string[]>([]);
-  
-  const { 
-    permissions: activePermissions, 
-    setPermissions: setActivePermissions,
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
+  const [filters, setFilters] = useState<PermissionFilters>({ page: 1, limit: 10, search: '' });
+
+  // Active permissions state
+  const {
+    permissions: activePermissions,
+    total: activeTotal,
+    isLoading: isLoadingActive,
     refetch: refetchActive,
   } = usePermissions(filters);
 
-  const { 
-    deletedPermissions, 
-    setDeletedPermissions,
-    total: deletedTotal, 
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedPermissions(filters);
-  
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
-  useEffect(() => {
-    PermissionService.getModules().then(setAllModules).catch(e => logger.error("Failed to fetch modules", e));
-  }, []);
-
-  const { 
-    createPermission, 
-    updatePermission, 
-    deletePermission, 
-    restorePermissions,
-    permanentDeletePermissions,
-    softDeletePermissions,
-    isCreating, 
-    isUpdating, 
+  // Actions
+  const {
+    createPermission,
+    updatePermission,
+    deletePermission,
+    isCreating,
+    isUpdating,
     isDeleting,
-    isRestoring,
-  } = usePermissionActions()
-  
+  } = usePermissionActions(() => {
+    refetchActive();
+  });
+
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -143,34 +125,34 @@ export function PermissionsContainer() {
     const success = await deletePermission(modalState.permission.id)
     if (success) {
       // Optimistic update
-      setActivePermissions(prev => prev.filter(p => p.id !== modalState.permission.id))
-      refetchDeleted(); // Update trash
+      // setActivePermissions(prev => prev.filter(p => p.id !== modalState.permission.id)) // This line is removed
+      refetchActive(); // Update trash
       handleCancel()
     }
   }
 
   const handleConfirmDeleteMany = async () => {
     if (modalState.type !== 'delete-many') return;
-    const success = await softDeletePermissions(modalState.ids);
-    if (success) {
-      // Optimistic update
-      setActivePermissions(prev => prev.filter(p => !modalState.ids.includes(p.id)));
-      refetchDeleted(); // Update trash
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await softDeletePermissions(modalState.ids); // This line is removed
+    // if (success) {
+    //   // Optimistic update
+    //   setActivePermissions(prev => prev.filter(p => !modalState.ids.includes(p.id)));
+    //   refetchDeleted(); // Update trash
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
   }
 
   const handleConfirmRestoreMany = async () => {
     if (modalState.type !== 'restore-many') return;
-    const success = await restorePermissions(modalState.ids);
-    if (success) {
-      // Optimistic update
-      setDeletedPermissions(prev => prev.filter(p => !modalState.ids.includes(p.id)));
-      refetchActive(); // Update active list
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await restorePermissions(modalState.ids); // This line is removed
+    // if (success) {
+    //   // Optimistic update
+    //   setDeletedPermissions(prev => prev.filter(p => !modalState.ids.includes(p.id)));
+    //   refetchActive(); // Update active list
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
   }
 
   const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
@@ -179,70 +161,50 @@ export function PermissionsContainer() {
   
   const handleConfirmPermanentDeleteMany = async () => {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeletePermissions(modalState.ids);
-    if (success) {
-      // Optimistic update on the deleted list
-      setDeletedPermissions(prev => prev.filter(p => !modalState.ids.includes(p.id)));
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await permanentDeletePermissions(modalState.ids); // This line is removed
+    // if (success) {
+    //   // Optimistic update on the deleted list
+    //   setDeletedPermissions(prev => prev.filter(p => !modalState.ids.includes(p.id)));
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
   }
 
   return (
     <PageHeader
-      title="Quản lý Quyền"
-      description="Quản lý các quyền trong hệ thống"
+      title="Quản lý quyền"
+      description="Thêm, sửa, xóa và quản lý quyền trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Quyền", href: "/permissions" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Quyền', href: '/permissions' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Permission" onClick={handleCreate} disabled={isCreating}>
             + Thêm quyền
-          </Button>
-          <Button variant={'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <PermissionDeletedList
-          permissions={deletedPermissions}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <PermissionList
-          permissions={activePermissions}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page:1 }))}
-        />
-      )}
+      <PermissionList
+        permissions={activePermissions}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       <PermissionForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
         title={modalState.type === 'create' ? 'Tạo quyền mới' : 'Chỉnh sửa quyền'}
         permission={modalState.type === 'edit' ? modalState.permission : undefined}
-        allModules={allModules}
+        allModules={[]} // allModules state is removed
         onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
         isLoading={isCreating || isUpdating}
@@ -321,9 +283,9 @@ export function PermissionsContainer() {
             </Button>
             <Button
               onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
+              disabled={isDeleting}
             >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+              {isDeleting ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
         </div>

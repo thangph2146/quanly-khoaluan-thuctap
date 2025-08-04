@@ -5,6 +5,7 @@
 import React from 'react'
 import { Plus, Edit, Trash2, Eye, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CreateButton, UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -57,10 +58,10 @@ export function MenuList({ menus, isLoading, onCreate, onEdit, onDelete, onView 
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Danh sách Menu</CardTitle>
-        <Button onClick={onCreate}>
+        <CreateButton module="Menu" onClick={onCreate}>
           <Plus className="h-4 w-4 mr-2" />
           Thêm menu
-        </Button>
+        </CreateButton>
       </CardHeader>
       <CardContent>
         <Table>
@@ -130,22 +131,24 @@ export function MenuList({ menus, isLoading, onCreate, onEdit, onDelete, onView 
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button
+                      <UpdateButton
+                        module="Menu"
                         variant="outline"
                         size="sm"
                         onClick={() => onEdit(menu)}
                         title="Chỉnh sửa"
                       >
                         <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
+                      </UpdateButton>
+                      <DeleteButton
+                        module="Menu"
                         variant="destructive"
                         size="sm"
                         onClick={() => onDelete(menu)}
                         title="Xóa"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </DeleteButton>
                     </div>
                   </TableCell>
                 </TableRow>

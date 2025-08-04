@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { DataTable } from '@/components/common/data-table';
 import type { ThesisPeriod, ThesisPeriodListProps } from '../types';
 
@@ -71,22 +72,24 @@ export function ThesisPeriodList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button
+            <UpdateButton
+              module="ThesisPeriod"
               variant="outline"
               size="icon"
               onClick={() => onEdit(period)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="ThesisPeriod"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(period)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         );
       },

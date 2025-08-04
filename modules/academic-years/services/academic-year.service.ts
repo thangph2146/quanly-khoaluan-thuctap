@@ -42,7 +42,7 @@ export class AcademicYearService {
     return createAcademicYear(data)
   }
 
-  static async update(id: number, data: AcademicYear): Promise<AcademicYear> {
+  static async update(id: number, data: UpdateAcademicYearData): Promise<AcademicYear> {
     return updateAcademicYear(id, data)
   }
 

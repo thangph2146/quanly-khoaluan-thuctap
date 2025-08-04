@@ -4,14 +4,14 @@
  */
 'use client';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useBusinesses, useBusinessActions, useDeletedBusinesses } from '../hooks';
+import { useBusinesses, useBusinessActions } from '../hooks';
 import { flattenBusinesses } from '../utils/business-tree.utils';
 import { BusinessList } from './BusinessList';
 import { BusinessForm } from './BusinessForm';
 import { BusinessDetails } from './BusinessDetails';
-import { BusinessDeletedList } from './BusinessDeletedList';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Modal } from '@/components/common';
 import type { Business, BusinessFilters, BusinessMutationData } from '../types';
 import { logger } from '@/lib/utils/logger';
@@ -29,7 +29,6 @@ export type ModalState =
   | { type: 'idle' };
 
 export function BusinessContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<BusinessFilters>({ page: 1, limit: 10, search: '' });
 
   // Active businesses state
@@ -40,46 +39,26 @@ export function BusinessContainer() {
     refetch: refetchActive,
   } = useBusinesses(filters);
 
-  // Deleted businesses state
-  const {
-    deletedBusinesses,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedBusinesses(filters);
-
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
   // Actions
   const {
     createBusiness,
     updateBusiness,
     deleteBusiness,
-    restoreBusinesses,
-    permanentDeleteBusinesses,
-    softDeleteBusinesses,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
   } = useBusinessActions(() => {
     refetchActive();
-    refetchDeleted();
   });
 
   // Modal state
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
   const allBusinessesForForm = useMemo(() => flattenBusinesses(activeBusinesses), [activeBusinesses]);
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   // Map lại dữ liệu để đảm bảo đủ trường cho FE
   const safeActiveBusinesses = (activeBusinesses || []).map(b => ({
-    ...b
-  }));
-  const safeDeletedBusinesses = (deletedBusinesses || []).map(b => ({
     ...b
   }));
 
@@ -163,9 +142,9 @@ export function BusinessContainer() {
     if (modalState.type !== 'delete-many') return;
     try {
       if (modalState.permanent) {
-        await permanentDeleteBusinesses(modalState.ids.map(Number));
+        // await permanentDeleteBusinesses(modalState.ids.map(Number)); // This line was removed
       } else {
-        await softDeleteBusinesses(modalState.ids.map(Number));
+        // await softDeleteBusinesses(modalState.ids.map(Number)); // This line was removed
       }
       modalState.onSuccess();
       handleCancel();
@@ -177,7 +156,7 @@ export function BusinessContainer() {
   const handleConfirmRestoreMany = async () => {
     if (modalState.type !== 'restore-many') return;
     try {
-      await restoreBusinesses(modalState.ids.map(Number));
+      // await restoreBusinesses(modalState.ids.map(Number)); // This line was removed
       modalState.onSuccess();
       handleCancel();
     } catch (error) {
@@ -196,45 +175,25 @@ export function BusinessContainer() {
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Business" onClick={handleCreate} disabled={isCreating}>
             + Thêm business
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <BusinessDeletedList
-          businesses={safeDeletedBusinesses}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <BusinessList
-          businesses={safeActiveBusinesses}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <BusinessList
+        businesses={safeActiveBusinesses}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       {/* Create/Edit Modal */}
       <BusinessForm
@@ -327,7 +286,7 @@ export function BusinessContainer() {
             <Button
               variant="default"
               onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
+              disabled={isDeleting} // Changed from isRestoring to isDeleting
             >
               Khôi phục
             </Button>

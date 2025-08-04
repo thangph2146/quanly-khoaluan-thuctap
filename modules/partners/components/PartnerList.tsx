@@ -1,6 +1,7 @@
 import React from "react";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UpdateButton, DeleteButton } from "@/components/common/ProtectedButton";
 import { DataTable } from "@/components/common/data-table";
 import type { Partner } from "../types";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,6 @@ interface PartnerListProps {
   onEdit: (partner: Partner) => void;
   onView: (partner: Partner) => void;
   onDelete: (partner: Partner) => void;
-  onDeleteMany: (ids: (string | number)[]) => void;
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -26,7 +26,6 @@ export const PartnerList: React.FC<PartnerListProps> = ({
   onEdit,
   onView,
   onDelete,
-  onDeleteMany,
   page,
   totalPages,
   onPageChange,
@@ -78,22 +77,24 @@ export const PartnerList: React.FC<PartnerListProps> = ({
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
+            <UpdateButton
+              module="Partner"
               variant="outline"
               size="icon"
               onClick={() => onEdit(partner)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="Partner"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(partner)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         );
       },
@@ -105,10 +106,6 @@ export const PartnerList: React.FC<PartnerListProps> = ({
       columns={columns}
       data={partners || []}
       isLoading={isLoading}
-      onDeleteMany={(ids, onSuccess) => {
-        onDeleteMany(ids);
-        onSuccess();
-      }}
       page={page}
       totalPages={totalPages}
       onPageChange={onPageChange}

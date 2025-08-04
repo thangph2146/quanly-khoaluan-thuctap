@@ -17,15 +17,15 @@ interface DialogState {
 	close: (id: string) => void
 }
 
-const useDialogStore = create<DialogState>((set) => ({
+const useDialogStore = create<DialogState>((set: any) => ({
 	dialogs: [],
-	open: (props) =>
-		set((state) => ({
+	 open: (props: any) =>
+  set((state: any) => ({
 			dialogs: [...state.dialogs, { ...props, id: uuidv4() }],
 		})),
-	close: (id) =>
-		set((state) => ({
-			dialogs: state.dialogs.filter((d) => d.id !== id),
+	 close: (id: any) =>
+  set((state: any) => ({
+   dialogs: state.dialogs.filter((d: any) => d.id !== id),
 		})),
 }))
 

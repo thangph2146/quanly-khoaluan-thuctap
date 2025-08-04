@@ -55,6 +55,20 @@ httpsAPI.interceptors.response.use(
 			}
 		}
 
+		// Xử lý lỗi 403 Forbidden - Access Denied
+		if (error.response?.status === 403) {
+			console.error('Access Denied: Insufficient permissions for', error.config?.url)
+			
+			// Redirect to access denied page or home
+			if (typeof window !== 'undefined') {
+				// Check if we're not already on an error page to avoid redirect loops
+				if (!window.location.pathname.includes('/access-denied') && 
+				    !window.location.pathname.includes('/auth')) {
+					window.location.href = '/access-denied'
+				}
+			}
+		}
+
 		// Xử lý các lỗi khác
 		let errorMessage = 'Đã có lỗi xảy ra'
 

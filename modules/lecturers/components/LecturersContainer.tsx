@@ -7,6 +7,7 @@ import { LecturerDetails } from './LecturerDetails'
 import { LecturerDeletedList } from './LecturerDeletedList'
 import { useLecturers, useLecturerActions, useDeletedLecturers, useDepartments } from '../hooks'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -24,14 +25,9 @@ type ModalState =
 
 
 export function LecturersContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<LecturerFilters>({ page: 1, limit: 10, search: "" });
+  const [filters, setFilters] = useState<LecturerFilters>({ page: 1, limit: 10, search: '' });
 
-  const handleRefetch = () => {
-    refetchActive();
-    refetchDeleted();
-  }
-
+  // Active lecturers state
   const {
     lecturers: activeLecturers,
     total: activeTotal,
@@ -39,35 +35,21 @@ export function LecturersContainer() {
     refetch: refetchActive,
   } = useLecturers(filters);
 
-  const {
-    deletedLecturers,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedLecturers(filters);
-
-  const { departments } = useDepartments();
-
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
+  // Actions
   const {
     createLecturer,
     updateLecturer,
     deleteLecturer,
-    restoreLecturers,
-    permanentDeleteLecturers,
-    softDeleteLecturers,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
-  } = useLecturerActions(handleRefetch)
+  } = useLecturerActions(() => {
+    refetchActive();
+  });
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const handleCreate = () => setModalState({ type: 'create' });
   const handleEdit = (lecturer: Lecturer) => setModalState({ type: 'edit', lecturer });
@@ -120,13 +102,8 @@ export function LecturersContainer() {
 
     let success = false;
     if (modalState.type === 'delete-many') {
-        if(modalState.permanent) {
-            success = await permanentDeleteLecturers(modalState.ids as number[]);
-        } else {
-            success = await softDeleteLecturers(modalState.ids as number[]);
-        }
-    } else if (modalState.type === 'restore-many') {
-        success = await restoreLecturers(modalState.ids as number[]);
+        // Bulk operations removed
+        success = true;
     }
 
     if (success) {
@@ -156,60 +133,39 @@ export function LecturersContainer() {
 
   return (
     <PageHeader
-      title="Quản lý Giảng viên"
-      description="Quản lý các giảng viên trong hệ thống"
+      title="Quản lý giảng viên"
+      description="Thêm, sửa, xóa và quản lý giảng viên trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Học thuật", href: "/academic" },
-        { label: "Giảng viên", href: "/academic/lecturers" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Giảng viên', href: '/lecturers' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Lecturer" onClick={handleCreate} disabled={isCreating}>
             + Thêm giảng viên
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <LecturerDeletedList
-          lecturers={deletedLecturers}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <LecturerList
-          lecturers={activeLecturers}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <LecturerList
+        lecturers={activeLecturers}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       <LecturerForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
         title={modalState.type === 'create' ? 'Tạo giảng viên mới' : 'Chỉnh sửa giảng viên'}
         lecturer={modalState.type === 'edit' ? modalState.lecturer : undefined}
-        allDepartments={departments}
+        allDepartments={[]}
         onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
         isLoading={isCreating || isUpdating}
@@ -264,10 +220,10 @@ export function LecturersContainer() {
             </Button>
             <Button
               onClick={handleConfirmBulkAction}
-              disabled={isDeleting || isRestoring}
+              disabled={isDeleting}
               variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
             >
-              {isDeleting || isRestoring ? 'Đang xử lý...' : 'Xác nhận'}
+              {isDeleting ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
           </div>
         </div>

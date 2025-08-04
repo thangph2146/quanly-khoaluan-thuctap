@@ -8,6 +8,7 @@ export interface Permission {
   module: string;
   description?: string | null;
   deletedAt?: string | null;
+  rolePermissions?: any[];
 }
 
 export interface PaginatedResponse<T> {

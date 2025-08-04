@@ -5,12 +5,6 @@ import {
   LogOut,
 } from "lucide-react"
 
-// import type { User } from "@/modules/users/types"
-// import {
-//   Avatar,
-//   AvatarFallback,
-//   AvatarImage,
-// } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,16 +18,32 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signOutAction } from "@/modules/auth/actions";
+import { useState } from "react";
 
 export function NavUser() {
   const { isMobile } = useSidebar()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   
   // Lấy user thực tế từ session
   const { data: session, status } = useSession();
   const user = session?.user || { name: "Chưa đăng nhập", email: "", avatarUrl: undefined };
 
   if (status === "loading") return <div>Đang tải...</div>;
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    
+    setIsLoggingOut(true);
+    try {
+      await signOutAction();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback - redirect to home
+      window.location.href = '/';
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -44,10 +54,6 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              {/* <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatarUrl || ""} alt={user.name || ""} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-              </Avatar> */}
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
@@ -63,19 +69,18 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                {/* <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                </Avatar> */}
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
               <LogOut />
-              Đăng xuất
+              {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

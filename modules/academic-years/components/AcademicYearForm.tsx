@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Modal } from "@/components/common";
-import type { AcademicYear, CreateAcademicYearData, UpdateAcademicYearData } from '../types';
+import type { AcademicYear, ApiCreateAcademicYearData as CreateAcademicYearData, ApiUpdateAcademicYearData as UpdateAcademicYearData } from '../types';
 
 interface AcademicYearFormProps {
   academicYear?: AcademicYear | null;

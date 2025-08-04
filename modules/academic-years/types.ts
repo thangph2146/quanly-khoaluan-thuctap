@@ -22,7 +22,6 @@ export interface AcademicYearListProps {
   onEdit: (year: AcademicYear) => void;
   onView: (year: AcademicYear) => void;
   onDelete: (year: AcademicYear) => void;
-  onDeleteMany: (ids: (string | number)[], onSuccess: () => void) => void;
   filterBar?: React.ReactNode;
   page?: number;
   totalPages?: number;

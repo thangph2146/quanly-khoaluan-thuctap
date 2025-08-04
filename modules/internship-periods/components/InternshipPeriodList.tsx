@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { DataTable } from '@/components/common/data-table';
 import type { InternshipPeriod, InternshipPeriodListProps } from '../types';
 
@@ -52,12 +53,12 @@ export function InternshipPeriodList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button variant="outline" size="icon" onClick={() => onEdit(period)} title="Chỉnh sửa">
+            <UpdateButton module="InternshipPeriod" variant="outline" size="icon" onClick={() => onEdit(period)} title="Chỉnh sửa">
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="destructive" size="icon" onClick={() => onDelete(period)} title="Xóa">
+            </UpdateButton>
+            <DeleteButton module="InternshipPeriod" variant="destructive" size="icon" onClick={() => onDelete(period)} title="Xóa">
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         );
       },

@@ -7,6 +7,7 @@ import { ThesisDetails } from './ThesisDetails';
 import { ThesisDeletedList } from './ThesisDeletedList';
 import { useTheses, useThesisActions, useDeletedTheses } from '../hooks';
 import { Button } from '@/components/ui/button';
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -23,7 +24,6 @@ type ModalState =
   | { type: 'idle' };
 
 export function ThesesContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<ThesisFilters>({ page: 1, limit: 10, search: '' });
 
   const {
@@ -35,35 +35,19 @@ export function ThesesContainer() {
   } = useTheses(filters);
 
   const {
-    deletedTheses,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedTheses(filters);
-
-  useEffect(() => {
-    setFilters((f: ThesisFilters) => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
-  const {
     createThesis,
     updateThesis,
     deleteThesis,
-    restoreTheses,
-    permanentDeleteTheses,
-    softDeleteTheses,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
   } = useThesisActions(() => {
     refetchActive();
-    refetchDeleted();
   });
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -133,90 +117,41 @@ export function ThesesContainer() {
     if (success) {
       setActiveTheses((prev: Thesis[]) => prev.filter((t: Thesis) => t.id !== modalState.thesis.id));
       handleCancel();
-      refetchDeleted();
+      refetchActive();
     }
   };
 
-  const handleConfirmDeleteMany = async () => {
-    if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteTheses(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
 
-  const handleConfirmRestoreMany = async () => {
-    if (modalState.type !== 'restore-many') return;
-    const success = await restoreTheses(modalState.ids);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
-
-  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
-    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
-  };
-
-  const handleConfirmPermanentDeleteMany = async () => {
-    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteTheses(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
 
   return (
     <PageHeader
-      title="Quản lý Khóa luận"
-      description="Quản lý các khóa luận tốt nghiệp trong hệ thống"
+      title="Quản lý khóa luận"
+      description="Thêm, sửa, xóa và quản lý các khóa luận trong hệ thống"
       breadcrumbs={[
         { label: 'Trang chủ', href: '/' },
         { label: 'Khóa luận', href: '/thesis' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Thesis" onClick={handleCreate} disabled={isCreating}>
             + Thêm khóa luận
-          </Button>
-          <Button variant={'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <ThesisDeletedList
-          theses={deletedTheses}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p: number) => setFilters((f: ThesisFilters) => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l: number) => setFilters((f: ThesisFilters) => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <ThesisList
-          theses={activeTheses}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p: number) => setFilters((f: ThesisFilters) => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l: number) => setFilters((f: ThesisFilters) => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <ThesisList
+        theses={activeTheses}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters((f: ThesisFilters) => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters((f: ThesisFilters) => ({ ...f, limit: l, page: 1 }))}
+      />
 
       <ThesisForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
@@ -278,11 +213,7 @@ export function ThesesContainer() {
             </Button>
             <Button
               variant="destructive"
-              onClick={
-                modalState.type === 'delete-many' && modalState.permanent
-                  ? handleConfirmPermanentDeleteMany
-                  : handleConfirmDeleteMany
-              }
+              onClick={() => {}}
               disabled={isDeleting}
             >
               {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
@@ -305,8 +236,8 @@ export function ThesesContainer() {
             <Button variant="outline" onClick={handleCancel}>
               Hủy
             </Button>
-            <Button onClick={handleConfirmRestoreMany} disabled={isRestoring}>
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+            <Button onClick={() => {}} disabled={isDeleting}>
+              {isDeleting ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
         </div>

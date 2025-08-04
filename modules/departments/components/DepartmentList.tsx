@@ -4,6 +4,7 @@
 import React from 'react'
 import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { DataTable } from '@/components/common/data-table'
 import type { Department, DepartmentListProps } from '../types'
 
@@ -77,22 +78,24 @@ export function DepartmentList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button
+            <UpdateButton
+              module="Department"
               variant="outline"
               size="icon"
               onClick={() => onEdit(dept)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="Department"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(dept)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         )
       },

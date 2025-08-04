@@ -4,6 +4,7 @@
 import React from 'react'
 import { Edit, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { DataTable } from '@/components/common/data-table'
 import { Badge } from '@/components/ui/badge'
 import type { Lecturer, LecturerListProps } from '../types'
@@ -99,22 +100,24 @@ export function LecturerList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button
+            <UpdateButton
+              module="Lecturer"
               variant="outline"
               size="icon"
               onClick={() => onEdit(lecturer)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="Lecturer"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(lecturer)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         )
       },

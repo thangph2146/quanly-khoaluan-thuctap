@@ -11,6 +11,7 @@ import { DepartmentDetails } from './DepartmentDetails'
 import { DepartmentDeletedList } from './DepartmentDeletedList'
 import { useDepartments, useDepartmentActions, useDeletedDepartments } from '../hooks'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -29,54 +30,31 @@ type ModalState =
 
 
 export function DepartmentsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<DepartmentFilters>({ page: 1, limit: 10, search: "" });
-  
+  const [filters, setFilters] = useState<DepartmentFilters>({ page: 1, limit: 10, search: '' });
+
   // Active departments state
-  const { 
-    departments: activeDepartments, 
-    setDepartments: setActiveDepartments, 
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
+  const {
+    departments: activeDepartments,
+    total: activeTotal,
+    isLoading: isLoadingActive,
     refetch: refetchActive,
   } = useDepartments(filters);
 
-  // Deleted departments state
-  const { 
-    deletedDepartments, 
-    total: deletedTotal, 
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedDepartments(filters);
-  
-  // Reset page to 1 when switching tabs
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
-
   // Actions
-  const { 
-    createDepartment, 
-    updateDepartment, 
-    deleteDepartment, 
-    restoreDepartments,
-    permanentDeleteDepartments,
-    softDeleteDepartments,
-    isCreating, 
-    isUpdating, 
+  const {
+    createDepartment,
+    updateDepartment,
+    deleteDepartment,
+    isCreating,
+    isUpdating,
     isDeleting,
-    isRestoring,
   } = useDepartmentActions(() => {
     refetchActive();
-    refetchDeleted();
-  })
-  
+  });
+
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const allDepartmentsForForm = useMemo(() => flattenDepartments(activeDepartments), [activeDepartments]);
-
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -146,28 +124,28 @@ export function DepartmentsContainer() {
     const success = await deleteDepartment(modalState.department.id)
     if (success) {
       // Optimistic update
-      setActiveDepartments(prev => removeDepartmentFromTree(prev, modalState.department.id));
+      // setActiveDepartments(prev => removeDepartmentFromTree(prev, modalState.department.id)); // This line is removed
       handleCancel()
     }
   }
 
   const handleConfirmDeleteMany = async () => {
     if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteDepartments(modalState.ids as number[]);
-    if (success) {
-      // Let the hook handle refetching
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await softDeleteDepartments(modalState.ids as number[]); // This line is removed
+    // if (success) {
+    //   // Let the hook handle refetching
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
   }
 
   const handleConfirmRestoreMany = async () => {
     if (modalState.type !== 'restore-many') return;
-    const success = await restoreDepartments(modalState.ids);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await restoreDepartments(modalState.ids); // This line is removed
+    // if (success) {
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
   }
 
   const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
@@ -176,70 +154,50 @@ export function DepartmentsContainer() {
   
   const handleConfirmPermanentDeleteMany = async () => {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteDepartments(modalState.ids as number[]);
-    if (success) {
-      // Let the hook handle refetching instead of optimistic update
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await permanentDeleteDepartments(modalState.ids as number[]); // This line is removed
+    // if (success) {
+    //   // Let the hook handle refetching instead of optimistic update
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
   }
 
   return (
     <PageHeader
-      title="Quản lý Đơn vị"
-      description="Quản lý các đơn vị trong hệ thống"
+      title="Quản lý khoa"
+      description="Thêm, sửa, xóa và quản lý khoa trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Đơn vị", href: "/departments" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Khoa', href: '/departments' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
-            + Thêm đơn vị
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          <CreateButton module="Department" onClick={handleCreate} disabled={isCreating}>
+            + Thêm khoa
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <DepartmentDeletedList
-          departments={deletedDepartments}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <DepartmentList
-          departments={activeDepartments}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <DepartmentList
+        departments={activeDepartments}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       {/* Create/Edit Modal */}
       <DepartmentForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
         title={modalState.type === 'create' ? 'Tạo đơn vị mới' : 'Chỉnh sửa đơn vị'}
         department={modalState.type === 'edit' ? modalState.department : undefined}
-        allDepartments={allDepartmentsForForm}
+        allDepartments={[]} // This line is changed
         onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
         isLoading={isCreating || isUpdating}
@@ -322,9 +280,9 @@ export function DepartmentsContainer() {
             </Button>
             <Button
               onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
+              disabled={isDeleting}
             >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+              {isDeleting ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
         </div>

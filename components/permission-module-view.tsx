@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Permission } from '@/modules/permission/types'
+import { Permission } from '@/modules/permissions/types'
 import { cn } from '@/lib/utils'
 
 interface PermissionModuleViewProps {
@@ -63,7 +63,7 @@ export function PermissionModuleView({ permissions, modules, onEdit, onDelete, o
 
 		// Sort permissions within each module
 		Object.keys(grouped).forEach(module => {
-			grouped[module].sort((a, b) => a.name.localeCompare(b.name))
+			  grouped[module].sort((a: any, b: any) => a.name.localeCompare(b.name))
 		})
 
 		return grouped
@@ -190,7 +190,7 @@ export function PermissionModuleView({ permissions, modules, onEdit, onDelete, o
 								{isExpanded && (
 									<CardContent className="pt-0">
 										<div className="grid gap-2">
-											{modulePermissions.map(permission => (
+											          {modulePermissions.map((permission: any) => (
 												<div
 													key={permission.id}
 													className="flex items-center justify-between p-3 bg-white/50 rounded-lg border border-white/20"

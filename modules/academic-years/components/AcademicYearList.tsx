@@ -5,6 +5,7 @@
 import React from 'react'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { UpdateButton, DeleteButton } from '@/components/common/ProtectedButton';
 import { DataTable } from '@/components/common/data-table'
 import type { AcademicYear, AcademicYearListProps } from '../types'
 import { type ColumnDef, type Row } from '@tanstack/react-table'
@@ -15,7 +16,6 @@ export function AcademicYearList({
   onEdit,
   onView,
   onDelete,
-  onDeleteMany,
   filterBar,
   page,
   totalPages,
@@ -92,22 +92,24 @@ export function AcademicYearList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button
+            <UpdateButton
+              module="AcademicYear"
               variant="outline"
               size="icon"
               onClick={() => onEdit(academicYear)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="AcademicYear"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(academicYear)}
               title="Xóa"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         )
       },
@@ -123,7 +125,6 @@ export function AcademicYearList({
         data={academicYears}
         isLoading={isLoading}
         filterBar={filterBar}
-        onDeleteMany={onDeleteMany}
         page={page}
         totalPages={totalPages}
         onPageChange={onPageChange}

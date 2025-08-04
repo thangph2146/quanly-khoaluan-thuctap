@@ -27,6 +27,7 @@ import type {
     AcademicYearMutationData
 } from '../types'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 
 type ModalState = 
   | { type: 'create' }
@@ -38,41 +39,31 @@ type ModalState =
   | { type: 'idle' };
 
 export function AcademicYearsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<Omit<AcademicYearFilters, 'startDate' | 'endDate'>>({ page: 1, limit: 10, search: "" });
-  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
+  const [filters, setFilters] = useState<AcademicYearFilters>({ page: 1, limit: 10, search: '' });
 
-  const handleRefetch = () => {
-    refetchActive();
-    refetchDeleted();
-  }
-
+  // Active academic years state
   const {
-    data: activeYears, 
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
+    data: activeAcademicYears,
+    total: activeTotal,
+    isLoading: isLoadingActive,
     refetch: refetchActive,
   } = useAcademicYears(filters);
 
-  const { 
-    deletedAcademicYears, 
-    total: deletedTotal, 
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedAcademicYears(filters);
-
+  // Actions
   const {
     createAcademicYear,
     updateAcademicYear,
     softDeleteAcademicYear,
-    softDeleteAcademicYears,
-    restoreAcademicYears,
-    permanentDeleteAcademicYears,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
-  } = useAcademicYearActions(handleRefetch)
+  } = useAcademicYearActions(() => {
+    refetchActive();
+  });
+
+  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
+
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const handleCreate = () => setModalState({ type: 'create' });
   const handleEdit = (year: AcademicYear) => setModalState({ type: 'edit', year });
@@ -118,12 +109,12 @@ export function AcademicYearsContainer() {
     let success = false;
     if (modalState.type === 'delete-many') {
         if(modalState.permanent) {
-            success = await permanentDeleteAcademicYears(modalState.ids as number[]);
+            // This functionality was removed, so this block will not be reached
         } else {
-            success = await softDeleteAcademicYears(modalState.ids as number[]);
+            // This functionality was removed, so this block will not be reached
         }
     } else if (modalState.type === 'restore-many') {
-        success = await restoreAcademicYears(modalState.ids);
+        // This functionality was removed, so this block will not be reached
     }
 
     if (success) {
@@ -132,8 +123,6 @@ export function AcademicYearsContainer() {
     }
   }
   
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10))
-
   const filterBar = (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
       <div className="flex flex-col space-y-2 sm:col-span-2">
@@ -165,54 +154,34 @@ export function AcademicYearsContainer() {
 
   return (
     <PageHeader
-      title="Quản lý Năm học"
-      description="Quản lý các năm học trong hệ thống"
+      title="Quản lý năm học"
+      description="Thêm, sửa, xóa và quản lý năm học trong hệ thống"
       breadcrumbs={[
         { label: 'Trang chủ', href: '/' },
         { label: 'Năm học', href: '/academic-years' },
       ]}
       actions={
         <div className="flex gap-2">
-            <Button onClick={handleCreate} disabled={isCreating}>
-                + Thêm năm học
-            </Button>
-            <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
-                {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-            </Button>
+          <CreateButton module="AcademicYear" onClick={handleCreate} disabled={isCreating}>
+            + Thêm năm học
+          </CreateButton>
         </div>
       }
     >
-        {showDeleted ? (
-            <AcademicYearDeletedList 
-                academicYears={deletedAcademicYears}
-                isLoading={isLoadingDeleted}
-                onRestore={handleRestoreMany}
-                onPermanentDelete={handlePermanentDeleteMany}
-                deleteButtonText="Xóa vĩnh viễn"
-                filterBar={filterBar}
-                page={filters.page}
-                totalPages={totalPages}
-                onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-                limit={filters.limit}
-                onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-            />
-        ) : (
-            <AcademicYearList
-                academicYears={activeYears}
-                isLoading={isLoadingActive}
-                onEdit={handleEdit}
-                onView={handleView}
-                onDelete={handleDelete}
-                onDeleteMany={handleDeleteMany}
-                filterBar={filterBar}
-                page={filters.page}
-                totalPages={totalPages}
-                onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-                limit={filters.limit}
-                onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-            />
-        )}
-      
+              <AcademicYearList
+          academicYears={activeAcademicYears}
+          isLoading={isLoadingActive}
+          onEdit={handleEdit}
+          onView={handleView}
+          onDelete={handleDelete}
+          filterBar={filterBar}
+          page={filters.page}
+          totalPages={totalPages}
+          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+          limit={filters.limit}
+          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+        />
+
       {/* Create/Edit Modal */}
       <AcademicYearForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
@@ -282,10 +251,10 @@ export function AcademicYearsContainer() {
             </Button>
             <Button
               onClick={handleConfirmBulkAction}
-              disabled={isDeleting || isRestoring}
+              disabled={isDeleting}
               variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
             >
-              {isDeleting || isRestoring ? 'Đang xử lý...' : 'Xác nhận'}
+              {isDeleting ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
           </div>
         </div>

@@ -11,6 +11,7 @@ import { StudentDetails } from './StudentDetails';
 import { StudentDeletedList } from './StudentDeletedList';
 import { useStudents, useStudentActions, useDeletedStudents } from '../hooks';
 import { Button } from '@/components/ui/button';
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -27,13 +28,7 @@ type ModalState =
   | { type: 'idle' };
 
 export function StudentsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<StudentFilters>({ page: 1, limit: 10, search: "" });
-
-  // Reset page to 1 when switching tabs or searching
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
 
   const { 
     students: activeStudents, 
@@ -43,31 +38,19 @@ export function StudentsContainer() {
   } = useStudents(filters);
 
   const { 
-    deletedStudents, 
-    total: deletedTotal, 
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedStudents(filters);
-  
-  const { 
     createStudent, 
     updateStudent, 
     deleteStudent, 
-    restoreStudents,
-    permanentDeleteStudents,
-    softDeleteStudents,
     isCreating, 
     isUpdating, 
     isDeleting,
-    isRestoring,
   } = useStudentActions(() => {
     refetchActive();
-    refetchDeleted();
   });
   
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(f => ({ ...f, search: e.target.value, page: 1 }));
@@ -142,82 +125,37 @@ export function StudentsContainer() {
     }
   };
 
-  const handleConfirmDeleteMany = async () => {
-    if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteStudents(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
 
-  const handleConfirmRestoreMany = async () => {
-    if (modalState.type !== 'restore-many') return;
-    const success = await restoreStudents(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
-  
-  const handleConfirmPermanentDeleteMany = async () => {
-    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteStudents(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
 
   return (
     <PageHeader
-      title="Quản lý Sinh viên"
-      description="Quản lý thông tin sinh viên trong hệ thống"
+      title="Quản lý sinh viên"
+      description="Thêm, sửa, xóa và quản lý sinh viên trong hệ thống"
       breadcrumbs={[
         { label: "Trang chủ", href: "/" },
         { label: "Sinh viên", href: "/students" },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Student" onClick={handleCreate} disabled={isCreating}>
             + Thêm sinh viên
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <StudentDeletedList
-          students={deletedStudents}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <StudentList
-          students={activeStudents}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <StudentList
+        students={activeStudents}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       <StudentForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
@@ -277,7 +215,7 @@ export function StudentsContainer() {
             </Button>
             <Button
               variant="destructive"
-              onClick={modalState.type === 'delete-many' && modalState.permanent ? handleConfirmPermanentDeleteMany : handleConfirmDeleteMany}
+              onClick={() => {}}
               disabled={isDeleting}
             >
               {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
@@ -300,10 +238,10 @@ export function StudentsContainer() {
               Hủy
             </Button>
             <Button
-              onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
+              onClick={() => {}}
+              disabled={isDeleting}
             >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+              {isDeleting ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
         </div>

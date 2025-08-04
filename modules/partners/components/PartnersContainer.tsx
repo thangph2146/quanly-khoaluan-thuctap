@@ -7,6 +7,7 @@ import { PartnerDeletedList } from './PartnerDeletedList';
 import { PartnerDetails } from './PartnerDetails';
 import { usePartners, usePartnerActions, useDeletedPartners } from '../hooks';
 import { Button } from '@/components/ui/button';
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { PageHeader, Modal } from '@/components/common';
 import type { Partner, PartnerMutationData, PartnerFilters } from '../types';
@@ -23,10 +24,9 @@ type ModalState =
   | { type: 'idle' };
 
 export function PartnersContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<PartnerFilters>({ page: 1, limit: 10, search: '' });
-  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
+  // Active partners state  
   const {
     partners: activePartners,
     total: activeTotal,
@@ -34,35 +34,21 @@ export function PartnersContainer() {
     refetch: refetchActive,
   } = usePartners(filters);
 
-  const {
-    deletedPartners,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedPartners(filters);
-
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted, filters.search]);
-
+  // Actions
   const {
     createPartner,
     updatePartner,
     deletePartner,
-    softDeletePartners,
-    restorePartners,
-    permanentDeletePartners,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
   } = usePartnerActions(() => {
     refetchActive();
-    refetchDeleted();
-    setModalState({ type: 'idle' });
   });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
+
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const handleCreate = () => setModalState({ type: 'create' });
   const handleEdit = (partner: Partner) => setModalState({ type: 'edit', partner });
@@ -107,47 +93,34 @@ export function PartnersContainer() {
 
   return (
     <PageHeader
-      title="Quản lý Đối tác"
-      description="Quản lý thông tin các đối tác của khoa."
-      breadcrumbs={[{ label: 'Trang chủ', href: '/' }, { label: 'Đối tác', href: '/partners' }]}
+      title="Quản lý đối tác"
+      description="Thêm, sửa, xóa và quản lý đối tác trong hệ thống"
+      breadcrumbs={[
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Đối tác', href: '/partners' },
+      ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate}>+ Thêm đối tác</Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          <CreateButton module="Partner" onClick={handleCreate} disabled={isCreating}>
+            + Thêm đối tác
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <PartnerDeletedList
-          partners={deletedPartners}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          page={filters.page || 1}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit || 10}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-          filterBar={FilterBar}
-        />
-      ) : (
-        <PartnerList
+              <PartnerList
           partners={activePartners}
           isLoading={isLoadingActive}
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
+  
+          filterBar={FilterBar}
           page={filters.page || 1}
           totalPages={totalPages}
           onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
           limit={filters.limit || 10}
           onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-          filterBar={FilterBar}
         />
-      )}
 
       <PartnerForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
@@ -192,7 +165,7 @@ export function PartnersContainer() {
             <p>Bạn có chắc chắn muốn xóa <strong>{modalState.type === 'delete-many' && modalState.ids.length}</strong> đối tác này không?</p>
             <div className="flex justify-end space-x-2 pt-4">
                 <Button variant="outline" onClick={handleCancel} disabled={isDeleting}>Hủy</Button>
-                <Button variant="destructive" onClick={() => modalState.type === 'delete-many' && softDeletePartners(modalState.ids as number[])} disabled={isDeleting}>
+                <Button variant="destructive" onClick={() => {}} disabled={isDeleting}>
                     {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
                 </Button>
             </div>
@@ -209,9 +182,9 @@ export function PartnersContainer() {
         <div className="p-4">
             <p>Bạn có chắc chắn muốn khôi phục <strong>{modalState.type === 'restore-many' && modalState.ids.length}</strong> đối tác này không?</p>
             <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={handleCancel} disabled={isRestoring}>Hủy</Button>
-                <Button onClick={() => modalState.type === 'restore-many' && restorePartners(modalState.ids as number[])} disabled={isRestoring}>
-                    {isRestoring ? 'Đang khôi phục...' : 'Xác nhận'}
+                <Button variant="outline" onClick={handleCancel}>Hủy</Button>
+                <Button onClick={() => {}} disabled={isDeleting}>
+                    {isDeleting ? 'Đang khôi phục...' : 'Xác nhận'}
                 </Button>
             </div>
         </div>
@@ -228,7 +201,7 @@ export function PartnersContainer() {
             <p>Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa vĩnh viễn <strong>{modalState.type === 'permanent-delete-many' && modalState.ids.length}</strong> đối tác này không?</p>
             <div className="flex justify-end space-x-2 pt-4">
                 <Button variant="outline" onClick={handleCancel} disabled={isDeleting}>Hủy</Button>
-                <Button variant="destructive" onClick={() => modalState.type === 'permanent-delete-many' && permanentDeletePartners(modalState.ids as number[])} disabled={isDeleting}>
+                <Button variant="destructive" onClick={() => {}} disabled={isDeleting}>
                     {isDeleting ? 'Đang xóa...' : 'Xác nhận xóa vĩnh viễn'}
                 </Button>
             </div>

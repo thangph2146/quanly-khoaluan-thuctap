@@ -83,7 +83,7 @@ export async function createAcademicYear(data: CreateAcademicYearData): Promise<
 /**
  * Update an existing academic year
  */
-export async function updateAcademicYear(id: number, data: AcademicYear): Promise<AcademicYear> {
+export async function updateAcademicYear(id: number, data: UpdateAcademicYearData): Promise<AcademicYear> {
   const response = await client.put(`/academic-years/${id}`, data);
   return response.data;
 }

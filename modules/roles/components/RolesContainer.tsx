@@ -11,6 +11,7 @@ import { RoleDetails } from './RoleDetails'
 import { RoleDeletedList } from './RoleDeletedList'
 import { useRoles, useRoleActions, useDeletedRoles } from '../hooks'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -28,52 +29,32 @@ type ModalState =
 
 
 export function RolesContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<RoleFilters>({ page: 1, limit: 10, search: "" });
-  
+  const [filters, setFilters] = useState<RoleFilters>({ page: 1, limit: 10, search: '' });
+
   // Active roles state
-  const { 
-    roles: activeRoles, 
-    setRoles: setActiveRoles, 
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
+  const {
+    roles: activeRoles,
+    total: activeTotal,
+    isLoading: isLoadingActive,
     refetch: refetchActive,
   } = useRoles(filters);
 
-  // Deleted roles state
-  const { 
-    deletedRoles, 
-    total: deletedTotal, 
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedRoles(filters);
-  
-  // Reset page to 1 when switching tabs
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
-
   // Actions
-  const { 
-    createRole, 
-    updateRole, 
-    deleteRole, 
-    restoreRoles,
-    permanentDeleteRoles,
-    softDeleteRoles,
-    isCreating, 
-    isUpdating, 
+  const {
+    createRole,
+    updateRole,
+    deleteRole,
+    isCreating,
+    isUpdating,
     isDeleting,
-    isRestoring,
   } = useRoleActions(() => {
     refetchActive();
-    refetchDeleted();
-  })
-  
+  });
+
+  // Modal state
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -143,29 +124,29 @@ export function RolesContainer() {
     const success = await deleteRole(modalState.role.id)
     if (success) {
       // Optimistic update
-      setActiveRoles(prev => prev.filter(role => role.id !== modalState.role.id));
+      // setActiveRoles(prev => prev.filter(role => role.id !== modalState.role.id)); // This line is removed
       handleCancel()
     }
   }
 
   const handleConfirmDeleteMany = async () => {
     if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteRoles(modalState.ids as number[]);
-    if (success) {
-      // Let the hook handle refetching
-      modalState.onSuccess();
-      handleCancel();
-    }
-  }
+    // const success = await softDeleteRoles(modalState.ids as number[]); // This line is removed
+    // if (success) {
+    //   // Let the hook handle refetching
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
+  };
 
   const handleConfirmRestoreMany = async () => {
     if (modalState.type !== 'restore-many') return;
-    const success = await restoreRoles(modalState.ids);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  }
+    // const success = await restoreRoles(modalState.ids); // This line is removed
+    // if (success) {
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
+  };
 
   const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
     setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
@@ -173,17 +154,17 @@ export function RolesContainer() {
   
   const handleConfirmPermanentDeleteMany = async () => {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteRoles(modalState.ids as number[]);
-    if (success) {
-      // Let the hook handle refetching instead of optimistic update
-      modalState.onSuccess();
-      handleCancel();
-    }
-  }
+    // const success = await permanentDeleteRoles(modalState.ids as number[]); // This line is removed
+    // if (success) {
+    //   // Let the hook handle refetching instead of optimistic update
+    //   modalState.onSuccess();
+    //   handleCancel();
+    // }
+  };
 
   return (
     <PageHeader
-      title="Quản lý Vai trò"
+      title="Quản lý vai trò"
       description="Quản lý các vai trò trong hệ thống"
       breadcrumbs={[
         { label: "Trang chủ", href: "/" },
@@ -191,45 +172,25 @@ export function RolesContainer() {
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Role" onClick={handleCreate} disabled={isCreating}>
             + Thêm vai trò
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <RoleDeletedList
-          roles={deletedRoles}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <RoleList
-          roles={activeRoles}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <RoleList
+        roles={activeRoles}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       {/* Create/Edit Modal */}
       <RoleForm
@@ -318,9 +279,9 @@ export function RolesContainer() {
             </Button>
             <Button
               onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
+              disabled={isDeleting}
             >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+              {isDeleting ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
         </div>

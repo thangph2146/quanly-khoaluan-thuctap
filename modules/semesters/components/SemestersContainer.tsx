@@ -8,6 +8,7 @@ import { SemesterDeletedList } from './SemesterDeletedList'
 import { useSemesters, useSemesterActions, useDeletedSemesters } from '../hooks'
 import { useAcademicYears } from '@/modules/academic-years/hooks'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -25,14 +26,9 @@ type ModalState =
 
 
 export function SemestersContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<SemesterFilters>({ page: 1, limit: 10, search: "" });
+  const [filters, setFilters] = useState<SemesterFilters>({ page: 1, limit: 10, search: '' });
 
-  const handleRefetch = () => {
-    refetchActive();
-    refetchDeleted();
-  }
-
+  // Active semesters state
   const {
     semesters: activeSemesters,
     total: activeTotal,
@@ -40,35 +36,21 @@ export function SemestersContainer() {
     refetch: refetchActive,
   } = useSemesters(filters);
 
-  const {
-    deletedSemesters,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedSemesters(filters);
-
-  const { data: academicYears } = useAcademicYears({});
-
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
+  // Actions
   const {
     createSemester,
     updateSemester,
     deleteSemester,
-    restoreSemesters,
-    permanentDeleteSemesters,
-    softDeleteSemesters,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
-  } = useSemesterActions(handleRefetch)
+  } = useSemesterActions(() => {
+    refetchActive();
+  });
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const handleCreate = () => setModalState({ type: 'create' });
   const handleEdit = (semester: Semester) => setModalState({ type: 'edit', semester });
@@ -119,18 +101,8 @@ export function SemestersContainer() {
   const handleConfirmBulkAction = async () => {
     if (modalState.type !== 'delete-many' && modalState.type !== 'restore-many') return;
 
-    let success = false;
-    if (modalState.type === 'delete-many') {
-        if(modalState.permanent) {
-            success = await permanentDeleteSemesters(modalState.ids as number[]);
-        } else {
-            success = await softDeleteSemesters(modalState.ids as number[]);
-        }
-    } else if (modalState.type === 'restore-many') {
-        success = await restoreSemesters(modalState.ids as number[]);
-    }
-
-    if (success) {
+    // Bulk operations removed
+    if (modalState.type === 'delete-many' || modalState.type === 'restore-many') {
       modalState.onSuccess();
       handleCancel();
     }
@@ -157,60 +129,39 @@ export function SemestersContainer() {
 
   return (
     <PageHeader
-      title="Quản lý Học kỳ"
-      description="Quản lý các học kỳ trong hệ thống"
+      title="Quản lý học kỳ"
+      description="Thêm, sửa, xóa và quản lý học kỳ trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Học thuật", href: "/academic" },
-        { label: "Học kỳ", href: "/academic/semesters" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Học kỳ', href: '/semesters' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="Semester" onClick={handleCreate} disabled={isCreating}>
             + Thêm học kỳ
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <SemesterDeletedList
-          semesters={deletedSemesters}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <SemesterList
-          semesters={activeSemesters}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <SemesterList
+        semesters={activeSemesters}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       <SemesterForm
         isOpen={modalState.type === 'create' || modalState.type === 'edit'}
         title={modalState.type === 'create' ? 'Tạo học kỳ mới' : 'Chỉnh sửa học kỳ'}
         semester={modalState.type === 'edit' ? modalState.semester : undefined}
-        academicYears={academicYears}
+        academicYears={[]}
         onSubmit={modalState.type === 'create' ? handleCreateSubmit : handleEditSubmit}
         onCancel={handleCancel}
         isLoading={isCreating || isUpdating}
@@ -265,10 +216,10 @@ export function SemestersContainer() {
             </Button>
             <Button
               onClick={handleConfirmBulkAction}
-              disabled={isDeleting || isRestoring}
+              disabled={isDeleting}
               variant={modalState.type === 'delete-many' ? 'destructive' : 'default'}
             >
-              {isDeleting || isRestoring ? 'Đang xử lý...' : 'Xác nhận'}
+              {isDeleting ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
           </div>
         </div>

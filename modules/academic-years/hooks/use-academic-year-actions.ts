@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { AcademicYearService } from '../services'
-import type { CreateAcademicYearData, UpdateAcademicYearData } from '../types'
+import type { ApiCreateAcademicYearData as CreateAcademicYearData, ApiUpdateAcademicYearData as UpdateAcademicYearData } from '../types'
 
 export function useAcademicYearActions(onSuccess?: () => void) {
   const [isCreating, setCreating] = useState(false)

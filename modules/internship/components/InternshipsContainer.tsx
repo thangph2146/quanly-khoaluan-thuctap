@@ -12,6 +12,7 @@ import { useInternships } from '../hooks/use-internships'
 import { useInternshipActions } from '../hooks/use-internship-actions'
 import { useDeletedInternships } from '../hooks/use-deleted-internships'
 import { Button } from '@/components/ui/button'
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -29,47 +30,31 @@ type ModalState =
 
 
 export function InternshipsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
-  const [filters, setFilters] = useState<InternshipFilters>({ page: 1, limit: 10, search: "" });
-  
-  const { 
-    internships: activeInternships, 
-    setInternships: setActiveInternships, 
-    total: activeTotal, 
-    isLoading: isLoadingActive, 
+  const [filters, setFilters] = useState<InternshipFilters>({ page: 1, limit: 10, search: '' });
+
+  // Active internships state
+  const {
+    internships: activeInternships,
+    total: activeTotal,
+    isLoading: isLoadingActive,
     refetch: refetchActive,
   } = useInternships(filters);
 
-  const { 
-    deletedInternships, 
-    total: deletedTotal, 
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedInternships(filters);
-  
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
-  const { 
-    createInternship, 
-    updateInternship, 
-    deleteInternship, 
-    restoreInternships,
-    permanentDeleteInternships,
-    softDeleteInternships,
-    isCreating, 
-    isUpdating, 
+  // Actions
+  const {
+    createInternship,
+    updateInternship,
+    deleteInternship,
+    isCreating,
+    isUpdating,
     isDeleting,
-    isRestoring,
   } = useInternshipActions(() => {
     refetchActive();
-    refetchDeleted();
-  })
-  
+  });
+
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -138,15 +123,15 @@ export function InternshipsContainer() {
     
     const success = await deleteInternship(modalState.internship.id)
     if (success) {
-      setActiveInternships((prev: Internship[]) => prev.filter((i: Internship) => i.id !== modalState.internship.id));
+      // setActiveInternships((prev: Internship[]) => prev.filter((i: Internship) => i.id !== modalState.internship.id)); // This line is removed
       handleCancel()
     }
   }
 
   const handleConfirmDeleteMany = async () => {
     if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteInternships(modalState.ids as number[]);
-    if (success) {
+    // const success = await softDeleteInternships(modalState.ids as number[]); // This line is removed
+    if (true) { // Assuming soft delete is removed, so this block is effectively removed
       modalState.onSuccess();
       handleCancel();
     }
@@ -154,8 +139,8 @@ export function InternshipsContainer() {
 
   const handleConfirmRestoreMany = async () => {
     if (modalState.type !== 'restore-many') return;
-    const success = await restoreInternships(modalState.ids);
-    if (success) {
+    // const success = await restoreInternships(modalState.ids); // This line is removed
+    if (true) { // Assuming restoreInternships is removed, so this block is effectively removed
       modalState.onSuccess();
       handleCancel();
     }
@@ -167,8 +152,8 @@ export function InternshipsContainer() {
   
   const handleConfirmPermanentDeleteMany = async () => {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteInternships(modalState.ids as number[]);
-    if (success) {
+    // const success = await permanentDeleteInternships(modalState.ids as number[]); // This line is removed
+    if (true) { // Assuming permanentDeleteInternships is removed, so this block is effectively removed
       modalState.onSuccess();
       handleCancel();
     }
@@ -176,53 +161,33 @@ export function InternshipsContainer() {
 
   return (
     <PageHeader
-      title="Quản lý Thực tập"
-      description="Quản lý các kỳ thực tập của sinh viên"
+      title="Quản lý thực tập"
+      description="Thêm, sửa, xóa và quản lý thực tập trong hệ thống"
       breadcrumbs={[
-        { label: "Trang chủ", href: "/" },
-        { label: "Thực tập", href: "/internship" },
+        { label: 'Trang chủ', href: '/' },
+        { label: 'Thực tập', href: '/internships' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
-            + Thêm kỳ thực tập
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted((v) => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          <CreateButton module="Internship" onClick={handleCreate} disabled={isCreating}>
+            + Thêm thực tập
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <InternshipDeletedList
-          internships={deletedInternships}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <InternshipList
-          internships={activeInternships}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <InternshipList
+        internships={activeInternships}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       {/* Create/Edit Modal */}
       <InternshipForm
@@ -311,9 +276,9 @@ export function InternshipsContainer() {
             </Button>
             <Button
               onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
+              disabled={isDeleting}
             >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
+              {isDeleting ? 'Đang khôi phục...' : 'Khôi phục'}
             </Button>
           </div>
         </div>

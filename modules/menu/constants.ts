@@ -17,16 +17,16 @@ export const MENU_ICONS = {
 } as const
 
 export const MENU_PATHS = {
-  DASHBOARD: '/admin',
-  USERS: '/admin/users',
-  PERMISSIONS: '/admin/permissions',
-  ROLES: '/admin/roles',
-  MENUS: '/admin/menus',
-  ACADEMIC_YEARS: '/admin/academic-years',
-  DEPARTMENTS: '/admin/departments',
-  THESIS: '/admin/thesis',
-  INTERNSHIP: '/admin/internship',
-  PARTNERS: '/admin/partners',
+  DASHBOARD: '/',
+  USERS: '/users',
+  PERMISSIONS: '/permissions',
+  ROLES: '/roles',
+  MENUS: '/menus',
+  ACADEMIC_YEARS: '/academic-years',
+  DEPARTMENTS: '/departments',
+  THESIS: '/thesis',
+  INTERNSHIP: '/internship',
+  PARTNERS: '/partners',
 } as const
 
 export const MENU_STATUS = {

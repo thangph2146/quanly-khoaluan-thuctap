@@ -1,10 +1,11 @@
 "use-client";
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { UserList, UserDeletedList, UserForm, UserDetails } from "./";
-import { useUsers, useUserActions, useDeletedUsers } from "../hooks";
+import { UserList, UserForm, UserDetails } from "./";
+import { useUsers, useUserActions } from "../hooks";
 import { PageHeader, Modal } from "@/components/common";
 import { Button } from "@/components/ui/button";
+import { CreateButton } from "@/components/common/ProtectedButton";
 import type { User, CreateUserData, UpdateUserData, UserFilters } from "../types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,22 +16,10 @@ type ModalState =
   | { type: "create" }
   | { type: "edit"; user: User }
   | { type: "view"; user: User }
-  | { type: "delete"; user: User }
-  | {
-      type: "bulk-delete";
-      ids: (string | number)[];
-      onSuccess: () => void;
-      permanent?: boolean;
-    }
-  | {
-      type: "bulk-restore";
-      ids: (string | number)[];
-      onSuccess: () => void;
-    };
+  | { type: "delete"; user: User };
 
 export function UsersContainer() {
   const [modalState, setModalState] = useState<ModalState>({ type: "idle" });
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<UserFilters>({ page: 1, limit: 10, search: "" });
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -49,18 +38,8 @@ export function UsersContainer() {
     refetch: refetchUsers,
   } = useUsers(filters);
 
-  const {
-    users: deletedUsers,
-    isLoading: isLoadingDeleted,
-    page: deletedPage,
-    totalPages: deletedTotalPages,
-    limit: deletedLimit,
-    refetch: refetchDeleted,
-  } = useDeletedUsers(filters);
-
   const handleSuccess = () => {
     refetchUsers();
-    refetchDeleted();
   };
 
   const {
@@ -80,16 +59,7 @@ export function UsersContainer() {
   const handleDelete = (user: User) => setModalState({ type: "delete", user });
   const handleCancel = useCallback(() => setModalState({ type: "idle" }), []);
 
-  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) =>
-    setModalState({ type: "bulk-delete", ids, onSuccess, permanent: false });
 
-  const handlePermanentDeleteMany = (
-    ids: (string | number)[],
-    onSuccess: () => void
-  ) => setModalState({ type: "bulk-delete", ids, onSuccess, permanent: true });
-
-  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) =>
-    setModalState({ type: "bulk-restore", ids, onSuccess });
 
   const handleFormSubmit = async (data: CreateUserData | UpdateUserData) => {
     if (modalState.type === "create") {
@@ -97,29 +67,19 @@ export function UsersContainer() {
     } else if (modalState.type === "edit") {
       await updateUser(modalState.user.id, data as UpdateUserData);
     }
-    handleCancel();
+    setModalState({ type: "idle" });
   };
 
-  const handleConfirmDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (modalState.type === "delete") {
       await softDeleteUser(modalState.user.id);
-      handleCancel();
+      setModalState({ type: "idle" });
     }
   };
 
-  const handleConfirmBulkAction = async () => {
-    if (modalState.type === "bulk-delete") {
-      const idsToProcess = modalState.ids.map((id) => Number(id));
-      const action = modalState.permanent ? "permanentDelete" : "softDelete";
-      await bulkAction(idsToProcess, action);
-      modalState.onSuccess();
-    } else if (modalState.type === "bulk-restore") {
-      const idsToProcess = modalState.ids.map((id) => Number(id));
-      await bulkAction(idsToProcess, "restore");
-      modalState.onSuccess();
-    }
-    handleCancel();
-  };
+
+
+  const safeUserTotalPages = Math.max(1, userTotalPages);
 
   const handlePageChange = (page: number) => {
     setFilters(f => ({ ...f, page }));
@@ -129,10 +89,7 @@ export function UsersContainer() {
     setFilters(f => ({ ...f, limit, page: 1}));
   }
 
-  const confirmationModalOpen =
-    modalState.type === "delete" ||
-    modalState.type === "bulk-delete" ||
-    modalState.type === "bulk-restore";
+  const confirmationModalOpen = modalState.type === "delete";
 
   const isFormLoading = isCreating || isUpdating;
 
@@ -142,68 +99,26 @@ export function UsersContainer() {
         title: "Xác nhận xóa",
         description: `Bạn có chắc chắn muốn xóa tạm thời người dùng "${modalState.user.name}"?`,
         confirmText: "Xóa",
-        onConfirm: handleConfirmDelete,
+        onConfirm: handleDeleteConfirm,
         isLoading: isDeleting,
       };
     }
-    if (modalState.type === "bulk-delete" && modalState.permanent) {
-      return {
-        title: `Xác nhận xóa vĩnh viễn`,
-        description: `Bạn có chắc chắn muốn xóa vĩnh viễn ${modalState.ids.length} người dùng đã chọn? Hành động này không thể hoàn tác.`,
-        confirmText: "Xóa vĩnh viễn",
-        onConfirm: handleConfirmBulkAction,
-        isLoading: isBulkActionLoading,
-      };
-    }
-    if (modalState.type === "bulk-delete") {
-      return {
-        title: `Xác nhận xóa`,
-        description: `Bạn có chắc chắn muốn xóa tạm thời ${modalState.ids.length} người dùng đã chọn?`,
-        confirmText: "Xóa",
-        onConfirm: handleConfirmBulkAction,
-        isLoading: isBulkActionLoading,
-      };
-    }
-    if (modalState.type === "bulk-restore") {
-      return {
-        title: `Xác nhận khôi phục`,
-        description: `Bạn có chắc chắn muốn khôi phục ${modalState.ids.length} người dùng đã chọn?`,
-        confirmText: "Khôi phục",
-        onConfirm: handleConfirmBulkAction,
-        isLoading: isBulkActionLoading,
-      };
-    }
     return null;
-  }, [modalState, isDeleting, isBulkActionLoading]);
-
-  const safeUserTotalPages = useMemo(() => Math.max(userTotalPages || 0, 0), [userTotalPages]);
-  const safeDeletedTotalPages = useMemo(() => Math.max(deletedTotalPages || 0, 0), [deletedTotalPages]);
+  }, [modalState, isDeleting]);
 
   const filterBar = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-      <div className="flex flex-col space-y-2 justify-between">
+    <div className="flex items-center space-x-4">
+      <div className="flex-1 max-w-sm">
         <Label htmlFor="search">Tìm kiếm</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="search"
-            placeholder="Tìm kiếm người dùng..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-grow"
-          />
-          {searchTerm && (
-            <Button
-              onClick={() =>
-                setSearchTerm('')
-              }
-            >
-              Xóa filter
-            </Button>
-          )}
-        </div>
+        <Input
+          id="search"
+          placeholder="Tìm kiếm người dùng..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
     </div>
-  )
+  );
 
   return (
     <PageHeader
@@ -212,48 +127,26 @@ export function UsersContainer() {
       breadcrumbs={[{ label: "Dashboard", href: "/" }, { label: "Users" }]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="User" onClick={handleCreate} disabled={isCreating}>
             + Thêm người dùng
-          </Button>
-          <Button
-            variant={showDeleted ? "default" : "outline"}
-            onClick={() => setShowDeleted((v) => !v)}
-          >
-            {showDeleted ? "Danh sách hoạt động" : "Xem thùng rác"}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
       <div className="p-4">
-        {showDeleted ? (
-          <UserDeletedList
-            users={deletedUsers}
-            isLoading={isLoadingDeleted}
-            onRestore={handleRestoreMany}
-            onPermanentDelete={handlePermanentDeleteMany}
-            page={deletedPage}
-            totalPages={safeDeletedTotalPages}
-            onPageChange={handlePageChange}
-            limit={deletedLimit}
-            onLimitChange={handleLimitChange}
-            filterBar={filterBar}
-          />
-        ) : (
-          <UserList
-            users={users}
-            isLoading={isLoadingUsers}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-            onDeleteMany={handleDeleteMany}
-            page={userPage}
-            totalPages={safeUserTotalPages}
-            onPageChange={handlePageChange}
-            limit={userLimit}
-            onLimitChange={handleLimitChange}
-            filterBar={filterBar}
-          />
-        )}
+        <UserList
+          users={users}
+          isLoading={isLoadingUsers}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onView={handleView}
+          page={userPage}
+          totalPages={safeUserTotalPages}
+          onPageChange={handlePageChange}
+          limit={userLimit}
+          onLimitChange={handleLimitChange}
+          filterBar={filterBar}
+        />
       </div>
 
       <UserForm
@@ -288,11 +181,7 @@ export function UsersContainer() {
               Hủy
             </Button>
             <Button
-              variant={
-                modalState.type === "bulk-delete" && modalState.permanent
-                  ? "destructive"
-                  : "default"
-              }
+              variant="default"
               onClick={modalContent?.onConfirm}
               disabled={modalContent?.isLoading}
             >

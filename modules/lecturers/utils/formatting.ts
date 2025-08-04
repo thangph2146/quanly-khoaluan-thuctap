@@ -32,7 +32,7 @@ export function filterLecturers(lecturers: Lecturer[], searchTerm: string): Lect
   return lecturers.filter(lecturer => 
     lecturer.name.toLowerCase().includes(term) ||
     lecturer.email.toLowerCase().includes(term) ||
-    (lecturer.departmentName && lecturer.departmentName.toLowerCase().includes(term)) ||
+    (lecturer.department?.name && lecturer.department.name.toLowerCase().includes(term)) ||
     (lecturer.academicRank && lecturer.academicRank.toLowerCase().includes(term)) ||
     (lecturer.degree && lecturer.degree.toLowerCase().includes(term)) ||
     (lecturer.specialization && lecturer.specialization.toLowerCase().includes(term))

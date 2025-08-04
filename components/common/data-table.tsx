@@ -26,9 +26,7 @@ import {
   SelectItem,
   SelectValue,
 } from "../ui/select";
-import { ChevronRight, Filter } from "lucide-react";
-import { Checkbox } from "../ui/checkbox";
-import { Button } from "../ui/button";
+import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { CardTitle } from "../ui/card";
 import { CardDescription } from "../ui/card";
@@ -49,7 +47,7 @@ export interface DataTableProps<TData, TValue> {
    * Pagination: total number of pages
    */
   totalPages?: number;
-  /**9
+  /**
    * Pagination: callback when page changes
    */
   onPageChange?: (page: number) => void;
@@ -63,9 +61,6 @@ export interface DataTableProps<TData, TValue> {
   getId?: (row: TData) => string | number;
   getParentId?: (row: TData) => string | number | null;
   getChildren?: (row: TData) => TData[];
-  onDeleteMany?: (ids: (string | number)[], onSuccess: () => void) => void;
-  onRestoreMany?: (ids: (string | number)[], onSuccess: () => void) => void;
-  deleteButtonText?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -82,86 +77,10 @@ export function DataTable<TData, TValue>({
   getId,
   getParentId,
   getChildren,
-  onDeleteMany,
-  onRestoreMany,
-  deleteButtonText = "Xóa nhiều",
 }: DataTableProps<TData, TValue>) {
   const [expandedRowIds, setExpandedRowIds] = React.useState<
     Set<string | number>
   >(new Set());
-  const [selectedRowIds, setSelectedRowIds] = React.useState<
-    Set<string | number>
-  >(new Set());
-
-  const allRowIds = React.useMemo(
-    () =>
-      data.map((row) =>
-        getId ? getId(row) : (row as TData & { id: string | number }).id
-      ),
-    [data, getId]
-  );
-  const isAllSelected =
-    allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds.has(id));
-
-  const handleSelectAll = React.useCallback(() => {
-    setSelectedRowIds(() => {
-      if (isAllSelected) {
-        return new Set();
-      } else {
-        return new Set(allRowIds);
-      }
-    });
-  }, [isAllSelected, allRowIds]);
-
-  const getAllDescendantIds = React.useCallback(
-    (row: TData): (string | number)[] => {
-      if (!getChildren) return [];
-      const children = getChildren(row) || [];
-      let ids: (string | number)[] = [];
-      for (const child of children) {
-        const childId = getId
-          ? getId(child)
-          : (child as TData & { id: string | number }).id;
-        ids.push(childId);
-        ids = ids.concat(getAllDescendantIds(child));
-      }
-      return ids;
-    },
-    [getChildren, getId]
-  );
-
-  const handleSelectRow = React.useCallback(
-    (rowId: string | number) => {
-      setSelectedRowIds((prev) => {
-        const next = new Set(prev);
-        const rowObj = data.find(
-          (row) =>
-            (getId
-              ? getId(row)
-              : (row as TData & { id: string | number }).id) === rowId
-        );
-
-        if (isTreeTable && getChildren && rowObj) {
-          const descendantIds = getAllDescendantIds(rowObj);
-          if (next.has(rowId)) {
-            next.delete(rowId);
-            descendantIds.forEach((id) => next.delete(id));
-          } else {
-            next.add(rowId);
-            descendantIds.forEach((id) => next.add(id));
-          }
-        } else {
-          if (next.has(rowId)) {
-            next.delete(rowId);
-          } else {
-            next.add(rowId);
-          }
-        }
-        return next;
-      });
-    },
-    [data, getId, isTreeTable, getChildren, getAllDescendantIds]
-  );
 
   const handleToggleRow = (rowId: string | number) => {
     setExpandedRowIds((prev) => {
@@ -174,42 +93,6 @@ export function DataTable<TData, TValue>({
       return next;
     });
   };
-
-  const columnsWithSelect: ColumnDef<TData, TValue>[] = React.useMemo(
-    () => [
-      {
-        id: "select",
-        header: () => (
-          <Checkbox
-            checked={isAllSelected}
-            onCheckedChange={handleSelectAll}
-            aria-label="Chọn tất cả"
-          />
-        ),
-        cell: ({ row }) => {
-          const rowId = getId
-            ? getId(row.original)
-            : (row.original as { id: string | number }).id;
-          return (
-            <Checkbox
-              checked={selectedRowIds.has(rowId)}
-              onCheckedChange={() => handleSelectRow(rowId)}
-              aria-label="Chọn dòng"
-            />
-          );
-        },
-      },
-      ...columns,
-    ],
-    [
-      columns,
-      isAllSelected,
-      handleSelectAll,
-      selectedRowIds,
-      handleSelectRow,
-      getId,
-    ]
-  );
 
   const tableData = React.useMemo(() => {
     if (!isTreeTable || !getChildren) return data;
@@ -230,7 +113,7 @@ export function DataTable<TData, TValue>({
 
   const table = useReactTable({
     data: tableData,
-    columns: columnsWithSelect,
+    columns: columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -300,7 +183,7 @@ export function DataTable<TData, TValue>({
       return [
         <React.Fragment key={rowId}>
           <TableRow
-            data-state={selectedRowIds.has(rowId) ? "selected" : undefined}
+            data-state={expandedRowIds.has(rowId) ? "selected" : undefined}
           >
             {renderedCells}
           </TableRow>
@@ -312,27 +195,6 @@ export function DataTable<TData, TValue>({
     });
   }
 
-  // Bulk action bar
-  const selectedIds = Array.from(selectedRowIds);
-  const showBulkActions =
-    selectedIds.length > 0 && (onDeleteMany || onRestoreMany);
-
-  const handleSuccess = () => {
-    setSelectedRowIds(new Set());
-  };
-
-  const handleDeleteManyTrigger = () => {
-    if (onDeleteMany) {
-      onDeleteMany(selectedIds, handleSuccess);
-    }
-  };
-
-  const handleRestoreManyTrigger = () => {
-    if (onRestoreMany) {
-      onRestoreMany(selectedIds, handleSuccess);
-    }
-  };
-
   return (
     <div className="space-y-2">
       {filterBar && (
@@ -340,8 +202,7 @@ export function DataTable<TData, TValue>({
           {/* Filters */}
           <Card className="mb-4">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
+              <CardTitle>
                 Bộ lọc
               </CardTitle>
               <CardDescription>
@@ -351,27 +212,6 @@ export function DataTable<TData, TValue>({
             <CardContent>{filterBar}</CardContent>
           </Card>
         </>
-      )}
-      {showBulkActions && (
-        <div className="flex gap-2 items-center p-2 bg-muted rounded border">
-          <span>Đã chọn {selectedIds.length} dòng</span>
-          {onDeleteMany && (
-            <Button
-              className="px-3 py-1 rounded bg-destructive text-white hover:bg-destructive/80"
-              onClick={handleDeleteManyTrigger}
-            >
-              {deleteButtonText}
-            </Button>
-          )}
-          {onRestoreMany && (
-            <Button
-              className="px-3 py-1 rounded bg-primary text-white hover:bg-primary/80"
-              onClick={handleRestoreManyTrigger}
-            >
-              Khôi phục nhiều
-            </Button>
-          )}
-        </div>
       )}
 
       <div className="rounded-md border overflow-x-auto">
@@ -397,9 +237,9 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                {columnsWithSelect.map((_, j) => (
+                {columns.map((_, j) => (
                   <TableCell key={j}>
-                    <TableSkeleton columns={Math.max(1, columnsWithSelect.length)} rows={1} />
+                    <TableSkeleton columns={Math.max(1, columns.length)} rows={1} />
                   </TableCell>
                 ))}
               </TableRow>
@@ -432,7 +272,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columnsWithSelect.length}
+                  colSpan={columns.length}
                   className="text-center text-muted-foreground"
                 >
                   Không có dữ liệu

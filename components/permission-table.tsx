@@ -13,7 +13,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table'
-import { Permission } from '@/modules/permission/types'
+import { Permission } from '@/modules/permissions/types'
 import { cn } from '@/lib/utils'
 
 interface PermissionTableProps {

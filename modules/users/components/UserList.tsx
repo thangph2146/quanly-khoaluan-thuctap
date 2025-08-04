@@ -7,6 +7,7 @@ import { Edit, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/common/data-table";
 import { Badge } from "@/components/ui/badge";
+import { UpdateButton, DeleteButton } from "@/components/common/ProtectedButton";
 import type { User, UserListProps } from "../types";
 import { Row } from "@tanstack/react-table";
 
@@ -92,22 +93,24 @@ export function UserList({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
-            <Button
+            <UpdateButton
+              module="User"
               variant="outline"
               size="icon"
               onClick={() => onEdit(user)}
               title="Chỉnh sửa"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </UpdateButton>
+            <DeleteButton
+              module="User"
               variant="destructive"
               size="icon"
               onClick={() => onDelete(user)}
               title="Xóa tạm thời"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </DeleteButton>
           </div>
         );
       },

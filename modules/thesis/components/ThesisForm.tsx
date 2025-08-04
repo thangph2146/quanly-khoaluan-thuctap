@@ -194,7 +194,7 @@ export function ThesisForm({
               <p className="text-sm text-destructive">{form.formState.errors.studentId.message}</p>
             )}
           </div>
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>GV Hướng dẫn *</Label>
             <Controller
               name="supervisorId"
@@ -235,7 +235,7 @@ export function ThesisForm({
             {form.formState.errors.examinerId && (
               <p className="text-sm text-destructive">{form.formState.errors.examinerId.message}</p>
             )}
-          </div>
+          </div> */}
           <div className="space-y-2">
             <Label>Năm học *</Label>
             <Controller

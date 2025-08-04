@@ -20,7 +20,7 @@ const defaultMenuItems: Menu[] = [
 	{
 		id: -1,
 		name: 'Menu',
-		path: '/admin/menu',
+		path: '/menu',
 		icon: 'menu',
 		displayOrder: 999,
 		parentId: null
@@ -65,7 +65,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 			const menusArray = Array.isArray(menusData) ? menusData : []
 			
 			// Ensure menu page is always available for admin access
-			const hasMenuPage = menusArray.some(menu => menu.path === '/admin/menu')
+			const hasMenuPage = menusArray.some(menu => menu.path === '/menu')
 			
 			if (!hasMenuPage) {
 				// Add default menu items if not present

@@ -4,6 +4,7 @@ import { InternshipPeriodForm } from './InternshipPeriodForm';
 import { InternshipPeriodDeletedList } from './InternshipPeriodDeletedList';
 import { useInternshipPeriods, useInternshipPeriodActions, useDeletedInternshipPeriods } from '../hooks';
 import { Button } from '@/components/ui/button';
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -21,48 +22,31 @@ type ModalState =
   | { type: 'idle' };
 
 export function InternshipPeriodsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<InternshipPeriodFilters>({ page: 1, limit: 10, search: '' });
 
   // Active periods state
   const {
     internshipPeriods: activePeriods,
-    setInternshipPeriods: setActivePeriods,
     total: activeTotal,
     isLoading: isLoadingActive,
     refetch: refetchActive,
   } = useInternshipPeriods(filters);
-
-  // Deleted periods state
-  const {
-    deletedInternshipPeriods,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedInternshipPeriods(filters);
-
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
 
   // Actions
   const {
     createInternshipPeriod,
     updateInternshipPeriod,
     deleteInternshipPeriod,
-    permanentDeleteInternshipPeriods,
-    softDeleteInternshipPeriods,
     isCreating,
     isUpdating,
     isDeleting,
   } = useInternshipPeriodActions(() => {
     refetchActive();
-    refetchDeleted();
   });
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -124,18 +108,18 @@ export function InternshipPeriodsContainer() {
     if (modalState.type !== 'delete') return;
     const success = await deleteInternshipPeriod(modalState.internshipPeriod.id);
     if (success) {
-      setActivePeriods((prev: InternshipPeriod[]) => removeInternshipPeriodFromList(prev, modalState.internshipPeriod.id));
+      // setActivePeriods((prev: InternshipPeriod[]) => removeInternshipPeriodFromList(prev, modalState.internshipPeriod.id));
       handleCancel();
     }
   };
 
   const handleConfirmDeleteMany = async () => {
     if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteInternshipPeriods(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await softDeleteInternshipPeriods(modalState.ids as number[]);
+    // if (success) {
+    modalState.onSuccess();
+    handleCancel();
+    // }
   };
 
   const handleConfirmRestoreMany = async () => {
@@ -152,62 +136,42 @@ export function InternshipPeriodsContainer() {
 
   const handleConfirmPermanentDeleteMany = async () => {
     if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteInternshipPeriods(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
+    // const success = await permanentDeleteInternshipPeriods(modalState.ids as number[]);
+    // if (success) {
+    modalState.onSuccess();
+    handleCancel();
+    // }
   };
 
   return (
     <PageHeader
-      title="Quản lý Đợt thực tập"
-      description="Quản lý các đợt thực tập trong hệ thống"
+      title="Quản lý đợt thực tập"
+      description="Thêm, sửa, xóa và quản lý đợt thực tập trong hệ thống"
       breadcrumbs={[
         { label: 'Trang chủ', href: '/' },
         { label: 'Đợt thực tập', href: '/internship-periods' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="InternshipPeriod" onClick={handleCreate} disabled={isCreating}>
             + Thêm đợt thực tập
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <InternshipPeriodDeletedList
-          internshipPeriods={deletedInternshipPeriods}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p: number) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l: number) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <InternshipPeriodList
-          internshipPeriods={activePeriods}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p: number) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l: number) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <InternshipPeriodList
+        internshipPeriods={activePeriods}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       {/* Create/Edit Modal */}
       <InternshipPeriodForm

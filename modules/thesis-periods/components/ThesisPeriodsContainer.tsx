@@ -4,6 +4,7 @@ import { ThesisPeriodForm } from './ThesisPeriodForm';
 import { ThesisPeriodDeletedList } from './ThesisPeriodDeletedList';
 import { useThesisPeriods, useThesisPeriodActions, useDeletedThesisPeriods } from '../hooks';
 import { Button } from '@/components/ui/button';
+import { CreateButton } from '@/components/common/ProtectedButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader, Modal } from '@/components/common';
@@ -15,13 +16,10 @@ type ModalState =
   | { type: 'create' }
   | { type: 'edit', thesisPeriod: ThesisPeriod }
   | { type: 'delete', thesisPeriod: ThesisPeriod }
-  | { type: 'delete-many', ids: (string | number)[], onSuccess: () => void, permanent?: boolean }
-  | { type: 'restore-many', ids: number[], onSuccess: () => void }
   | { type: 'view', thesisPeriod: ThesisPeriod }
   | { type: 'idle' };
 
 export function ThesisPeriodsContainer() {
-  const [showDeleted, setShowDeleted] = useState(false);
   const [filters, setFilters] = useState<ThesisPeriodFilters>({ page: 1, limit: 10, search: '' });
 
   // Active periods state
@@ -33,38 +31,21 @@ export function ThesisPeriodsContainer() {
     refetch: refetchActive,
   } = useThesisPeriods(filters);
 
-  // Deleted periods state
-  const {
-    deletedThesisPeriods,
-    total: deletedTotal,
-    isLoading: isLoadingDeleted,
-    refetch: refetchDeleted,
-  } = useDeletedThesisPeriods(filters);
-
-  useEffect(() => {
-    setFilters(f => ({ ...f, page: 1 }));
-  }, [showDeleted]);
-
   // Actions
   const {
     createThesisPeriod,
     updateThesisPeriod,
     deleteThesisPeriod,
-    restoreThesisPeriods,
-    permanentDeleteThesisPeriods,
-    softDeleteThesisPeriods,
     isCreating,
     isUpdating,
     isDeleting,
-    isRestoring,
   } = useThesisPeriodActions(() => {
     refetchActive();
-    refetchDeleted();
   });
 
   const [modalState, setModalState] = useState<ModalState>({ type: 'idle' });
 
-  const totalPages = Math.ceil((showDeleted ? deletedTotal : activeTotal) / (filters.limit || 10));
+  const totalPages = Math.ceil(activeTotal / (filters.limit || 10));
 
   const filterBar = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -95,13 +76,7 @@ export function ThesisPeriodsContainer() {
   const handleView = (thesisPeriod: ThesisPeriod) => setModalState({ type: 'view', thesisPeriod });
   const handleCancel = useCallback(() => setModalState({ type: 'idle' }), []);
 
-  const handleDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
-    setModalState({ type: 'delete-many', ids, onSuccess });
-  };
 
-  const handleRestoreMany = (ids: (string | number)[], onSuccess: () => void) => {
-    setModalState({ type: 'restore-many', ids: ids as number[], onSuccess });
-  };
 
   const handleCreateSubmit = useCallback(async (data: ThesisPeriodMutationData) => {
     try {
@@ -131,86 +106,37 @@ export function ThesisPeriodsContainer() {
     }
   };
 
-  const handleConfirmDeleteMany = async () => {
-    if (modalState.type !== 'delete-many') return;
-    const success = await softDeleteThesisPeriods(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
 
-  const handleConfirmRestoreMany = async () => {
-    if (modalState.type !== 'restore-many') return;
-    const success = await restoreThesisPeriods(modalState.ids);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
-
-  const handlePermanentDeleteMany = (ids: (string | number)[], onSuccess: () => void) => {
-    setModalState({ type: 'delete-many', ids, onSuccess, permanent: true });
-  };
-
-  const handleConfirmPermanentDeleteMany = async () => {
-    if (modalState.type !== 'delete-many' || !modalState.permanent) return;
-    const success = await permanentDeleteThesisPeriods(modalState.ids as number[]);
-    if (success) {
-      modalState.onSuccess();
-      handleCancel();
-    }
-  };
 
   return (
     <PageHeader
-      title="Quản lý Đợt Khóa luận"
-      description="Quản lý các đợt khóa luận trong hệ thống"
+      title="Quản lý đợt khóa luận"
+      description="Thêm, sửa, xóa và quản lý các đợt khóa luận trong hệ thống"
       breadcrumbs={[
         { label: 'Trang chủ', href: '/' },
         { label: 'Đợt khóa luận', href: '/thesis-periods' },
       ]}
       actions={
         <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={isCreating}>
+          <CreateButton module="ThesisPeriod" onClick={handleCreate} disabled={isCreating}>
             + Thêm đợt khóa luận
-          </Button>
-          <Button variant={showDeleted ? 'default' : 'outline'} onClick={() => setShowDeleted(v => !v)}>
-            {showDeleted ? 'Danh sách hoạt động' : 'Xem thùng rác'}
-          </Button>
+          </CreateButton>
         </div>
       }
     >
-      {showDeleted ? (
-        <ThesisPeriodDeletedList
-          thesisPeriods={deletedThesisPeriods}
-          isLoading={isLoadingDeleted}
-          onRestore={handleRestoreMany}
-          onPermanentDelete={handlePermanentDeleteMany}
-          deleteButtonText="Xóa vĩnh viễn"
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p: number) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l: number) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      ) : (
-        <ThesisPeriodList
-          thesisPeriods={activePeriods}
-          isLoading={isLoadingActive}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDelete}
-          onDeleteMany={handleDeleteMany}
-          filterBar={filterBar}
-          page={filters.page}
-          totalPages={totalPages}
-          onPageChange={(p: number) => setFilters(f => ({ ...f, page: p }))}
-          limit={filters.limit}
-          onLimitChange={(l: number) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
-        />
-      )}
+      <ThesisPeriodList
+        thesisPeriods={activePeriods}
+        isLoading={isLoadingActive}
+        onEdit={handleEdit}
+        onView={handleView}
+        onDelete={handleDelete}
+        filterBar={filterBar}
+        page={filters.page}
+        totalPages={totalPages}
+        onPageChange={(p) => setFilters(f => ({ ...f, page: p }))}
+        limit={filters.limit}
+        onLimitChange={(l) => setFilters(f => ({ ...f, limit: l, page: 1 }))}
+      />
 
       {/* Create/Edit Modal */}
       <ThesisPeriodForm
@@ -256,56 +182,7 @@ export function ThesisPeriodsContainer() {
         </div>
       </Modal>
 
-      {/* Bulk Soft/Permanent Delete Confirmation */}
-      <Modal
-        isOpen={modalState.type === 'delete-many'}
-        onOpenChange={(open) => !open && handleCancel()}
-        title={modalState.type === 'delete-many' && modalState.permanent ? "Xác nhận xóa vĩnh viễn" : "Xác nhận xóa nhiều mục"}
-      >
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {modalState.type === 'delete-many' && modalState.permanent
-              ? `Bạn có chắc chắn muốn xóa vĩnh viễn ${Array.isArray(modalState.ids) ? modalState.ids.length : 0} mục đã chọn? Hành động này không thể hoàn tác.`
-              : `Bạn có chắc chắn muốn xóa ${modalState.type === 'delete-many' && Array.isArray(modalState.ids) ? modalState.ids.length : 0} mục đã chọn? Hành động này sẽ chuyển các mục vào thùng rác.`}
-          </p>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}>
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={modalState.type === 'delete-many' && modalState.permanent ? handleConfirmPermanentDeleteMany : handleConfirmDeleteMany}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Đang xóa...' : 'Xác nhận'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
-      {/* Bulk Restore Confirmation */}
-      <Modal
-        isOpen={modalState.type === 'restore-many'}
-        onOpenChange={(open) => !open && handleCancel()}
-        title="Xác nhận khôi phục nhiều mục"
-      >
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Bạn có chắc chắn muốn khôi phục {modalState.type === 'restore-many' ? modalState.ids.length : 0} mục đã chọn?
-          </p>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancel}>
-              Hủy
-            </Button>
-            <Button
-              onClick={handleConfirmRestoreMany}
-              disabled={isRestoring}
-            >
-              {isRestoring ? 'Đang khôi phục...' : 'Khôi phục'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </PageHeader>
   );
 } 

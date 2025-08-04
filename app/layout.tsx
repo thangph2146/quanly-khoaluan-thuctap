@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
+import { PermissionProvider } from "@/contexts/PermissionContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,13 +28,15 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <SessionProvider session={session}>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          {children}
-        </body>
-      </html>
+      <PermissionProvider>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            {children}
+          </body>
+        </html>
+      </PermissionProvider>
     </SessionProvider>
   );
 }

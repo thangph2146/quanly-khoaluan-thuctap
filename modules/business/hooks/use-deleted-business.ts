@@ -20,7 +20,11 @@ export function useDeletedBusinesses(filters: BusinessFilters) {
       setError(null);
       const response = await BusinessService.getDeleted(currentFilters);
       if (response && typeof response === 'object' && 'data' in response) {
-        setBusinesses(response.data);
+        setBusinesses(response.data.map(b => ({ 
+          ...b, 
+          displayOrder: b.displayOrder || 0,
+          createdAt: b.createdAt || new Date().toISOString()
+        })));
         setTotal(response.total);
       } else {
         console.error('Received unexpected data format for deleted businesses:', response);
